@@ -36,6 +36,7 @@
     "eslint-config-next": "16.2.11",
     "prettier": "^3.9.6",
     "server-only": "^0.0.1",
+    "supabase": "^2.109.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
