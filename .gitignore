@@ -1,0 +1,17 @@
+# deps / build
+node_modules/
+.next/
+out/
+dist/
+# env
+.env
+.env.*
+!.env.example
+# supabase local
+supabase/.branches/
+supabase/.temp/
+# os / editor
+.DS_Store
+# claude local
+.claude/
+.superpowers/
