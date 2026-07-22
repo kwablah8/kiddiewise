@@ -11,4 +11,14 @@ export const queryKeys = {
     recentActivities: ["dashboard", "recent-activities"] as const,
     upcomingEvents: ["dashboard", "upcoming-events"] as const,
   },
+  students: {
+    all: ["students"] as const,
+    detail: (id: string) => ["students", id] as const,
+  },
+  parents: {
+    all: ["parents"] as const,
+  },
+  classes: {
+    options: ["classes", "options"] as const,
+  },
 } as const;
