@@ -58,6 +58,14 @@ const STATUS_OPTIONS = [
 // Select items need a concrete string value to compare against.
 const NONE_VALUE = "__none__";
 
+// base-ui's <Select.Value> only auto-resolves a value's label once its matching <Select.Item>
+// has actually mounted inside the popup (i.e. after the user has opened it) — so a value set
+// via `defaultValues` (never opened yet) would otherwise render its raw enum string. Looking
+// the label up ourselves sidesteps that timing dependency entirely.
+function labelFor(options: readonly { value: string; label: string }[], value: string): string {
+  return options.find((o) => o.value === value)?.label ?? value;
+}
+
 // `studentCreateSchema` has `.default()`s on `enrollment_status`/`guardian_ids`, so its input
 // type (what the form actually collects) makes them optional while its output type (what
 // `createStudent`/`updateStudent` require) makes them required. RHF needs both: defaultValues
@@ -314,7 +322,9 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger id="gender" className="w-full" aria-invalid={!!errors.gender}>
-                    <SelectValue placeholder="Select gender" />
+                    <SelectValue placeholder="Select gender">
+                      {(v: string) => labelFor(GENDER_OPTIONS, v)}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {GENDER_OPTIONS.map((opt) => (
@@ -352,7 +362,9 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger id="enrollment_status" className="w-full">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Select status">
+                      {(v: string) => labelFor(STATUS_OPTIONS, v)}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {STATUS_OPTIONS.map((opt) => (
@@ -377,7 +389,13 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
                   disabled={classesLoading}
                 >
                   <SelectTrigger id="class_id" className="w-full sm:w-64">
-                    <SelectValue placeholder={classesLoading ? "Loading classes…" : undefined} />
+                    <SelectValue placeholder={classesLoading ? "Loading classes…" : undefined}>
+                      {(v: string) => {
+                        if (v === NONE_VALUE) return "No class assigned";
+                        const cls = classOptions?.find((c) => c.id === v);
+                        return cls ? `${cls.name} (${cls.level})` : "No class assigned";
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={NONE_VALUE}>No class assigned</SelectItem>
