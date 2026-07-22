@@ -80,12 +80,13 @@ export function YearList({ selectedYearId, onSelectYear }: YearListProps) {
                     tabIndex={0}
                     onClick={() => onSelectYear(year.id)}
                     onKeyDown={(e) => {
+                      if (e.target !== e.currentTarget) return;
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         onSelectYear(year.id);
                       }
                     }}
-                    aria-current={isSelected ? "true" : undefined}
+                    aria-pressed={isSelected}
                     className={cn(
                       "flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-3 text-left transition-colors first:pt-2 last:pb-2 hover:bg-[var(--bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
                       isSelected && "bg-[var(--bg)]",
