@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { cardShellClass, lightFocusRingClass } from "@/lib/ui";
 import { EmptyState } from "@/components/states/empty-state";
 
 interface ListPanelProps {
@@ -25,18 +26,16 @@ export function ListPanel({
   className,
 }: ListPanelProps) {
   return (
-    <section
-      className={cn(
-        "rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
-        className,
-      )}
-    >
+    <section className={cn(cardShellClass, className)}>
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold text-[var(--text)]">{title}</h3>
         {viewAllHref && (
           <Link
             href={viewAllHref}
-            className="inline-flex items-center gap-1 text-sm font-medium text-[var(--primary)] hover:underline"
+            className={cn(
+              "inline-flex items-center gap-1 rounded-md text-sm font-medium text-[var(--primary)] hover:underline",
+              lightFocusRingClass,
+            )}
           >
             View all
             <ArrowRight className="size-3.5" aria-hidden="true" />

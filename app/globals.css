@@ -97,6 +97,7 @@
   --success-bg: #E7F6EC;
   --success-fg: #15803D;
   --warning-bg: #FEF3C7;
+  --warning-fg: #B45309;
   --danger: #DC2626;
   /* signature brand surface: maroon → near-black vertical gradient (sidebar) */
   --brand-top: #5C1B22;

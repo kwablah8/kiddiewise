@@ -4,7 +4,7 @@ export type StatusTone = "success" | "warning" | "danger" | "neutral";
 
 const toneStyles: Record<StatusTone, string> = {
   success: "bg-[var(--success-bg)] text-[var(--success-fg)]",
-  warning: "bg-[var(--warning-bg)] text-[#92400E]",
+  warning: "bg-[var(--warning-bg)] text-[var(--warning-fg)]",
   danger: "bg-[color-mix(in_srgb,var(--danger)_12%,white)] text-[var(--danger)]",
   neutral: "bg-[var(--bg)] text-[var(--muted-foreground)]",
 };

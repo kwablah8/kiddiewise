@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { cardShellClass } from "@/lib/ui";
 import { EmptyState } from "@/components/states/empty-state";
 
 interface ChartCardProps {
@@ -25,12 +26,7 @@ export function ChartCard({
   className,
 }: ChartCardProps) {
   return (
-    <section
-      className={cn(
-        "rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
-        className,
-      )}
-    >
+    <section className={cn(cardShellClass, className)}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-base font-semibold text-[var(--text)]">{title}</h3>

@@ -15,6 +15,7 @@ import {
   TrendingUp,
   Users,
   Wallet,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -22,6 +23,7 @@ import { UserCard } from "@/components/app/user-card";
 import { useSidebarCounts } from "@/lib/queries/sidebar";
 import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { navFocusRingClass } from "@/lib/ui";
 
 interface NavItem {
   label: string;
@@ -87,7 +89,10 @@ export function Sidebar({
           onClick={collapsed ? onToggleCollapsed : undefined}
           aria-label={collapsed ? "Expand sidebar" : undefined}
           disabled={!collapsed}
-          className="flex min-w-0 items-center gap-2.5 disabled:cursor-default"
+          className={cn(
+            "flex min-w-0 items-center gap-2.5 rounded-md disabled:cursor-default",
+            navFocusRingClass,
+          )}
         >
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white">
             <GraduationCap className="size-4.5" aria-hidden="true" />
@@ -103,8 +108,9 @@ export function Sidebar({
           onClick={onToggleCollapsed}
           aria-label="Collapse sidebar"
           className={cn(
-            "hidden size-7 shrink-0 items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white lg:flex",
+            "hidden size-7 shrink-0 items-center justify-center rounded-md text-white/70 transition-colors hover:bg-white/10 hover:text-white lg:flex",
             collapsed && "lg:hidden",
+            navFocusRingClass,
           )}
         >
           <ChevronLeft className="size-4" aria-hidden="true" />
@@ -113,14 +119,17 @@ export function Sidebar({
           type="button"
           onClick={onCloseMobile}
           aria-label="Close navigation"
-          className="flex size-7 shrink-0 items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white lg:hidden"
+          className={cn(
+            "flex size-7 shrink-0 items-center justify-center rounded-md text-white/70 hover:bg-white/10 hover:text-white lg:hidden",
+            navFocusRingClass,
+          )}
         >
-          <ChevronLeft className="size-4" aria-hidden="true" />
+          <X className="size-4" aria-hidden="true" />
         </button>
       </div>
 
       {!collapsed && (
-        <p className="px-5 pb-2 text-[11px] font-medium tracking-wider text-white/40 uppercase">
+        <p className="px-5 pb-2 text-[11px] font-medium tracking-wider text-white/70 uppercase">
           Main menu
         </p>
       )}
@@ -136,12 +145,14 @@ export function Sidebar({
               key={item.href}
               href={item.href}
               title={collapsed ? item.label : undefined}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 collapsed && "justify-center px-0",
                 isActive
                   ? "bg-white/15 text-white"
                   : "text-white/60 hover:bg-white/5 hover:text-white/90",
+                navFocusRingClass,
               )}
             >
               <item.icon className="size-4.5 shrink-0" aria-hidden="true" />

@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Profile } from "@/lib/types";
 import { formatInitials, formatRole } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { navFocusRingClass } from "@/lib/ui";
 
 interface UserCardProps {
   profile: Profile;
@@ -31,7 +32,7 @@ export function UserCard({ profile, collapsed, onSignOut }: UserCardProps) {
       {!collapsed && (
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-white">{name}</p>
-          <p className="truncate text-xs text-white/50">{formatRole(profile.role)}</p>
+          <p className="truncate text-xs text-white/70">{formatRole(profile.role)}</p>
         </div>
       )}
 
@@ -40,7 +41,10 @@ export function UserCard({ profile, collapsed, onSignOut }: UserCardProps) {
         onClick={onSignOut}
         aria-label="Log out"
         title="Log out"
-        className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[var(--danger)] transition-colors hover:bg-[var(--danger)]/10"
+        className={cn(
+          "flex size-8 shrink-0 items-center justify-center rounded-lg text-[var(--danger)] transition-colors hover:bg-[var(--danger)]/10",
+          navFocusRingClass,
+        )}
       >
         <LogOut className="size-4" aria-hidden="true" />
       </button>

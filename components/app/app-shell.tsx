@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/app/sidebar";
 import { useSession } from "@/lib/auth/useSession";
 import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { lightFocusRingClass, navFocusRingClass } from "@/lib/ui";
 
 interface AppShellProps {
   profile: Profile;
@@ -34,7 +35,7 @@ export function AppShell({ profile, children }: AppShellProps) {
           type="button"
           aria-label="Close navigation overlay"
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          className={cn("fixed inset-0 z-30 bg-black/40 lg:hidden", navFocusRingClass)}
         />
       )}
 
@@ -49,7 +50,10 @@ export function AppShell({ profile, children }: AppShellProps) {
             type="button"
             onClick={() => setMobileOpen(true)}
             aria-label="Open navigation"
-            className="flex size-8 items-center justify-center rounded-lg text-[var(--muted-foreground)] hover:bg-[var(--bg)]"
+            className={cn(
+              "flex size-8 items-center justify-center rounded-lg text-[var(--muted-foreground)] hover:bg-[var(--bg)]",
+              lightFocusRingClass,
+            )}
           >
             <Menu className="size-5" aria-hidden="true" />
           </button>

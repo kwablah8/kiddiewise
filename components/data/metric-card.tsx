@@ -1,18 +1,16 @@
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { cardShellClass } from "@/lib/ui";
 import { TrendPill } from "./trend-pill";
 
-export type MetricTint = "green" | "amber" | "blue" | "indigo" | "purple";
+export type MetricTint = "green" | "amber";
 
 // Soft, low-saturation tinted chips (06-UI §2 "Stat-card icon chips") — decorative
-// accents, not full-color blocks. green/amber are the admin palette; blue/indigo/purple
-// extend the same component for the teacher portal later.
+// accents, not full-color blocks. green/amber are the admin palette; other tints
+// (blue/indigo/purple) belong to the teacher portal and are out of this slice's scope.
 const tintStyles: Record<MetricTint, string> = {
   green: "bg-[var(--success-bg)] text-[var(--success-fg)]",
-  amber: "bg-[var(--warning-bg)] text-[#92400E]",
-  blue: "bg-[#E7F0FE] text-[#1D4ED8]",
-  indigo: "bg-[#EEF0FF] text-[#4F46E5]",
-  purple: "bg-[#F5EEFF] text-[#7C3AED]",
+  amber: "bg-[var(--warning-bg)] text-[var(--warning-fg)]",
 };
 
 interface MetricCardProps {
@@ -36,12 +34,7 @@ export function MetricCard({
   className,
 }: MetricCardProps) {
   return (
-    <div
-      className={cn(
-        "rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
-        className,
-      )}
-    >
+    <div className={cn(cardShellClass, className)}>
       <div className="flex items-center justify-between">
         <span
           className={cn(
