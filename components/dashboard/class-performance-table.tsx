@@ -2,19 +2,11 @@
 
 import { ErrorState } from "@/components/states/error-state";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
-import { StatusPill, type StatusTone } from "@/components/data/status-pill";
+import { StatusPill } from "@/components/data/status-pill";
 import { cardShellClass } from "@/lib/ui";
+import { performanceBand } from "@/lib/grading";
 import { useClassPerformance } from "@/lib/queries/dashboard";
 import type { ClassPerformanceVM } from "@/lib/validators/dashboard";
-
-/** Score bands -> a real label + tone, never color alone (06-UI §11). */
-function performanceBand(score: number | null): { label: string; tone: StatusTone } {
-  if (score === null) return { label: "No data", tone: "neutral" };
-  if (score >= 80) return { label: "Excellent", tone: "success" };
-  if (score >= 70) return { label: "Good", tone: "success" };
-  if (score >= 60) return { label: "Average", tone: "warning" };
-  return { label: "Needs Attention", tone: "danger" };
-}
 
 const columns: DataTableColumn<ClassPerformanceVM>[] = [
   { key: "class_name", header: "Class Name", render: (row) => row.class_name },

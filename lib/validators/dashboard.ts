@@ -1,21 +1,24 @@
 import { z } from "zod";
 
-// NOTE: the real `dashboard_stats(school_id)` RPC (docs/03-DATABASE §12) returns only the four
-// bare totals below — no comparison figures. The `_trend` fields are a deliberate VM-layer
-// enrichment (this is exactly what a Zod view-model is for per this file's own convention:
-// "joined/derived shapes the API will return") so the required stat-card trend pills
-// (`06-UI §5/§6`, `01-REQ Admin §Dashboard`) have real, typed data to render. At integration,
-// `getDashboardStats` will need to compute these four percentages (e.g. current vs prior period)
-// alongside the totals — a small, additive RPC change, not a seam break.
+// Mirrors the real `dashboard_stats(school_id)` RPC (docs/03-DATABASE §12) exactly — four bare
+// totals, no comparison figures — so integration is a clean swap, not a seam break.
 export const dashboardStatsVM = z.object({
   total_students: z.number(),
-  students_trend: z.number(),
   total_staff: z.number(),
-  staff_trend: z.number(),
   total_revenue: z.number(),
-  revenue_trend: z.number(),
   attendance_rate: z.number(),
-  attendance_trend: z.number(),
+});
+
+// SEAM: no RPC supplies month-over-month deltas yet — this is a separate, honestly-named node
+// (not folded into dashboardStatsVM) so it's obvious at a glance which fields the real RPC
+// backs today and which are still a follow-up. See docs/superpowers/plans/FOLLOWUPS.md. Each
+// field is a signed percent delta vs last month, feeding the stat-card trend pills
+// (`06-UI §5/§6`, `01-REQ Admin §Dashboard`).
+export const dashboardTrendsVM = z.object({
+  students: z.number(),
+  staff: z.number(),
+  revenue: z.number(),
+  attendance: z.number(),
 });
 
 export const trendPointVM = z.object({ month: z.string(), value: z.number() });
@@ -44,6 +47,7 @@ export const upcomingEventVM = z.object({
 });
 
 export type DashboardStatsVM = z.infer<typeof dashboardStatsVM>;
+export type DashboardTrendsVM = z.infer<typeof dashboardTrendsVM>;
 export type TrendPointVM = z.infer<typeof trendPointVM>;
 export type ClassPerformanceVM = z.infer<typeof classPerformanceVM>;
 export type RecentActivityVM = z.infer<typeof recentActivityVM>;

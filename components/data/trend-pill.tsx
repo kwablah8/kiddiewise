@@ -8,18 +8,25 @@ interface TrendPillProps {
   className?: string;
 }
 
-/** "↗ +12% from last month" — success/danger tint, arrow pairs with the sign (06-UI §9). */
+/**
+ * "↗ +12% from last month" — success/danger tint, arrow pairs with the sign (06-UI §9).
+ * A zero value is neither good nor bad, so it gets its own neutral (muted gray) tone rather
+ * than defaulting into the success tint.
+ */
 export function TrendPill({ value, period, className }: TrendPillProps) {
   const isNegative = value < 0;
+  const isZero = value === 0;
   const Icon = value > 0 ? TrendingUp : isNegative ? TrendingDown : Minus;
 
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap",
-        isNegative
-          ? "bg-[color-mix(in_srgb,var(--danger)_12%,white)] text-[var(--danger)]"
-          : "bg-[var(--success-bg)] text-[var(--success-fg)]",
+        isZero
+          ? "bg-[color-mix(in_srgb,var(--muted-foreground)_10%,transparent)] text-[var(--muted-foreground)]"
+          : isNegative
+            ? "bg-[color-mix(in_srgb,var(--danger)_12%,white)] text-[var(--danger)]"
+            : "bg-[var(--success-bg)] text-[var(--success-fg)]",
         className,
       )}
     >

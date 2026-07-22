@@ -1,5 +1,6 @@
 import type {
   DashboardStatsVM,
+  DashboardTrendsVM,
   TrendPointVM,
   ClassPerformanceVM,
   RecentActivityVM,
@@ -14,16 +15,21 @@ export const mockSidebarCounts: SidebarCountsVM = {
 
 export const mockDashboardStats: DashboardStatsVM = {
   total_students: 248,
-  students_trend: 8,
   total_staff: 32,
-  staff_trend: 3,
-  // total_revenue is the sum of mockFeeTrend below (187,500); revenue_trend mirrors that
-  // series' actual last-two-month delta (26,000 vs 38,250 ≈ -32%) so the metric card and the
-  // Fee Collection Trend chart never contradict each other.
+  // total_revenue is the sum of mockFeeTrend below (187,500).
   total_revenue: 187500,
-  revenue_trend: -32,
   attendance_rate: 94,
-  attendance_trend: 2,
+};
+
+// SEAM: month-over-month deltas the real dashboard_stats RPC doesn't supply yet — see the
+// dashboardTrendsVM comment in lib/validators/dashboard.ts. `revenue: -32` deliberately mirrors
+// mockFeeTrend's actual last-two-month delta (26,000 vs 38,250 ≈ -32%) so the Total Revenue
+// card and the Fee Collection Trend chart never contradict each other on screen.
+export const mockDashboardTrends: DashboardTrendsVM = {
+  students: 8,
+  staff: 3,
+  revenue: -32,
+  attendance: 2,
 };
 
 export const mockFeeTrend: TrendPointVM[] = [

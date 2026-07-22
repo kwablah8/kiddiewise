@@ -5,6 +5,8 @@ import * as data from "@/lib/data/dashboard";
 
 export const useDashboardStats = () =>
   useQuery({ queryKey: queryKeys.dashboard.stats, queryFn: data.getDashboardStats });
+export const useDashboardTrends = () =>
+  useQuery({ queryKey: queryKeys.dashboard.trends, queryFn: data.getDashboardTrends });
 export const useFeeTrend = () =>
   useQuery({ queryKey: queryKeys.dashboard.feeTrend, queryFn: data.getFeeTrend });
 export const useEnrollmentTrend = () =>

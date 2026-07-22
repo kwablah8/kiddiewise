@@ -103,9 +103,11 @@
   --brand-top: #5C1B22;
   --brand-bottom: #2A0C10;
   /* Dashboard chart series (06-UI §5 "Fee Collection Trend" / "Enrollment Trend"): fee/revenue
-     uses --primary (green) directly; enrollment gets its own restrained token so the two chart
-     cards read as distinct series without inventing an inline hex in any component. */
-  --chart-enrollment: #2563EB;
+     uses --primary (green) directly; enrollment reuses the admin amber accent (--warning-fg,
+     the same hue as the amber metric-card chips) so the two chart cards read as distinct
+     series while staying inside the green+amber admin palette (06-UI §2) — no blue/indigo/
+     purple, which belong to the teacher portal. */
+  --chart-enrollment: var(--warning-fg);
 }
 
 .dark {
