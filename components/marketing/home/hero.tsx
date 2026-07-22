@@ -1,79 +1,69 @@
-import { Section } from "@/components/marketing/section";
+import Image from "next/image";
+
 import { CtaButton } from "@/components/marketing/cta-button";
-import { PhotoSlot } from "@/components/marketing/photo-slot";
-import { Adinkra } from "@/components/marketing/adinkra";
+import { SITE } from "@/lib/marketing/site";
+import { MEDIA } from "@/lib/marketing/media";
 
-const TRUST = ["Est. 1998", "Average class of 18", "98% WASSCE passes"];
-
+/**
+ * Home hero — a real SLIS community photo (staff & families in the school's blue-and-gold polos)
+ * under a deep-blue brand gradient for legibility. The dark top satisfies the shell header's
+ * "translucent over a dark hero" contract. Eyebrow carries the motto; a gold pill announces the
+ * open admission; dual CTAs drive the two real actions (apply / visit).
+ */
 export function HomeHero() {
   return (
-    <Section
-      tone="maroon"
+    <section
       aria-labelledby="hero-title"
-      className="overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-24"
+      className="relative isolate flex min-h-[92svh] items-center overflow-hidden px-6 pt-32 pb-20 sm:px-8 sm:pt-40 sm:pb-28"
     >
-      {/* SEAM: decorative brand watermark, not real imagery. */}
-      <Adinkra
-        name="nyansapo"
-        className="pointer-events-none absolute -top-24 -right-24 size-[30rem] text-white/[0.05] sm:size-[38rem]"
+      <Image
+        src={MEDIA.community.src}
+        alt={MEDIA.community.alt}
+        fill
+        priority
+        sizes="100vw"
+        className="-z-20 object-cover object-center"
+      />
+      {/* Deep-blue brand wash: darker at the left/bottom where the text sits, for AA legibility. */}
+      <div
+        className="absolute inset-0 -z-10 bg-[linear-gradient(105deg,color-mix(in_srgb,var(--m-brand-deep),transparent_8%)_0%,color-mix(in_srgb,var(--m-brand-deep),transparent_28%)_45%,color-mix(in_srgb,var(--m-brand),transparent_45%)_100%)]"
+        aria-hidden="true"
       />
 
-      <div className="relative grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-        <div className="reveal">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/75">
-            <span className="size-1.5 rounded-full bg-[var(--primary)]" aria-hidden="true" />
-            Independent K–12 · Kwahu Plateau, Ghana
+      <div className="relative mx-auto w-full max-w-6xl">
+        <div className="max-w-2xl reveal text-white">
+          <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--m-accent)] sm:text-xs">
+            {SITE.motto}
           </span>
 
           <h1
             id="hero-title"
-            className="mt-6 text-[clamp(2.75rem,6vw,4.75rem)] font-semibold leading-[1.02] tracking-[-0.03em] text-balance"
+            className="mt-5 text-[clamp(2.6rem,6vw,4.75rem)] font-semibold leading-[1.03] tracking-[-0.03em] text-balance"
           >
-            A modern education, rooted in character.
+            A place to be nurtured, to grow, and to lead.
           </h1>
 
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/75 sm:text-xl">
-            For over twenty-five years, Kwahu Ridge Academy has raised curious, grounded young
-            Ghanaians — from their first day in Early Years to the WASSCE — on a hilltop campus
-            built for how children actually learn.
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/85 sm:text-xl">
+            {SITE.name} guides children from Creche through Junior High School in{" "}
+            {SITE.location.lines[0]} — with warmth, structure, and a genuinely high bar for every
+            learner.
           </p>
 
           <div className="mt-9 flex flex-wrap gap-3">
-            <CtaButton href="/admissions" variant="primary" size="lg" withArrow>
+            <CtaButton href="/admissions" variant="gold" size="lg" withArrow>
               Apply for admission
             </CtaButton>
-            <CtaButton href="/contact" variant="ghost-on-maroon" size="lg">
+            <CtaButton href="/contact" variant="ghost-light" size="lg">
               Book a visit
             </CtaButton>
           </div>
 
-          <ul className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] uppercase tracking-[0.14em] text-white/55">
-            {TRUST.map((fact, i) => (
-              <li key={fact} className="flex items-center gap-3">
-                {i > 0 ? <span aria-hidden="true">·</span> : null}
-                {fact}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="reveal d1 relative">
-          {/* SEAM: real photo later */}
-          <PhotoSlot
-            label="Students on the steps of the main hall at morning assembly"
-            aspect="4 / 5"
-            tone="warm"
-            symbol="aya"
-            className="shadow-2xl"
-          />
-          <div className="absolute -bottom-5 left-6 flex items-center gap-2.5 rounded-2xl bg-[var(--surface)] px-4 py-3 shadow-xl ring-1 ring-black/[0.04]">
-            <span className="size-2 rounded-full bg-[var(--primary)]" aria-hidden="true" />
-            <span className="text-sm font-medium text-[var(--text)]">
-              Now enrolling · 2026 / 2027
-            </span>
-          </div>
+          <p className="mt-10 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm">
+            <span className="size-2 rounded-full bg-[var(--m-accent)]" aria-hidden="true" />
+            {SITE.admissionsNote}
+          </p>
         </div>
       </div>
-    </Section>
+    </section>
   );
 }

@@ -1,36 +1,39 @@
+import { Compass, Heart, School, Sprout } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
 import { Section } from "@/components/marketing/section";
-import { Adinkra, ADINKRA_MEANING, type AdinkraName } from "@/components/marketing/adinkra";
+import { SITE } from "@/lib/marketing/site";
 
 interface Feature {
-  symbol: AdinkraName;
+  icon: LucideIcon;
   title: string;
   blurb: string;
 }
 
 const FEATURES: readonly Feature[] = [
   {
-    symbol: "sankofa",
-    title: "Character first",
+    icon: Heart,
+    title: "One caring community",
     blurb:
-      "Kindness, honesty and pride in one's roots are taught as deliberately as maths and reading.",
+      "The same familiar team walks with your child from Creche to JHS, so every learner is genuinely known — not a number in a register.",
   },
   {
-    symbol: "nyansapo",
-    title: "Teaching that sticks",
+    icon: Sprout,
+    title: "Play that grows into purpose",
     blurb:
-      "Specialist teachers who love their subjects — and know every child in the room by name.",
+      "Early years learn through guided play; older learners build on that with structure and steadily higher expectations.",
   },
   {
-    symbol: "fihankra",
-    title: "A close community",
+    icon: School,
+    title: "Every stage on one campus",
     blurb:
-      "An average class of eighteen and a pastoral team that actually notices when something's off.",
+      "Creche, Nursery, Kindergarten, Primary and Junior High sit side by side in Oyarifa — a settled, unbroken journey for your family.",
   },
   {
-    symbol: "aya",
-    title: "The whole child",
+    icon: Compass,
+    title: "Character alongside academics",
     blurb:
-      "Sport, music, coding and farming — because character is built well beyond the desk.",
+      "Nurturing, growing and leading are taught as deliberately as reading and numbers, so children leave us ready to lead with excellence.",
   },
 ];
 
@@ -38,39 +41,39 @@ export function HomeFeatures() {
   return (
     <Section tone="warm" aria-labelledby="features-title">
       <div className="reveal max-w-2xl">
-        <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--primary)]">
-          Why families choose us
+        <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--m-brand)]">
+          Why families choose {SITE.shortName}
         </span>
         <h2
           id="features-title"
-          className="mt-4 text-[clamp(1.9rem,3.4vw,2.6rem)] font-semibold leading-[1.1] tracking-[-0.02em]"
+          className="mt-4 text-[clamp(1.9rem,3.4vw,2.6rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-balance"
         >
-          What makes the ridge different.
+          A start worth building a childhood on.
         </h2>
       </div>
 
       <div className="mt-14 grid gap-x-12 gap-y-12 sm:grid-cols-2">
-        {FEATURES.map((feature, i) => (
-          <div
-            key={feature.title}
-            className={`reveal${i > 0 ? ` d${i}` : ""} flex gap-5 border-t border-[var(--border)] pt-8`}
-          >
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface)] text-[var(--brand-top)] ring-1 ring-black/[0.05]">
-              <Adinkra name={feature.symbol} className="size-6" />
-            </span>
-            <div>
-              <h3 className="text-lg font-semibold tracking-[-0.01em] text-[var(--text)]">
-                {feature.title}
-              </h3>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-                {ADINKRA_MEANING[feature.symbol].name}
-              </p>
-              <p className="mt-3 leading-relaxed text-[var(--muted-foreground)]">
-                {feature.blurb}
-              </p>
+        {FEATURES.map((feature, i) => {
+          const Icon = feature.icon;
+          return (
+            <div
+              key={feature.title}
+              className={`reveal${i > 0 ? ` d${Math.min(i, 3)}` : ""} flex gap-5 border-t border-[var(--border)] pt-8`}
+            >
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--m-brand),white_90%)] text-[var(--m-brand)] ring-1 ring-[color-mix(in_srgb,var(--m-brand),white_75%)]">
+                <Icon className="size-6" aria-hidden="true" />
+              </span>
+              <div>
+                <h3 className="text-lg font-semibold tracking-[-0.01em] text-[var(--text)]">
+                  {feature.title}
+                </h3>
+                <p className="mt-3 leading-relaxed text-[var(--muted-foreground)]">
+                  {feature.blurb}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Section>
   );

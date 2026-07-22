@@ -1,47 +1,49 @@
 import { Section } from "@/components/marketing/section";
-import { Adinkra } from "@/components/marketing/adinkra";
-import { SITE } from "@/components/marketing/nav-config";
-import { formatPercent } from "@/lib/format";
+import { SITE } from "@/lib/marketing/site";
 
-const yearsOnTheRidge = new Date().getFullYear() - SITE.foundedYear;
-
-const STATS: readonly { value: string; label: string }[] = [
-  { value: "1,240", label: "Students on campus" },
-  { value: "96", label: "Teachers & mentors" },
-  { value: String(yearsOnTheRidge), label: "Years on the ridge" },
-  { value: formatPercent(98), label: "WASSCE pass rate" },
+/**
+ * The values band — honest, non-numeric content drawn straight from the school's motto. It
+ * deliberately asserts NO enrollment, class-size or pass-rate figures: none are confirmed for the
+ * real school, and the M4 plan's honesty guard forbids inventing them.
+ */
+const VALUES: readonly { name: string; blurb: string }[] = [
+  { name: "Nurturing", blurb: "Warm, attentive care from a child's very first day." },
+  { name: "Growing", blurb: "Steady progress, guided at each child's own pace." },
+  { name: "Leading", blurb: "Confidence and character built alongside academics." },
+  { name: "Excellence", blurb: "A high, honest standard held at every stage." },
 ];
 
 export function HomeStatsBand() {
   return (
-    <Section tone="maroon" aria-labelledby="stats-title" className="overflow-hidden">
-      <Adinkra
-        name="aya"
-        className="pointer-events-none absolute -bottom-20 -left-16 size-[26rem] text-white/[0.04]"
-      />
+    <Section tone="brand" aria-labelledby="values-title" className="overflow-hidden">
       <div className="relative">
-        <h2 id="stats-title" className="sr-only">
-          The school by the numbers
-        </h2>
-        <p className="reveal font-mono text-[11px] uppercase tracking-[0.22em] text-white/55">
-          By the numbers
+        <p className="reveal font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--m-accent)]">
+          What we stand for
         </p>
+        <h2
+          id="values-title"
+          className="reveal mt-4 max-w-3xl text-[clamp(1.7rem,3.2vw,2.4rem)] font-semibold leading-[1.12] tracking-[-0.02em] text-balance text-white"
+        >
+          {SITE.motto}
+        </h2>
 
-        <dl className="mt-10 grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-4 sm:gap-x-6">
-          {STATS.map((stat, i) => (
+        <dl className="mt-12 grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-x-6">
+          {VALUES.map((value, i) => (
             <div
-              key={stat.label}
-              className={`reveal${i > 0 ? ` d${i}` : ""} sm:border-l sm:border-white/12 sm:pl-6`}
+              key={value.name}
+              className={`reveal${i > 0 ? ` d${Math.min(i, 3)}` : ""} border-t-2 border-[var(--m-accent)] pt-4`}
             >
-              <dd className="text-[clamp(2.5rem,5vw,3.75rem)] font-bold leading-none tracking-[-0.03em] tabular-nums">
-                {stat.value}
-              </dd>
-              <dt className="mt-3 font-mono text-[11px] uppercase tracking-[0.16em] text-white/60">
-                {stat.label}
+              <dt className="text-2xl font-semibold tracking-[-0.01em] text-white">
+                {value.name}
               </dt>
+              <dd className="mt-2 leading-relaxed text-white/70">{value.blurb}</dd>
             </div>
           ))}
         </dl>
+
+        <p className="reveal mt-12 font-mono text-[11px] uppercase tracking-[0.18em] text-white/60">
+          Creche → JHS · {SITE.admissionsNote}
+        </p>
       </div>
     </Section>
   );
