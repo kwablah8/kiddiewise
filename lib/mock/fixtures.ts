@@ -14,9 +14,16 @@ export const mockSidebarCounts: SidebarCountsVM = {
 
 export const mockDashboardStats: DashboardStatsVM = {
   total_students: 248,
+  students_trend: 8,
   total_staff: 32,
+  staff_trend: 3,
+  // total_revenue is the sum of mockFeeTrend below (187,500); revenue_trend mirrors that
+  // series' actual last-two-month delta (26,000 vs 38,250 ≈ -32%) so the metric card and the
+  // Fee Collection Trend chart never contradict each other.
   total_revenue: 187500,
+  revenue_trend: -32,
   attendance_rate: 94,
+  attendance_trend: 2,
 };
 
 export const mockFeeTrend: TrendPointVM[] = [

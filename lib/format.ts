@@ -14,6 +14,13 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   year: "numeric",
 });
 
+const monthFormatter = new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: "UTC" });
+
+const ghsCompactFormatter = new Intl.NumberFormat("en-GH", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
 /** `GHS 12,500.00` */
 export function formatGHS(value: number): string {
   return `GHS ${ghsFormatter.format(value)}`;
@@ -28,6 +35,16 @@ export function formatDate(value: string | Date): string {
 /** `94%` (integer, sensible for attendance/scores) */
 export function formatPercent(value: number): string {
   return `${Math.round(value)}%`;
+}
+
+/** `GHS 22K` — compact axis-label form of `formatGHS` for chart ticks. */
+export function formatGHSCompact(value: number): string {
+  return `GHS ${ghsCompactFormatter.format(value)}`;
+}
+
+/** `"2026-01"` -> `"Jan"` — month-point labels for trend chart axes. */
+export function formatMonthShort(value: string): string {
+  return monthFormatter.format(new Date(value));
 }
 
 /** `+12% from last month` / `-8% from last month` */

@@ -11,9 +11,13 @@ import type {
 export const getDashboardStats = (): Promise<DashboardStatsVM> =>
   simulate(fx.mockDashboardStats, {
     total_students: 0,
+    students_trend: 0,
     total_staff: 0,
+    staff_trend: 0,
     total_revenue: 0,
+    revenue_trend: 0,
     attendance_rate: 0,
+    attendance_trend: 0,
   });
 export const getFeeTrend = (): Promise<TrendPointVM[]> => simulate(fx.mockFeeTrend, []);
 export const getEnrollmentTrend = (): Promise<TrendPointVM[]> =>
