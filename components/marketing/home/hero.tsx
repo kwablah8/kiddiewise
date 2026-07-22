@@ -1,8 +1,6 @@
-import Image from "next/image";
-
 import { CtaButton } from "@/components/marketing/cta-button";
+import { HeroParallaxImage } from "@/components/marketing/home/hero-parallax-image";
 import { SITE } from "@/lib/marketing/site";
-import { MEDIA } from "@/lib/marketing/media";
 
 /**
  * Home hero — a real SLIS community photo (staff & families in the school's blue-and-gold polos)
@@ -10,10 +8,9 @@ import { MEDIA } from "@/lib/marketing/media";
  * "translucent over a dark hero" contract. Eyebrow carries the motto; a gold pill announces the
  * open admission; dual CTAs drive the two real actions (apply / visit).
  *
- * `.hero-parallax` gives the photo a few percent of scroll-linked drift + a faint scale (CSS
- * `view()` timeline — see `globals.css`); `.accent-pulse` gives the "admission open" dot a slow,
- * quiet pulse. Both are progressive enhancement: fully static without support or under
- * reduced motion, and the foreground text/CTAs are never transformed, so they stay crisp.
+ * `<HeroParallaxImage>` gives the photo a gentle scroll-linked drift (rAF, transform-only,
+ * reduced-motion-safe); `.accent-pulse` gives the "admission open" dot a slow, quiet pulse.
+ * The foreground text/CTAs are never transformed, so they stay crisp.
  */
 export function HomeHero() {
   return (
@@ -21,14 +18,7 @@ export function HomeHero() {
       aria-labelledby="hero-title"
       className="relative isolate flex min-h-[92svh] items-center overflow-hidden px-6 pt-32 pb-20 sm:px-8 sm:pt-40 sm:pb-28"
     >
-      <Image
-        src={MEDIA.community.src}
-        alt={MEDIA.community.alt}
-        fill
-        priority
-        sizes="100vw"
-        className="hero-parallax -z-20 object-cover object-center"
-      />
+      <HeroParallaxImage />
       {/* Deep-blue brand wash: darker at the left/bottom where the text sits, for AA legibility. */}
       <div
         className="absolute inset-0 -z-10 bg-[linear-gradient(105deg,color-mix(in_srgb,var(--m-brand-deep),transparent_8%)_0%,color-mix(in_srgb,var(--m-brand-deep),transparent_28%)_45%,color-mix(in_srgb,var(--m-brand),transparent_45%)_100%)]"

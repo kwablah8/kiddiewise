@@ -220,22 +220,10 @@
    guarantees the drift never reveals an edge. Foreground text is a normal, untransformed sibling,
    so it stays perfectly crisp. Progressive enhancement: static (and un-scaled) without support or
    with reduced motion requested. */
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .hero-parallax {
-      animation: hero-parallax-drift linear both;
-      animation-timeline: view();
-    }
-  }
-}
-@keyframes hero-parallax-drift {
-  from {
-    transform: scale(1.05) translateY(-2%);
-  }
-  to {
-    transform: scale(1.09) translateY(2%);
-  }
-}
+/* Hero parallax is handled in JS (components/marketing/home/hero-parallax-image.tsx) — a CSS
+   view()/scroll() timeline stays inactive for the absolutely-positioned hero image inside its
+   overflow-hidden section, so it never produced any transform. The JS version is rAF-throttled,
+   transform-only, and disabled under prefers-reduced-motion. */
 
 /* --- Mid-page parallax accent (values band) ---
    A soft, blurred glow drifts diagonally as the band scrolls through view — the one other
