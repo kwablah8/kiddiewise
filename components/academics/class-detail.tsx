@@ -2,14 +2,25 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BookOpen, Pencil, School } from "lucide-react";
+import { BookOpen, Loader2, Pencil, School, X } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/app/page-header";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { ClassFormDialog } from "./class-form";
-import { useAssignments, useClass } from "@/lib/queries/academics";
+import { AssignSubjectDialog } from "./assign-subject-dialog";
+import { useAssignments, useClass, useUnassign } from "@/lib/queries/academics";
+import type { AssignmentVM } from "@/lib/validators/academics";
 import { cardShellClass } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 
@@ -113,13 +124,23 @@ export function ClassDetail({ id }: ClassDetailProps) {
 
 function AssignmentsPanel({ classId }: { classId: string }) {
   const { data, isLoading, isError, refetch } = useAssignments(classId);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignKey, setAssignKey] = useState(0);
+  const [unassignTarget, setUnassignTarget] = useState<AssignmentVM | null>(null);
 
   return (
     <section className={cn(cardShellClass, "lg:col-span-2")}>
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-base font-semibold text-[var(--text)]">Assignments</h3>
-        {/* wired in Unit C: opens the assign-subject dialog (subject + teacher select). */}
-        <Button type="button" variant="outline" size="sm" disabled title="Coming soon">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setAssignKey((k) => k + 1);
+            setAssignOpen(true);
+          }}
+        >
           Assign Subject
         </Button>
       </div>
@@ -143,18 +164,92 @@ function AssignmentsPanel({ classId }: { classId: string }) {
           <ul className="divide-y divide-[var(--border)]">
             {data.map((a) => (
               <li key={a.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
-                <span className="truncate text-sm font-medium text-[var(--text)]">
-                  {a.subject_name}
-                </span>
-                <span className="shrink-0 text-sm text-[var(--muted-foreground)]">
-                  {a.teacher_name ?? "Unassigned"}
-                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-[var(--text)]">{a.subject_name}</p>
+                  <p className="truncate text-xs text-[var(--muted-foreground)]">
+                    {a.teacher_name ?? "Unassigned"}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="shrink-0 text-[var(--muted-foreground)] hover:text-[var(--danger)]"
+                  aria-label={`Unassign ${a.subject_name}`}
+                  onClick={() => setUnassignTarget(a)}
+                >
+                  <X className="size-4" aria-hidden="true" />
+                </Button>
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      <AssignSubjectDialog key={assignKey} classId={classId} open={assignOpen} onOpenChange={setAssignOpen} />
+      <ConfirmUnassignDialog
+        assignment={unassignTarget}
+        onOpenChange={(open) => {
+          if (!open) setUnassignTarget(null);
+        }}
+      />
     </section>
+  );
+}
+
+function ConfirmUnassignDialog({
+  assignment,
+  onOpenChange,
+}: {
+  assignment: AssignmentVM | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const unassign = useUnassign();
+
+  async function handleConfirm() {
+    if (!assignment) return;
+    try {
+      await unassign.mutateAsync({ id: assignment.id });
+      toast.success("Subject unassigned", {
+        description: `${assignment.subject_name} has been removed from this class.`,
+      });
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    }
+  }
+
+  return (
+    <Dialog open={!!assignment} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Unassign subject?</DialogTitle>
+          <DialogDescription>
+            {assignment && (
+              <>
+                <strong className="text-[var(--text)]">{assignment.subject_name}</strong> will be
+                removed from this class
+                {assignment.teacher_name ? ` and unassigned from ${assignment.teacher_name}` : ""}.
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="mt-2">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={unassign.isPending}
+          >
+            {unassign.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            Unassign
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

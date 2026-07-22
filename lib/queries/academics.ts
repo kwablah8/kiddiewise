@@ -163,6 +163,10 @@ export const useAssignSubject = () => {
       qc.invalidateQueries({ queryKey: queryKeys.academics.class(variables.class_id) });
       qc.invalidateQueries({ queryKey: queryKeys.academics.classes });
       qc.invalidateQueries({ queryKey: queryKeys.academics.staff });
+      // Every open staff-detail assignments panel (assignmentsByStaff(*)) can be affected —
+      // either the newly-assigned teacher's list gains a row, or (on a re-assign) the previous
+      // teacher's list loses one — so invalidate the whole by-staff prefix rather than one id.
+      qc.invalidateQueries({ queryKey: ["academics", "assignments", "by-staff"] });
       if (variables.teacher_id) {
         qc.invalidateQueries({ queryKey: queryKeys.academics.staffMember(variables.teacher_id) });
       }
