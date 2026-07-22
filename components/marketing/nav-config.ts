@@ -1,13 +1,15 @@
 /**
- * Marketing site configuration — the single source of truth for the public shell.
+ * Marketing shell navigation — nav items, the Apply CTA, and a LEGACY identity/contact object.
  *
- * This is the PUBLIC visual system (docs/06-UI §8): it shares only the brand colour and the
- * Geist typeface with the authenticated app, not the sidebar/portal chrome. Keeping the nav,
- * identity and contact details here means the header, footer and every page stay in sync.
- *
- * The school ("Kwahu Ridge Academy") is fictional placeholder content standing in for the real
- * client. Copy, contact details and social handles are SEAMs — swap for the real institution.
+ * As of the M4 SLIS rebrand (Unit A / Task S1), `lib/marketing/site.ts` is the canonical site
+ * config — new code should import `SITE` from there, not here. The `SITE`/`SOCIAL_LINKS` exports
+ * below are kept ONLY because the not-yet-rebranded shell components (site-header, site-footer,
+ * stats-band, contact-details, the admissions page — Unit B/C's job) still read them; they're
+ * derived from the canonical config so at least the facts (name, address, phone, email) are
+ * correct today, ahead of those components' full blue/gold recolor.
  */
+
+import { SITE as SLIS } from "@/lib/marketing/site";
 
 export interface NavItem {
   label: string;
@@ -25,26 +27,29 @@ export const NAV_ITEMS: readonly NavItem[] = [
 ] as const;
 
 /** The always-visible conversion action that sits beside the nav. */
-export const APPLY_CTA = { label: "Apply", href: "/admissions" } as const;
+export const APPLY_CTA = { label: "Apply Now", href: "/admissions" } as const;
 
-/** School identity + contact details. SEAM: real institution data at integration. */
+/**
+ * LEGACY identity/contact shape — DERIVED from `lib/marketing/site.ts`, not re-authored, so the
+ * two never drift. `kind` and `foundedYear` have no real-world source (the crest + flyer don't
+ * state a founding year) and are consumed today only by not-yet-rebranded components
+ * (`stats-band.tsx`'s "years on the ridge" stat — explicitly Unit B/S4's job to replace with
+ * honest, qualitative copy per the plan's "honesty guard"). `foundedYear` is deliberately set to
+ * the current year rather than an invented past date, so that stat reads "0" instead of
+ * asserting a fabricated history until S4 removes the arithmetic entirely.
+ */
 export const SITE = {
-  name: "Kwahu Ridge Academy",
-  short: "Kwahu Ridge",
-  kind: "An independent K–12 school",
-  tagline: "A modern education, rooted in character.",
-  foundedYear: 1998,
-  place: "Kwahu Plateau · Eastern Region · Ghana",
-  address: "Ridge Road, Obo, Kwahu · Eastern Region, Ghana",
-  phoneDisplay: "+233 34 200 1998",
-  phoneHref: "tel:+233342001998",
-  email: "admissions@kwahuridge.edu.gh",
+  name: SLIS.name,
+  short: SLIS.shortName,
+  kind: "Creche to JHS",
+  tagline: SLIS.motto,
+  foundedYear: new Date().getFullYear(), // SEAM: unconfirmed — see note above.
+  place: `${SLIS.location.lines[0]} · ${SLIS.location.area}`,
+  address: `${SLIS.location.lines.join(", ")}, ${SLIS.location.area}`,
+  phoneDisplay: SLIS.contact.phones.join(" / "),
+  phoneHref: `tel:${SLIS.contact.phones[0]}`,
+  email: SLIS.contact.email,
 } as const;
 
-/** Social presence rendered as editorial text links (this lucide build ships no brand marks). */
-export const SOCIAL_LINKS: readonly NavItem[] = [
-  { label: "Instagram", href: "https://instagram.com/kwahuridge" },
-  { label: "Facebook", href: "https://facebook.com/kwahuridge" },
-  { label: "YouTube", href: "https://youtube.com/@kwahuridge" },
-  { label: "LinkedIn", href: "https://linkedin.com/school/kwahuridge" },
-] as const;
+/** SEAM: real social handles are unknown — empty until the school confirms them (lib/marketing/site.ts `socials`). */
+export const SOCIAL_LINKS: readonly NavItem[] = [];

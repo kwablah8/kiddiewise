@@ -147,6 +147,23 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* --- SLIS marketing brand tokens (M4 rebrand plan, Unit A / Task S1) ---
+   Scoped to `[data-brand="slis"]`, set on the `(marketing)` layout's root element, so these
+   NEVER leak into the authenticated app portal's maroon/green tokens above. Blue is the crest's
+   anchor color (hero/footer bands, primary actions); gold is the accent (CTAs, highlights).
+   Hex values were sampled directly from the resized crest (`public/slis/logo.jpg`): the shield's
+   blue half clusters tightly on #4169E1, the gold half + motto band on #FFD700 — both are, by
+   coincidence, the exact CSS-named "royalblue"/"gold" hues. `--m-accent-ink` is a brand-derived
+   near-navy (not plain gray) chosen for AA/AAA contrast on the gold accent (11.3:1). */
+[data-brand="slis"] {
+  --m-brand: #4169e1; /* royal blue, sampled from the crest shield */
+  --m-brand-deep: #1d2f65; /* darker blue for gradients/footer bands */
+  --m-accent: #ffd700; /* gold, sampled from the crest shield + motto band */
+  --m-accent-ink: #142044; /* dark navy text on gold — 11.3:1 contrast, AA/AAA-safe */
+  --m-canvas: #ffffff; /* white, from the crest's white background */
+  --m-warm: #fffbeb; /* soft warm white, gold-tinted section alternate */
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
