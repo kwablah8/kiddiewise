@@ -48,10 +48,10 @@ export function HomeIntro() {
         <div className="reveal d1">
           <div className="relative overflow-hidden rounded-3xl shadow-xl ring-1 ring-black/[0.06]">
             <Image
-              src={MEDIA.aboutPhoto.src}
-              alt={MEDIA.aboutPhoto.alt}
-              width={MEDIA.aboutPhoto.width}
-              height={MEDIA.aboutPhoto.height}
+              src={MEDIA.introPhoto.src}
+              alt={MEDIA.introPhoto.alt}
+              width={MEDIA.introPhoto.width}
+              height={MEDIA.introPhoto.height}
               sizes="(min-width: 1024px) 42rem, 100vw"
               className="h-full w-full object-cover"
             />

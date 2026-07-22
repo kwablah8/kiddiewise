@@ -21,6 +21,8 @@ export interface MediaManifest {
   logo: MediaAsset;
   heroPhoto: MediaAsset;
   aboutPhoto: MediaAsset;
+  /** A warm human portrait (a pupil in uniform) for portrait-friendly slots, e.g. the Home intro. */
+  introPhoto: MediaAsset;
   community: MediaAsset;
   programs: Record<ProgramKey, MediaAsset>;
   /** All real photos, for the Gallery page. SEAM: additional licensed photos append here. */
@@ -95,6 +97,20 @@ const classroomPrimaryReading: MediaAsset = {
   height: 1920,
 };
 
+const classroomJhsDesks: MediaAsset = {
+  src: "/slis/photos/classroom-jhs-desks.jpg",
+  alt: "Junior High School classroom with a whiteboard and rows of blue desks with grey chairs",
+  width: 1920,
+  height: 1280,
+};
+
+const studentPortraitUniform: MediaAsset = {
+  src: "/slis/photos/student-portrait-uniform.jpg",
+  alt: "A young SLIS pupil in the school's blue sailor-collar uniform, seated at a play table",
+  width: 1280,
+  height: 1920,
+};
+
 const hallwayValuesMural: MediaAsset = {
   src: "/slis/photos/hallway-values-mural.jpg",
   alt: "School hallway with a hand-washing hygiene mural painted on the wall",
@@ -118,14 +134,14 @@ export const MEDIA: MediaManifest = {
   },
   heroPhoto: campusExteriorBanners,
   aboutPhoto: campusCourtyard,
+  introPhoto: studentPortraitUniform,
   community: communityGroup,
   programs: {
     creche: classroomCrecheMural,
     nursery: classroomNurseryCalendar,
     kindergarten: classroomKindergartenCorner,
     primary: classroomPrimaryReading,
-    // SEAM: no distinct JHS classroom photo yet — reuses the Primary shot until one is supplied.
-    jhs: classroomPrimaryReading,
+    jhs: classroomJhsDesks,
   },
   gallery: [
     communityGroup,
@@ -137,6 +153,8 @@ export const MEDIA: MediaManifest = {
     classroomNurseryCalendar,
     classroomKindergartenCorner,
     classroomPrimaryReading,
+    classroomJhsDesks,
+    studentPortraitUniform,
     hallwayValuesMural,
     eventKidsFuntime,
   ],
