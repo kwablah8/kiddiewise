@@ -30,7 +30,7 @@ const DESIRED_CLASSES = [
 const fieldClass = cn(
   "mt-1.5 block w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3",
   "text-[15px] text-[var(--text)] outline-none transition-colors placeholder:text-[var(--muted-foreground)]",
-  "focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--primary)]/25",
+  "focus-visible:border-[var(--m-brand)] focus-visible:ring-2 focus-visible:ring-[var(--m-brand)]/25",
   "aria-[invalid=true]:border-[var(--danger)] aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-[var(--danger)]/15",
   "disabled:cursor-not-allowed disabled:opacity-60",
 );
@@ -118,7 +118,7 @@ export function InquiryForm({
         <button
           type="button"
           onClick={() => setSucceeded(false)}
-          className="mt-3 rounded-md text-sm font-medium text-[var(--primary)] outline-none transition-colors hover:text-[color-mix(in_oklch,var(--primary),black_15%)] focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
+          className="mt-3 rounded-md text-sm font-medium text-[var(--m-brand)] outline-none transition-colors hover:text-[var(--m-brand-deep)] focus-visible:ring-2 focus-visible:ring-[var(--m-brand)] focus-visible:ring-offset-2"
         >
           Send another inquiry
         </button>
@@ -259,7 +259,7 @@ export function InquiryForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--primary)] px-6 text-[0.95rem] font-medium text-white shadow-sm outline-none transition-[background-color,box-shadow] duration-200 hover:bg-[color-mix(in_oklch,var(--primary),black_12%)] hover:shadow-md focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 sm:w-auto"
+        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--m-brand)] px-6 text-[0.95rem] font-medium text-white shadow-sm outline-none transition-[background-color,box-shadow] duration-200 hover:bg-[var(--m-brand-deep)] hover:shadow-md focus-visible:ring-2 focus-visible:ring-[var(--m-brand)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 sm:w-auto"
       >
         {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
         {submitLabel}

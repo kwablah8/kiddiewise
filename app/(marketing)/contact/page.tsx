@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 import { Section } from "@/components/marketing/section";
-import { Adinkra } from "@/components/marketing/adinkra";
 import { ContactDetails } from "@/components/marketing/contact/contact-details";
 import { ContactForm } from "@/components/marketing/contact/contact-form";
+import { SITE } from "@/lib/marketing/site";
 
 export const metadata: Metadata = { title: "Contact" };
 
@@ -16,27 +16,23 @@ export default function ContactPage() {
   return (
     <>
       <Section
-        tone="maroon"
+        tone="brand"
         aria-labelledby="contact-hero-title"
         className="overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-24"
       >
-        <Adinkra
-          name="fihankra"
-          className="pointer-events-none absolute -top-16 -left-16 size-[26rem] text-white/[0.05] sm:size-[32rem]"
-        />
         <div className="relative max-w-2xl reveal">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/75">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/80">
             Contact
           </span>
           <h1
             id="contact-hero-title"
-            className="mt-6 text-[clamp(2.5rem,5.5vw,4rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-balance"
+            className="mt-6 text-[clamp(2.5rem,5.5vw,4rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-balance text-white"
           >
             We&apos;d love to hear from you.
           </h1>
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/75 sm:text-xl">
-            Questions about admissions, a visit, or anything else about life on the ridge — reach
-            us directly or send a message below.
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
+            Questions about admission, a visit, or anything else about life at {SITE.shortName} —
+            reach us directly or send a message below.
           </p>
         </div>
       </Section>
@@ -44,7 +40,7 @@ export default function ContactPage() {
       <Section tone="white" aria-labelledby="contact-form-title">
         <div className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
           <div>
-            <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--primary)]">
+            <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--m-brand)]">
               Get in touch
             </span>
             <h2

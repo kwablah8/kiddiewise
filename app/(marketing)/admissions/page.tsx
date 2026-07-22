@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import { Section } from "@/components/marketing/section";
 import { CtaButton } from "@/components/marketing/cta-button";
-import { Adinkra } from "@/components/marketing/adinkra";
 import { AdmissionsProcessSteps } from "@/components/marketing/admissions/process-steps";
 import { AdmissionsRequirements } from "@/components/marketing/admissions/requirements";
 import { InquiryForm } from "@/components/marketing/admissions/inquiry-form";
@@ -19,35 +18,31 @@ export default function AdmissionsPage() {
   return (
     <>
       <Section
-        tone="maroon"
+        tone="brand"
         aria-labelledby="admissions-hero-title"
         className="overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-24"
       >
-        <Adinkra
-          name="nkyinkyim"
-          className="pointer-events-none absolute -top-20 -right-20 size-[28rem] text-white/[0.05] sm:size-[36rem]"
-        />
         <div className="relative max-w-2xl reveal">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/75">
-            <span className="size-1.5 rounded-full bg-[var(--primary)]" aria-hidden="true" />
-            Admissions · 2026 / 2027 open
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/80">
+            <span className="size-1.5 rounded-full bg-[var(--m-accent)]" aria-hidden="true" />
+            Admission open for 2026
           </span>
           <h1
             id="admissions-hero-title"
-            className="mt-6 text-[clamp(2.5rem,5.5vw,4rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-balance"
+            className="mt-6 text-[clamp(2.5rem,5.5vw,4rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-balance text-white"
           >
-            Join us on the ridge.
+            Join our school community.
           </h1>
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/75 sm:text-xl">
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
             Admission to {SITE.name}{" "}
             runs on a simple, personal process — from a first conversation to your
             child&apos;s first morning in class. Here&apos;s exactly what to expect.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
-            <CtaButton href="#inquiry" variant="solid-light" size="lg" withArrow>
+            <CtaButton href="#inquiry" variant="gold" size="lg" withArrow>
               Start an inquiry
             </CtaButton>
-            <CtaButton href="/contact" variant="ghost-on-maroon" size="lg">
+            <CtaButton href="/contact" variant="ghost-light" size="lg">
               Get in touch
             </CtaButton>
           </div>
@@ -60,7 +55,7 @@ export default function AdmissionsPage() {
       <Section tone="white" id="inquiry" aria-labelledby="inquiry-title">
         <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
           <div className="reveal">
-            <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--primary)]">
+            <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--m-brand)]">
               Start here
             </span>
             <h2
@@ -77,7 +72,7 @@ export default function AdmissionsPage() {
               Prefer to talk first?{" "}
               <a
                 href={`mailto:${SITE.email}`}
-                className="rounded-md font-medium text-[var(--primary)] outline-none transition-colors hover:text-[color-mix(in_oklch,var(--primary),black_15%)] focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
+                className="rounded-md font-medium text-[var(--m-brand)] outline-none transition-colors hover:text-[var(--m-brand-deep)] focus-visible:ring-2 focus-visible:ring-[var(--m-brand)] focus-visible:ring-offset-2"
               >
                 {SITE.email}
               </a>{" "}

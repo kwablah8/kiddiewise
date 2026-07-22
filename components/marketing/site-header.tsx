@@ -83,11 +83,11 @@ export function SiteHeader() {
     return cn(
       "relative rounded-md py-1 text-sm transition-colors outline-none focus-visible:ring-2",
       scrolled
-        ? "focus-visible:ring-[var(--primary)]"
+        ? "focus-visible:ring-[var(--m-brand)]"
         : "focus-visible:ring-white focus-visible:ring-offset-0",
       active
         ? scrolled
-          ? "text-[var(--primary)]"
+          ? "text-[var(--m-brand)]"
           : "text-white"
         : scrolled
           ? "text-[var(--muted-foreground)] hover:text-[var(--text)]"
@@ -99,7 +99,7 @@ export function SiteHeader() {
     <>
       <a
         href="#main"
-        className="sr-only z-[70] rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:top-4 focus:left-4"
+        className="sr-only z-[70] rounded-full bg-[var(--m-brand)] px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:top-4 focus:left-4"
       >
         Skip to content
       </a>
@@ -116,7 +116,7 @@ export function SiteHeader() {
           <Link
             href="/"
             aria-label={`${SITE.name} — home`}
-            className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+            className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[var(--m-brand)]"
           >
             <Wordmark tone={scrolled ? "dark" : "light"} />
           </Link>
@@ -141,7 +141,7 @@ export function SiteHeader() {
           </nav>
 
           <div className="hidden lg:block">
-            <CtaButton href={APPLY_CTA.href} variant="primary" size="md" withArrow>
+            <CtaButton href={APPLY_CTA.href} variant="gold" size="md" withArrow>
               {APPLY_CTA.label}
             </CtaButton>
           </div>
@@ -156,7 +156,7 @@ export function SiteHeader() {
             className={cn(
               "flex size-10 items-center justify-center rounded-xl outline-none transition-colors focus-visible:ring-2 lg:hidden",
               scrolled
-                ? "text-[var(--text)] hover:bg-black/[0.05] focus-visible:ring-[var(--primary)]"
+                ? "text-[var(--text)] hover:bg-black/[0.05] focus-visible:ring-[var(--m-brand)]"
                 : "text-white hover:bg-white/10 focus-visible:ring-white",
             )}
           >
@@ -187,7 +187,7 @@ export function SiteHeader() {
                 type="button"
                 onClick={close}
                 aria-label="Close menu"
-                className="flex size-10 items-center justify-center rounded-xl text-[var(--muted-foreground)] outline-none transition-colors hover:bg-black/[0.05] hover:text-[var(--text)] focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                className="flex size-10 items-center justify-center rounded-xl text-[var(--muted-foreground)] outline-none transition-colors hover:bg-black/[0.05] hover:text-[var(--text)] focus-visible:ring-2 focus-visible:ring-[var(--m-brand)]"
               >
                 <X className="size-5" aria-hidden="true" />
               </button>
@@ -203,10 +203,10 @@ export function SiteHeader() {
                     onClick={close}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "rounded-xl px-4 py-3 text-base font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--primary)]",
+                      "rounded-xl px-4 py-3 text-base font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--m-brand)]",
                       active
-                        ? "bg-[var(--bg-warm)] text-[var(--primary)]"
-                        : "text-[var(--text)] hover:bg-[var(--bg-warm)]",
+                        ? "bg-[var(--m-warm)] text-[var(--m-brand)]"
+                        : "text-[var(--text)] hover:bg-[var(--m-warm)]",
                     )}
                   >
                     {item.label}
@@ -218,7 +218,7 @@ export function SiteHeader() {
             <div className="mt-auto border-t border-[var(--border)] px-6 py-6">
               <CtaButton
                 href={APPLY_CTA.href}
-                variant="primary"
+                variant="gold"
                 size="lg"
                 withArrow
                 onClick={close}

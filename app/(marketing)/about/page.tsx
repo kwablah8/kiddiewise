@@ -8,9 +8,8 @@ export default function AboutPage() {
   return (
     <ComingSoonHero
       eyebrow="About · Coming soon"
-      title="Our history, mission and the people on the ridge."
-      blurb="We're writing the full story of Kwahu Ridge Academy — how we started in 1998, what we believe, and the teachers who make it real. In the meantime, admissions is open and visitors are always welcome."
-      symbol="sankofa"
+      title="Our mission, our values, and the people behind SLIS."
+      blurb="We're writing the full story of SNAB Learners International School — what we believe, how we care for children from Creche to JHS, and the team who make it real. In the meantime, admission is open and visitors are always welcome."
     />
   );
 }

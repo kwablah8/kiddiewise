@@ -20,7 +20,7 @@ export function ContactDetails() {
           const content = row.href ? (
             <a
               href={row.href}
-              className="rounded-md text-base break-words text-[var(--text)] outline-none transition-colors hover:text-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
+              className="rounded-md text-base break-words text-[var(--text)] outline-none transition-colors hover:text-[var(--m-brand)] focus-visible:ring-2 focus-visible:ring-[var(--m-brand)] focus-visible:ring-offset-2"
             >
               {row.value}
             </a>
@@ -29,7 +29,7 @@ export function ContactDetails() {
           );
           return (
             <div key={row.label} className="flex items-start gap-4">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_oklch,var(--primary),white_90%)] text-[var(--primary)]">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--m-brand),white_90%)] text-[var(--m-brand)]">
                 <Icon className="size-5" aria-hidden="true" />
               </span>
               <div>
@@ -48,7 +48,6 @@ export function ContactDetails() {
         label={`Map — ${SITE.address}`}
         aspect="4 / 3"
         tone="neutral"
-        symbol="fihankra"
         className="shadow-lg"
       />
     </div>

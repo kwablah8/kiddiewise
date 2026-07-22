@@ -9,28 +9,30 @@ const ctaVariants = cva(
   {
     variants: {
       variant: {
-        // Forest-green primary — the main action; reads on both dark bands and the light header.
-        // No solid ring-offset color (it would print a white "collar" on the maroon/transparent
-        // header contexts) — the offset is transparent, and the ring itself is lightened a touch
-        // so it clears 3:1 against both the maroon band and the light scrolled header.
-        primary:
-          "bg-[var(--primary)] text-white shadow-sm hover:bg-[color-mix(in_oklch,var(--primary),black_12%)] hover:shadow-md focus-visible:ring-[color-mix(in_srgb,var(--primary),white_18%)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
-        // White solid — the strong action when it sits on a green or maroon band.
+        // Gold — the primary SLIS conversion action. Dark-navy ink on gold reads 11.3:1, and the
+        // navy focus ring stays visible on gold (a gold ring would vanish). Transparent ring
+        // offset so it never prints a white collar over the blue hero / scrolled header.
+        gold:
+          "bg-[var(--m-accent)] text-[var(--m-accent-ink)] shadow-sm hover:bg-[color-mix(in_srgb,var(--m-accent),black_8%)] hover:shadow-md focus-visible:ring-[var(--m-accent-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+        // Royal-blue solid — a strong action on white / warm bands.
+        brand:
+          "bg-[var(--m-brand)] text-white shadow-sm hover:bg-[var(--m-brand-deep)] hover:shadow-md focus-visible:ring-[color-mix(in_srgb,var(--m-brand),white_25%)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+        // White solid — the strong action sitting on a blue band.
         "solid-light":
-          "bg-white text-[var(--primary)] shadow-sm hover:bg-white/90 hover:shadow-md focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
-        // Outlined light — a quiet secondary on maroon/green bands.
-        "ghost-on-maroon":
-          "border border-white/30 text-white hover:border-white/60 hover:bg-white/10 focus-visible:ring-white",
-        // Outlined dark — a quiet secondary on white/warm bands.
+          "bg-white text-[var(--m-brand)] shadow-sm hover:bg-white/90 hover:shadow-md focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+        // Outlined light — a quiet secondary on blue / dark bands.
+        "ghost-light":
+          "border border-white/35 text-white hover:border-white/70 hover:bg-white/10 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+        // Outlined dark — a quiet secondary on white / warm bands.
         "outline-dark":
-          "border border-[var(--border)] bg-transparent text-[var(--text)] hover:border-[var(--text)]/25 hover:bg-black/[0.03] focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+          "border border-[var(--border)] bg-transparent text-[var(--text)] hover:border-[color-mix(in_srgb,var(--m-brand),white_40%)] hover:bg-[color-mix(in_srgb,var(--m-brand),transparent_96%)] focus-visible:ring-[var(--m-brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-white",
       },
       size: {
         md: "h-11 px-5 text-sm",
         lg: "h-12 px-6 text-[0.95rem] sm:text-base",
       },
     },
-    defaultVariants: { variant: "primary", size: "md" },
+    defaultVariants: { variant: "brand", size: "md" },
   },
 );
 

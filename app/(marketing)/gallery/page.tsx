@@ -8,9 +8,8 @@ export default function GalleryPage() {
   return (
     <ComingSoonHero
       eyebrow="Gallery · Coming soon"
-      title="A look at classrooms, playing fields and the view."
-      blurb="Photography of the campus, our students at work and play, and the Kwahu highlands is on its way. Book a visit if you'd like to see it in person first."
-      symbol="aya"
+      title="A look at our classrooms, campus and community."
+      blurb="Photos of the Oyarifa campus, our children at work and play, and life across every stage are on their way. Book a visit if you'd like to see it in person first."
     />
   );
 }

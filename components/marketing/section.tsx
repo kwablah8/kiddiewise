@@ -1,13 +1,14 @@
 import { cn } from "@/lib/utils";
 
-export type SectionTone = "white" | "warm" | "maroon" | "green";
+export type SectionTone = "white" | "warm" | "brand" | "accent";
 
 const TONE_CLASS: Record<SectionTone, string> = {
-  white: "bg-[var(--surface)] text-[var(--text)]",
-  warm: "bg-[var(--bg-warm)] text-[var(--text)]",
-  maroon:
-    "bg-[linear-gradient(160deg,var(--brand-top),var(--brand-bottom))] text-white",
-  green: "bg-[var(--primary)] text-white",
+  white: "bg-[var(--m-canvas)] text-[var(--text)]",
+  warm: "bg-[var(--m-warm)] text-[var(--text)]",
+  // Royal-blue → deep-blue band: the SLIS anchor colour. Light text (AA on both stops).
+  brand: "bg-[linear-gradient(155deg,var(--m-brand),var(--m-brand-deep))] text-white",
+  // Gold band: uses the dark-navy ink token for text (11.3:1 on gold, AA/AAA-safe).
+  accent: "bg-[var(--m-accent)] text-[var(--m-accent-ink)]",
 };
 
 interface SectionProps {
@@ -22,9 +23,10 @@ interface SectionProps {
 }
 
 /**
- * The marketing layout wrapper. Every band on the public site is a <Section>, which gives it a
- * tone (white / warm off-white / maroon / green), consistent editorial vertical rhythm, and a
- * centered reading-width container. Alternating tones — not borders — carry the page's structure.
+ * The marketing layout wrapper. Every band on the public SLIS site is a <Section>, which gives it
+ * a tone (white / warm gold-tint / blue brand band / gold accent band), consistent editorial
+ * vertical rhythm, and a centered reading-width container. Alternating tones — not borders — carry
+ * the page's structure.
  */
 export function Section({
   tone = "white",

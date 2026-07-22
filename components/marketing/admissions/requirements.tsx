@@ -18,7 +18,7 @@ export function AdmissionsRequirements() {
     <Section tone="warm" aria-labelledby="requirements-title">
       <div className="grid items-start gap-12 lg:grid-cols-2 lg:gap-20">
         <div className="reveal">
-          <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--primary)]">
+          <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--m-brand)]">
             What you&apos;ll need
           </span>
           <h2
@@ -36,7 +36,7 @@ export function AdmissionsRequirements() {
             {REQUIREMENTS.map((item) => (
               <li key={item} className="flex items-start gap-3">
                 <CheckCircle2
-                  className="mt-0.5 size-5 shrink-0 text-[var(--primary)]"
+                  className="mt-0.5 size-5 shrink-0 text-[var(--m-brand)]"
                   aria-hidden="true"
                 />
                 <span className="leading-relaxed text-[var(--text)]">{item}</span>
@@ -51,7 +51,6 @@ export function AdmissionsRequirements() {
             label="A parent and admissions officer reviewing an application folder together"
             aspect="4 / 5"
             tone="neutral"
-            symbol="aya"
             className="shadow-xl"
           />
         </div>
