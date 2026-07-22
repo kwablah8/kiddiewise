@@ -56,20 +56,22 @@ export function HomeFeatures() {
         {FEATURES.map((feature, i) => {
           const Icon = feature.icon;
           return (
-            <div
-              key={feature.title}
-              className={`reveal${i > 0 ? ` d${Math.min(i, 3)}` : ""} flex gap-5 border-t border-[var(--border)] pt-8`}
-            >
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--m-brand),white_90%)] text-[var(--m-brand)] ring-1 ring-[color-mix(in_srgb,var(--m-brand),white_75%)]">
-                <Icon className="size-6" aria-hidden="true" />
-              </span>
-              <div>
-                <h3 className="text-lg font-semibold tracking-[-0.01em] text-[var(--text)]">
-                  {feature.title}
-                </h3>
-                <p className="mt-3 leading-relaxed text-[var(--muted-foreground)]">
-                  {feature.blurb}
-                </p>
+            <div key={feature.title} className={`reveal${i > 0 ? ` d${Math.min(i, 3)}` : ""}`}>
+              {/* Hover lift lives on this inner element, not the `.reveal` div — see the same
+                  note in `programs.tsx` (an entrance CSS Animation and a hover CSS Transition
+                  can't safely share one element's `transform`). */}
+              <div className="group flex gap-5 border-t border-[var(--border)] pt-8 transition-transform duration-200 hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--m-brand),white_90%)] text-[var(--m-brand)] ring-1 ring-[color-mix(in_srgb,var(--m-brand),white_75%)] transition-[transform,box-shadow] duration-200 group-hover:scale-[1.06] group-hover:shadow-[0_10px_24px_-14px_rgba(65,105,225,0.5)] motion-reduce:transition-none motion-reduce:group-hover:scale-100">
+                  <Icon className="size-6" aria-hidden="true" />
+                </span>
+                <div>
+                  <h3 className="text-lg font-semibold tracking-[-0.01em] text-[var(--text)]">
+                    {feature.title}
+                  </h3>
+                  <p className="mt-3 leading-relaxed text-[var(--muted-foreground)]">
+                    {feature.blurb}
+                  </p>
+                </div>
               </div>
             </div>
           );

@@ -17,6 +17,12 @@ export function HomeStatsBand() {
   return (
     <Section tone="brand" aria-labelledby="values-title" className="overflow-hidden">
       <div className="relative">
+        {/* Decorative only: a soft gold glow that drifts diagonally as the band scrolls through
+            view (`.band-glow`, `globals.css`). Behind the text, never affects legibility. */}
+        <div
+          aria-hidden="true"
+          className="band-glow pointer-events-none absolute -top-24 -right-16 -z-10 size-[26rem] rounded-full bg-[var(--m-accent)]/20 blur-3xl"
+        />
         <p className="reveal font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--m-accent)]">
           What we stand for
         </p>

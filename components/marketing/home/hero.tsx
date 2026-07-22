@@ -9,6 +9,11 @@ import { MEDIA } from "@/lib/marketing/media";
  * under a deep-blue brand gradient for legibility. The dark top satisfies the shell header's
  * "translucent over a dark hero" contract. Eyebrow carries the motto; a gold pill announces the
  * open admission; dual CTAs drive the two real actions (apply / visit).
+ *
+ * `.hero-parallax` gives the photo a few percent of scroll-linked drift + a faint scale (CSS
+ * `view()` timeline — see `globals.css`); `.accent-pulse` gives the "admission open" dot a slow,
+ * quiet pulse. Both are progressive enhancement: fully static without support or under
+ * reduced motion, and the foreground text/CTAs are never transformed, so they stay crisp.
  */
 export function HomeHero() {
   return (
@@ -22,7 +27,7 @@ export function HomeHero() {
         fill
         priority
         sizes="100vw"
-        className="-z-20 object-cover object-center"
+        className="hero-parallax -z-20 object-cover object-center"
       />
       {/* Deep-blue brand wash: darker at the left/bottom where the text sits, for AA legibility. */}
       <div
@@ -59,7 +64,10 @@ export function HomeHero() {
           </div>
 
           <p className="mt-10 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm">
-            <span className="size-2 rounded-full bg-[var(--m-accent)]" aria-hidden="true" />
+            <span
+              className="accent-pulse size-2 rounded-full bg-[var(--m-accent)]"
+              aria-hidden="true"
+            />
             {SITE.admissionsNote}
           </p>
         </div>

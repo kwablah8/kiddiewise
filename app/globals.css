@@ -200,6 +200,9 @@
     .reveal.d3 {
       animation-range: entry 18% cover 34%;
     }
+    .reveal.d4 {
+      animation-range: entry 24% cover 38%;
+    }
   }
 }
 
@@ -207,5 +210,70 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* --- Home hero parallax ---
+   The hero photo drifts a few percent and gains a faint scale as it travels through the viewport,
+   tied to its own `view()` timeline rather than raw scroll position — so it costs nothing once
+   scrolled away and never touches layout. The hero `<section>` clips overflow, so the extra scale
+   guarantees the drift never reveals an edge. Foreground text is a normal, untransformed sibling,
+   so it stays perfectly crisp. Progressive enhancement: static (and un-scaled) without support or
+   with reduced motion requested. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .hero-parallax {
+      animation: hero-parallax-drift linear both;
+      animation-timeline: view();
+    }
+  }
+}
+@keyframes hero-parallax-drift {
+  from {
+    transform: scale(1.05) translateY(-2%);
+  }
+  to {
+    transform: scale(1.09) translateY(2%);
+  }
+}
+
+/* --- Mid-page parallax accent (values band) ---
+   A soft, blurred glow drifts diagonally as the band scrolls through view — the one other
+   continuously-transformed layer on the page besides the hero. It's decorative, `aria-hidden`,
+   and sits behind the text, so it never affects legibility or layout. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .band-glow {
+      animation: band-glow-drift linear both;
+      animation-timeline: view();
+    }
+  }
+}
+@keyframes band-glow-drift {
+  from {
+    transform: translate(-4%, -6%);
+  }
+  to {
+    transform: translate(5%, 6%);
+  }
+}
+
+/* --- Continuous accent pulse ---
+   A slow, quiet pulse on the hero's "admission open" dot — the only looping motion on the page,
+   reserved for a single small decorative accent that is genuinely signalling a live status. */
+@media (prefers-reduced-motion: no-preference) {
+  .accent-pulse {
+    animation: accent-pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+@keyframes accent-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.55;
   }
 }
