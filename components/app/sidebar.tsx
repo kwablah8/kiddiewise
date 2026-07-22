@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarDays,
   ChevronLeft,
   ClipboardList,
   FileBarChart2,
@@ -35,6 +36,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Academic", href: "/academic", icon: CalendarDays },
   { label: "Students", href: "/students", icon: GraduationCap, countKey: "students" },
   { label: "Staff", href: "/staff", icon: Users, countKey: "staff" },
   { label: "Parents", href: "/parents", icon: UserRound },
