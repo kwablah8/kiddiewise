@@ -1,7 +1,8 @@
+import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
 
 import { Section } from "@/components/marketing/section";
-import { PhotoSlot } from "@/components/marketing/photo-slot";
+import { MEDIA } from "@/lib/marketing/media";
 
 const REQUIREMENTS: readonly string[] = [
   "Completed application form (submitted with the inquiry below)",
@@ -45,13 +46,13 @@ export function AdmissionsRequirements() {
           </ul>
         </div>
 
-        <div className="reveal d1">
-          {/* SEAM: real photo later */}
-          <PhotoSlot
-            label="A parent and admissions officer reviewing an application folder together"
-            aspect="4 / 5"
-            tone="neutral"
-            className="shadow-xl"
+        <div className="reveal d1 relative aspect-[4/5] overflow-hidden rounded-3xl shadow-xl ring-1 ring-black/[0.06]">
+          <Image
+            src={MEDIA.community.src}
+            alt={MEDIA.community.alt}
+            fill
+            sizes="(min-width: 1024px) 32rem, 100vw"
+            className="object-cover"
           />
         </div>
       </div>

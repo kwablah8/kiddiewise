@@ -92,7 +92,7 @@ export function SiteHeader() {
           : "text-white"
         : scrolled
           ? "text-[var(--muted-foreground)] hover:text-[var(--text)]"
-          : "text-white/80 hover:text-white",
+          : "text-white",
     );
   };
 

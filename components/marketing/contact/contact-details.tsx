@@ -1,12 +1,20 @@
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
 
 import { PhotoSlot } from "@/components/marketing/photo-slot";
-import { SITE } from "@/components/marketing/nav-config";
+import { SITE } from "@/lib/marketing/site";
+
+const fullAddress = `${SITE.location.lines.join(", ")}, ${SITE.location.area}`;
+const phoneDisplay = SITE.contact.phones.join(" / ");
 
 const ROWS = [
-  { icon: MapPin, label: "Address", value: SITE.address, href: undefined },
-  { icon: Phone, label: "Phone", value: SITE.phoneDisplay, href: SITE.phoneHref },
-  { icon: Mail, label: "Email", value: SITE.email, href: `mailto:${SITE.email}` },
+  { icon: MapPin, label: "Address", value: fullAddress, href: undefined },
+  { icon: Phone, label: "Phone", value: phoneDisplay, href: `tel:${SITE.contact.phones[0]}` },
+  {
+    icon: Mail,
+    label: "Email",
+    value: SITE.contact.email,
+    href: `mailto:${SITE.contact.email}`,
+  },
   { icon: Clock, label: "Office hours", value: "Mon – Fri, 7:30am – 4:30pm", href: undefined },
 ] as const;
 
@@ -45,7 +53,7 @@ export function ContactDetails() {
 
       {/* SEAM: real map embed later (or a Storage-hosted static map image) */}
       <PhotoSlot
-        label={`Map — ${SITE.address}`}
+        label={`Map — ${fullAddress}`}
         aspect="4 / 3"
         tone="neutral"
         className="shadow-lg"

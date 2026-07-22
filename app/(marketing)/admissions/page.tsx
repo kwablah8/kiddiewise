@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 
 import { Section } from "@/components/marketing/section";
 import { CtaButton } from "@/components/marketing/cta-button";
+import { AdmissionsPrograms } from "@/components/marketing/admissions/programs-overview";
 import { AdmissionsProcessSteps } from "@/components/marketing/admissions/process-steps";
 import { AdmissionsRequirements } from "@/components/marketing/admissions/requirements";
 import { InquiryForm } from "@/components/marketing/admissions/inquiry-form";
-import { SITE } from "@/components/marketing/nav-config";
+import { SITE } from "@/lib/marketing/site";
 
 export const metadata: Metadata = { title: "Admissions" };
 
@@ -23,9 +24,9 @@ export default function AdmissionsPage() {
         className="overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-24"
       >
         <div className="relative max-w-2xl reveal">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/80">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-white">
             <span className="size-1.5 rounded-full bg-[var(--m-accent)]" aria-hidden="true" />
-            Admission open for 2026
+            {SITE.admissionsNote}
           </span>
           <h1
             id="admissions-hero-title"
@@ -33,7 +34,7 @@ export default function AdmissionsPage() {
           >
             Join our school community.
           </h1>
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-white sm:text-xl">
             Admission to {SITE.name}{" "}
             runs on a simple, personal process — from a first conversation to your
             child&apos;s first morning in class. Here&apos;s exactly what to expect.
@@ -49,6 +50,7 @@ export default function AdmissionsPage() {
         </div>
       </Section>
 
+      <AdmissionsPrograms />
       <AdmissionsProcessSteps />
       <AdmissionsRequirements />
 
@@ -71,12 +73,12 @@ export default function AdmissionsPage() {
             <p className="mt-8 text-sm text-[var(--muted-foreground)]">
               Prefer to talk first?{" "}
               <a
-                href={`mailto:${SITE.email}`}
+                href={`mailto:${SITE.contact.email}`}
                 className="rounded-md font-medium text-[var(--m-brand)] outline-none transition-colors hover:text-[var(--m-brand-deep)] focus-visible:ring-2 focus-visible:ring-[var(--m-brand)] focus-visible:ring-offset-2"
               >
-                {SITE.email}
+                {SITE.contact.email}
               </a>{" "}
-              or {SITE.phoneDisplay}.
+              or {SITE.contact.phones.join(" / ")}.
             </p>
           </div>
 

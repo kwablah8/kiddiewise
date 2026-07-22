@@ -21,7 +21,7 @@ export default function ContactPage() {
         className="overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-24"
       >
         <div className="relative max-w-2xl reveal">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-white/80">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-white">
             Contact
           </span>
           <h1
@@ -30,7 +30,7 @@ export default function ContactPage() {
           >
             We&apos;d love to hear from you.
           </h1>
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-white sm:text-xl">
             Questions about admission, a visit, or anything else about life at {SITE.shortName} —
             reach us directly or send a message below.
           </p>

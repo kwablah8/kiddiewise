@@ -17,7 +17,9 @@ export function SiteFooter() {
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1.4fr]">
           <div className="max-w-sm">
             <Wordmark tone="light" />
-            <p className="mt-5 text-sm leading-relaxed text-white/70">
+            {/* Solid white: measured against the real gradient box, this column sits close enough
+                to the lighter --m-brand end that white/70 fell to ~3.9-4.2:1 (fails AA). */}
+            <p className="mt-5 text-sm leading-relaxed text-white">
               {SITE.motto} {SITE.name} welcomes learners from Creche through Junior High School in{" "}
               {SITE.location.lines[0]}, {SITE.location.area}.
             </p>
@@ -27,14 +29,14 @@ export function SiteFooter() {
           </div>
 
           <nav aria-label="Footer" className="flex flex-col gap-3">
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/70">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white">
               Explore
             </h2>
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`w-fit text-sm text-white/75 hover:text-white ${focusRing}`}
+                className={`w-fit text-sm text-white hover:text-[var(--m-accent)] ${focusRing}`}
               >
                 {item.label}
               </Link>
@@ -42,23 +44,23 @@ export function SiteFooter() {
           </nav>
 
           <div className="flex flex-col gap-3">
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/70">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white">
               Visit us
             </h2>
-            <address className="flex items-start gap-2.5 text-sm not-italic text-white/75">
+            <address className="flex items-start gap-2.5 text-sm not-italic text-white">
               <MapPin className="mt-0.5 size-4 shrink-0 text-[var(--m-accent)]" aria-hidden="true" />
               <span>
                 {SITE.location.lines.join(", ")}, {SITE.location.area}
               </span>
             </address>
-            <div className="flex items-start gap-2.5 text-sm text-white/75">
+            <div className="flex items-start gap-2.5 text-sm text-white">
               <Phone className="mt-0.5 size-4 shrink-0 text-[var(--m-accent)]" aria-hidden="true" />
               <span className="flex flex-col gap-1">
                 {SITE.contact.phones.map((phone) => (
                   <a
                     key={phone}
                     href={`tel:${phone}`}
-                    className={`w-fit hover:text-white ${focusRing}`}
+                    className={`w-fit hover:text-[var(--m-accent)] ${focusRing}`}
                   >
                     {phone}
                   </a>
@@ -67,7 +69,7 @@ export function SiteFooter() {
             </div>
             <a
               href={`mailto:${SITE.contact.email}`}
-              className={`flex items-center gap-2.5 text-sm break-all text-white/75 hover:text-white ${focusRing}`}
+              className={`flex items-center gap-2.5 text-sm break-all text-white hover:text-[var(--m-accent)] ${focusRing}`}
             >
               <Mail className="size-4 shrink-0 text-[var(--m-accent)]" aria-hidden="true" />
               {SITE.contact.email}
@@ -75,7 +77,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col gap-3 border-t border-white/10 pt-8 text-xs text-white/55 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-16 flex flex-col gap-3 border-t border-white/10 pt-8 text-xs text-white sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {year} {SITE.name}. All rights reserved.
           </p>

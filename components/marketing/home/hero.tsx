@@ -43,7 +43,7 @@ export function HomeHero() {
             A place to be nurtured, to grow, and to lead.
           </h1>
 
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/85 sm:text-xl">
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-white sm:text-xl">
             {SITE.name} guides children from Creche through Junior High School in{" "}
             {SITE.location.lines[0]} — with warmth, structure, and a genuinely high bar for every
             learner.
