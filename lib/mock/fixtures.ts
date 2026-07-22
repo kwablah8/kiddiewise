@@ -10,9 +10,16 @@ import type { SidebarCountsVM } from "@/lib/validators/sidebar";
 import type {
   StudentDetailVM,
   ParentListItemVM,
-  ClassOptionVM,
   GuardianVM,
 } from "@/lib/validators/people";
+import type {
+  AcademicYearVM,
+  TermVM,
+  ClassVM,
+  SubjectVM,
+  StaffVM,
+  AssignmentVM,
+} from "@/lib/validators/academics";
 
 export const mockSidebarCounts: SidebarCountsVM = {
   students: 248,
@@ -124,18 +131,197 @@ export const mockUpcomingEvents: UpcomingEventVM[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// People (Students + Parents) — Slice 2. Classes are mocked here until the
-// Academics UI (Slice 3) owns the real class list.
+// Academics (Years/Terms · Classes · Subjects · Staff · Assignments) — Slice 3.
+// This is now the single source of truth for classes: People (Students +
+// Parents, Slice 2) reads the same `mockClasses` array via `classOf()` below,
+// and `lib/data/people.ts#listClassOptions` derives from `store.classes`
+// (which is seeded from `mockClasses`), so a class created via Academics
+// shows up in the student form's class dropdown without a second fixture set.
 // ---------------------------------------------------------------------------
 
-export const mockClassOptions: ClassOptionVM[] = [
-  { id: "cls-1", name: "Basic 1", level: "Primary" },
-  { id: "cls-2", name: "Basic 2", level: "Primary" },
-  { id: "cls-3", name: "Basic 3", level: "Primary" },
-  { id: "cls-4", name: "JHS 1", level: "JHS" },
-  { id: "cls-5", name: "JHS 2", level: "JHS" },
-  { id: "cls-6", name: "JHS 3", level: "JHS" },
+// Raw fixture record shapes mirror the generated `Database` row types (minus
+// `school_id`/`created_at`, which are server/RLS concerns) — NOT the VMs,
+// since VM fields like `term_count`/`class_teacher_name`/`student_count`/
+// `subject_count`/`class_count`/`subject_name`/`teacher_name` are derived by
+// the store + `lib/data/academics.ts`, never hand-authored here.
+type AcademicYearFixture = Omit<AcademicYearVM, "term_count">;
+type TermFixture = TermVM;
+type ClassFixture = Omit<ClassVM, "class_teacher_name" | "student_count" | "subject_count">;
+type SubjectFixture = Omit<SubjectVM, "class_count">;
+type StaffFixture = Omit<StaffVM, "class_count" | "subject_count">;
+type AssignmentFixture = Omit<AssignmentVM, "subject_name" | "teacher_name">;
+
+// Today (fixture authoring date) sits in Third Term of the 2025/2026 academic
+// year — matches the rest of the dashboard fixtures (events/activities dated
+// July 2026) so "the active year/term" never looks inconsistent across screens.
+export const mockAcademicYears: AcademicYearFixture[] = [
+  {
+    id: "ay-1",
+    name: "2025/2026",
+    start_date: "2025-09-01",
+    end_date: "2026-07-31",
+    is_active: true,
+  },
+  {
+    id: "ay-2",
+    name: "2026/2027",
+    start_date: "2026-09-01",
+    end_date: "2027-07-31",
+    is_active: false,
+  },
 ];
+
+export const mockTerms: TermFixture[] = [
+  {
+    id: "trm-1",
+    academic_year_id: "ay-1",
+    name: "First Term",
+    ordinal: 1,
+    start_date: "2025-09-01",
+    end_date: "2025-12-12",
+    is_active: false,
+  },
+  {
+    id: "trm-2",
+    academic_year_id: "ay-1",
+    name: "Second Term",
+    ordinal: 2,
+    start_date: "2026-01-05",
+    end_date: "2026-03-27",
+    is_active: false,
+  },
+  {
+    id: "trm-3",
+    academic_year_id: "ay-1",
+    name: "Third Term",
+    ordinal: 3,
+    start_date: "2026-04-20",
+    end_date: "2026-07-31",
+    is_active: true,
+  },
+];
+
+export const mockSubjects: SubjectFixture[] = [
+  { id: "sub-01", name: "Mathematics", code: "MATH" },
+  { id: "sub-02", name: "English Language", code: "ENG" },
+  { id: "sub-03", name: "Integrated Science", code: "SCI" },
+  { id: "sub-04", name: "Social Studies", code: "SOC" },
+  { id: "sub-05", name: "French", code: null },
+  { id: "sub-06", name: "Religious and Moral Education", code: "RME" },
+  { id: "sub-07", name: "Information and Communication Technology", code: "ICT" },
+  { id: "sub-08", name: "Creative Arts", code: null },
+];
+
+// staff_no assigned in order (TCH-1..TCH-6) — mirrors nextStaffNo()'s
+// max-existing+1 rule so seeding and the auto-assign logic never disagree.
+export const mockStaff: StaffFixture[] = [
+  {
+    id: "stf-01",
+    first_name: "Efua",
+    last_name: "Owusu",
+    email: "efua.owusu@school.edu.gh",
+    phone: "+233 24 100 1001",
+    staff_no: "TCH-1",
+    department: "Mathematics",
+    is_active: true,
+  },
+  {
+    id: "stf-02",
+    first_name: "Kwabena",
+    last_name: "Sarpong",
+    email: "kwabena.sarpong@school.edu.gh",
+    phone: "+233 20 100 1002",
+    staff_no: "TCH-2",
+    department: "Science",
+    is_active: true,
+  },
+  {
+    id: "stf-03",
+    first_name: "Adjoa",
+    last_name: "Boateng",
+    email: "adjoa.boateng@school.edu.gh",
+    phone: null,
+    staff_no: "TCH-3",
+    department: "Languages",
+    is_active: true,
+  },
+  {
+    id: "stf-04",
+    first_name: "Yaw",
+    last_name: "Antwi",
+    email: "yaw.antwi@school.edu.gh",
+    phone: "+233 27 100 1004",
+    staff_no: "TCH-4",
+    department: "Social Studies",
+    is_active: true,
+  },
+  {
+    id: "stf-05",
+    first_name: "Abena",
+    last_name: "Frimpong",
+    email: "abena.frimpong@school.edu.gh",
+    phone: "+233 26 100 1005",
+    staff_no: "TCH-5",
+    department: null,
+    is_active: true,
+  },
+  {
+    id: "stf-06",
+    first_name: "Kojo",
+    last_name: "Asare",
+    email: "kojo.asare@school.edu.gh",
+    phone: null,
+    staff_no: "TCH-6",
+    department: null,
+    is_active: false,
+  },
+];
+
+// Same ids/names/levels the Slice-2 placeholder `mockClassOptions` used, so
+// existing student fixtures below (which reference `cls-1`..`cls-6`) keep
+// resolving; capacity + class_teacher_id are the Slice-3 additions. `cls-5`
+// deliberately has a null capacity and no class teacher for the "—" fallback
+// states in Unit B's classes table.
+export const mockClasses: ClassFixture[] = [
+  { id: "cls-1", name: "Basic 1", level: "Primary", capacity: 30, class_teacher_id: "stf-01" },
+  { id: "cls-2", name: "Basic 2", level: "Primary", capacity: 30, class_teacher_id: "stf-02" },
+  { id: "cls-3", name: "Basic 3", level: "Primary", capacity: 32, class_teacher_id: "stf-03" },
+  { id: "cls-4", name: "JHS 1", level: "JHS", capacity: 35, class_teacher_id: "stf-04" },
+  { id: "cls-5", name: "JHS 2", level: "JHS", capacity: null, class_teacher_id: null },
+  { id: "cls-6", name: "JHS 3", level: "JHS", capacity: 35, class_teacher_id: "stf-05" },
+];
+
+// class_subjects: unique per (class_id, subject_id); teacher_id optional
+// ("Unassigned"). `stf-06` (inactive) deliberately teaches nothing, so a
+// staff row can legitimately show class_count/subject_count of 0.
+export const mockClassSubjects: AssignmentFixture[] = [
+  { id: "as-01", class_id: "cls-1", subject_id: "sub-01", teacher_id: "stf-01" },
+  { id: "as-02", class_id: "cls-1", subject_id: "sub-02", teacher_id: "stf-01" },
+  { id: "as-03", class_id: "cls-1", subject_id: "sub-03", teacher_id: "stf-02" },
+  { id: "as-04", class_id: "cls-1", subject_id: "sub-08", teacher_id: null },
+  { id: "as-05", class_id: "cls-2", subject_id: "sub-01", teacher_id: "stf-02" },
+  { id: "as-06", class_id: "cls-2", subject_id: "sub-02", teacher_id: "stf-03" },
+  { id: "as-07", class_id: "cls-2", subject_id: "sub-04", teacher_id: "stf-04" },
+  { id: "as-08", class_id: "cls-3", subject_id: "sub-01", teacher_id: "stf-01" },
+  { id: "as-09", class_id: "cls-3", subject_id: "sub-03", teacher_id: "stf-02" },
+  { id: "as-10", class_id: "cls-3", subject_id: "sub-06", teacher_id: "stf-05" },
+  { id: "as-11", class_id: "cls-4", subject_id: "sub-01", teacher_id: "stf-04" },
+  { id: "as-12", class_id: "cls-4", subject_id: "sub-02", teacher_id: "stf-03" },
+  { id: "as-13", class_id: "cls-4", subject_id: "sub-05", teacher_id: "stf-05" },
+  { id: "as-14", class_id: "cls-4", subject_id: "sub-07", teacher_id: null },
+  { id: "as-15", class_id: "cls-5", subject_id: "sub-01", teacher_id: "stf-01" },
+  { id: "as-16", class_id: "cls-5", subject_id: "sub-03", teacher_id: "stf-02" },
+  { id: "as-17", class_id: "cls-5", subject_id: "sub-04", teacher_id: "stf-04" },
+  { id: "as-18", class_id: "cls-6", subject_id: "sub-01", teacher_id: "stf-05" },
+  { id: "as-19", class_id: "cls-6", subject_id: "sub-02", teacher_id: "stf-03" },
+  { id: "as-20", class_id: "cls-6", subject_id: "sub-07", teacher_id: "stf-05" },
+  { id: "as-21", class_id: "cls-6", subject_id: "sub-06", teacher_id: null },
+];
+
+// ---------------------------------------------------------------------------
+// People (Students + Parents) — Slice 2. Classes above (`mockClasses`) are
+// now owned by Academics (Slice 3); `classOf()` below just looks them up.
+// ---------------------------------------------------------------------------
 
 const parentsBase: Omit<ParentListItemVM, "children_names">[] = [
   {
@@ -228,7 +414,7 @@ function guardianOf(
 
 function classOf(classId: string | null): Pick<StudentFixture, "class_id" | "class_name"> {
   if (!classId) return { class_id: null, class_name: null };
-  const cls = mockClassOptions.find((c) => c.id === classId);
+  const cls = mockClasses.find((c) => c.id === classId);
   if (!cls) throw new Error(`Unknown fixture class id: ${classId}`);
   return { class_id: cls.id, class_name: cls.name };
 }

@@ -58,9 +58,12 @@ export function listParents(): Promise<ParentListItemVM[]> {
   );
 }
 
+// Reconciled for Slice 3: derives from the real Academics classes store (`store.classes`,
+// seeded from `lib/mock/fixtures.ts#mockClasses`) instead of a separate placeholder fixture,
+// so a class created via Academics immediately appears in the student form's dropdown.
 export function listClassOptions(): Promise<ClassOptionVM[]> {
   return simulate(
-    store.classes.map((c) => ({ ...c })),
+    store.classes.map((c) => ({ id: c.id, name: c.name, level: c.level })),
     [],
   );
 }
