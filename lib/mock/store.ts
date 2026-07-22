@@ -46,6 +46,12 @@ export const store = {
   linkGuardian(studentId: string, g: GuardianVM) {
     const s = students.find((x) => x.id === studentId);
     if (!s) return;
+    // Single-primary invariant: a student has at most one primary guardian. When a new link is
+    // marked primary, demote any existing primaries. (At integration the real path enforces this
+    // via a partial unique index on student_guardians(student_id) WHERE is_primary, or in the action.)
+    if (g.is_primary) {
+      for (const existing of s.guardians) existing.is_primary = false;
+    }
     if (!s.guardians.some((x) => x.parent_profile_id === g.parent_profile_id)) {
       s.guardians.push(g);
     }
