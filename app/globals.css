@@ -55,16 +55,16 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #15803D; /* forest green — admin accent (06-UI §2) */
+  --primary-foreground: #FFFFFF;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: #6B7280; /* secondary text, subtitles (06-UI §2) */
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
+  --border: #ECEEF1;
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.87 0 0);
@@ -83,15 +83,17 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* --- School Management design tokens (docs/06-UI-UX-STANDARDS.md §2) --- */
-  /* provisional until confirmed against the brand kit */
+  /* provisional until confirmed against the brand kit. NOTE: --border, --primary,
+     --primary-foreground and --muted-foreground are declared once, above, in the shadcn
+     variable set they map onto — redeclaring the same custom property twice in one :root
+     causes Tailwind/Lightning CSS's oklch->lab fallback duplication to shadow the second
+     (correct) value with the first. --muted intentionally stays shadcn's light bg tint
+     (Skeleton/Table/DropdownMenu use `bg-muted`); our doc's "muted text" token lives on
+     --muted-foreground instead, which shares the same meaning shadcn already gives it. */
   --bg: #F7F8FA;
   --surface: #FFFFFF;
-  --border: #ECEEF1;
   --text: #111827;
-  --muted: #6B7280;
   --label: #9CA3AF;
-  --primary: #15803D;          /* forest green — admin accent */
-  --primary-foreground: #FFFFFF;
   --success-bg: #E7F6EC;
   --success-fg: #15803D;
   --warning-bg: #FEF3C7;

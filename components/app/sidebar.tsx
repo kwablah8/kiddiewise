@@ -1,0 +1,170 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  ChevronLeft,
+  ClipboardList,
+  FileBarChart2,
+  FileCheck2,
+  GraduationCap,
+  LayoutDashboard,
+  BookOpen,
+  School,
+  SlidersHorizontal,
+  TrendingUp,
+  Users,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { UserCard } from "@/components/app/user-card";
+import { useSidebarCounts } from "@/lib/queries/sidebar";
+import type { Profile } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  countKey?: "students" | "staff";
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Students", href: "/students", icon: GraduationCap, countKey: "students" },
+  { label: "Staff", href: "/staff", icon: Users, countKey: "staff" },
+  { label: "Subjects", href: "/subjects", icon: BookOpen },
+  { label: "Classes", href: "/classes", icon: School },
+  { label: "Admissions", href: "/admissions", icon: ClipboardList },
+  { label: "Assessments", href: "/assessments", icon: FileCheck2 },
+  { label: "Fees", href: "/fees", icon: Wallet },
+  { label: "Grading", href: "/grading", icon: SlidersHorizontal },
+  { label: "Terminal Reports", href: "/terminal-reports", icon: FileBarChart2 },
+  { label: "Promotion", href: "/promotion", icon: TrendingUp },
+];
+
+interface SidebarProps {
+  profile: Profile;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
+  onSignOut: () => void;
+}
+
+export function Sidebar({
+  profile,
+  collapsed,
+  onToggleCollapsed,
+  mobileOpen,
+  onCloseMobile,
+  onSignOut,
+}: SidebarProps) {
+  const pathname = usePathname();
+  const { data: counts } = useSidebarCounts();
+
+  return (
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-40 flex flex-col bg-[linear-gradient(180deg,var(--brand-top),var(--brand-bottom))]",
+        "transition-transform duration-200 lg:translate-x-0",
+        collapsed ? "lg:w-20" : "lg:w-64",
+        "w-64",
+        mobileOpen ? "translate-x-0" : "-translate-x-full",
+      )}
+    >
+      {/* Brand block. Collapsed (desktop only): the icon itself expands the sidebar back,
+          since there isn't room for a second, separate toggle control next to it. */}
+      <div
+        className={cn(
+          "flex items-center px-5 pt-6 pb-4",
+          collapsed ? "lg:justify-center lg:px-3" : "justify-between",
+        )}
+      >
+        <button
+          type="button"
+          onClick={collapsed ? onToggleCollapsed : undefined}
+          aria-label={collapsed ? "Expand sidebar" : undefined}
+          disabled={!collapsed}
+          className="flex min-w-0 items-center gap-2.5 disabled:cursor-default"
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white">
+            <GraduationCap className="size-4.5" aria-hidden="true" />
+          </span>
+          {!collapsed && (
+            <span className="truncate text-[15px] font-semibold text-white">
+              School Management
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          aria-label="Collapse sidebar"
+          className={cn(
+            "hidden size-7 shrink-0 items-center justify-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white lg:flex",
+            collapsed && "lg:hidden",
+          )}
+        >
+          <ChevronLeft className="size-4" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={onCloseMobile}
+          aria-label="Close navigation"
+          className="flex size-7 shrink-0 items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white lg:hidden"
+        >
+          <ChevronLeft className="size-4" aria-hidden="true" />
+        </button>
+      </div>
+
+      {!collapsed && (
+        <p className="px-5 pb-2 text-[11px] font-medium tracking-wider text-white/40 uppercase">
+          Main menu
+        </p>
+      )}
+
+      {/* Nav */}
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
+        {NAV_ITEMS.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const count = item.countKey ? counts?.[item.countKey] : undefined;
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              title={collapsed ? item.label : undefined}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                collapsed && "justify-center px-0",
+                isActive
+                  ? "bg-white/15 text-white"
+                  : "text-white/60 hover:bg-white/5 hover:text-white/90",
+              )}
+            >
+              <item.icon className="size-4.5 shrink-0" aria-hidden="true" />
+              {!collapsed && (
+                <>
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  {typeof count === "number" && (
+                    <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-white/80">
+                      {count}
+                    </span>
+                  )}
+                </>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <Separator className="bg-white/10" />
+
+      <div className="p-3">
+        <UserCard profile={profile} collapsed={collapsed} onSignOut={onSignOut} />
+      </div>
+    </aside>
+  );
+}

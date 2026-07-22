@@ -5,6 +5,12 @@ import type {
   RecentActivityVM,
   UpcomingEventVM,
 } from "@/lib/validators/dashboard";
+import type { SidebarCountsVM } from "@/lib/validators/sidebar";
+
+export const mockSidebarCounts: SidebarCountsVM = {
+  students: 248,
+  staff: 32,
+};
 
 export const mockDashboardStats: DashboardStatsVM = {
   total_students: 248,

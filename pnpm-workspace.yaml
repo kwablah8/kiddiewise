@@ -1,3 +1,12 @@
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+# The devtool dependency chain (shadcn CLI -> @modelcontextprotocol/sdk) pulls in zod@3.x
+# as a transitive peer, which otherwise wins pnpm's shared virtual-store hoist slot for the
+# bare "zod" specifier and gets picked up by `@hookform/resolvers/zod`'s "zod/v4/core" import
+# during type-checking, even though our app only ever uses zod@4. Pin the hoisted slot to
+# our real dependency version so TS resolves one consistent zod everywhere.
+overrides:
+  zod: 4.4.3
+

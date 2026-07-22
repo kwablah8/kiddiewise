@@ -1,4 +1,7 @@
 export const queryKeys = {
+  sidebar: {
+    counts: ["sidebar", "counts"] as const,
+  },
   dashboard: {
     stats: ["dashboard", "stats"] as const,
     feeTrend: ["dashboard", "fee-trend"] as const,
