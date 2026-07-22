@@ -21,4 +21,15 @@ export const queryKeys = {
   classes: {
     options: ["classes", "options"] as const,
   },
+  academics: {
+    years: ["academics", "years"] as const,
+    terms: (yearId?: string) => ["academics", "terms", yearId ?? null] as const,
+    activeContext: ["academics", "active-context"] as const,
+    classes: ["academics", "classes"] as const,
+    class: (id: string) => ["academics", "classes", id] as const,
+    subjects: ["academics", "subjects"] as const,
+    staff: ["academics", "staff"] as const,
+    staffMember: (id: string) => ["academics", "staff", id] as const,
+    assignments: (classId: string) => ["academics", "assignments", classId] as const,
+  },
 } as const;
