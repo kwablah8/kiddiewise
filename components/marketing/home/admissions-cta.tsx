@@ -17,7 +17,7 @@ export function HomeAdmissionsCta() {
         >
           Start your child&apos;s journey with us.
         </h2>
-        <p className="mt-5 text-lg leading-relaxed text-white/80">
+        <p className="mt-5 text-lg leading-relaxed text-white">
           Registration for 2026 is open across every level. Apply online, or book a visit to see
           our Oyarifa campus for yourself — we would love to meet your family.
         </p>
@@ -30,12 +30,12 @@ export function HomeAdmissionsCta() {
           </CtaButton>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-white/80">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-white">
           <span className="flex items-center gap-2.5">
             <Phone className="size-4 shrink-0 text-[var(--m-accent)]" aria-hidden="true" />
             {SITE.contact.phones.map((phone, i) => (
               <span key={phone}>
-                {i > 0 ? <span className="text-white/40"> / </span> : null}
+                {i > 0 ? <span className="text-white"> / </span> : null}
                 <a
                   href={`tel:${phone}`}
                   className="rounded-md outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"

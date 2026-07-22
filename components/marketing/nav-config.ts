@@ -31,19 +31,14 @@ export const APPLY_CTA = { label: "Apply Now", href: "/admissions" } as const;
 
 /**
  * LEGACY identity/contact shape — DERIVED from `lib/marketing/site.ts`, not re-authored, so the
- * two never drift. `kind` and `foundedYear` have no real-world source (the crest + flyer don't
- * state a founding year) and are consumed today only by not-yet-rebranded components
- * (`stats-band.tsx`'s "years on the ridge" stat — explicitly Unit B/S4's job to replace with
- * honest, qualitative copy per the plan's "honesty guard"). `foundedYear` is deliberately set to
- * the current year rather than an invented past date, so that stat reads "0" instead of
- * asserting a fabricated history until S4 removes the arithmetic entirely.
+ * two never drift. `kind` has no real-world source (the crest + flyer don't state one beyond the
+ * program range) and is consumed today only by not-yet-rebranded components.
  */
 export const SITE = {
   name: SLIS.name,
   short: SLIS.shortName,
   kind: "Creche to JHS",
   tagline: SLIS.motto,
-  foundedYear: new Date().getFullYear(), // SEAM: unconfirmed — see note above.
   place: `${SLIS.location.lines[0]} · ${SLIS.location.area}`,
   address: `${SLIS.location.lines.join(", ")}, ${SLIS.location.area}`,
   phoneDisplay: SLIS.contact.phones.join(" / "),

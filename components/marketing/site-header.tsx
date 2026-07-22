@@ -5,9 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
-import { APPLY_CTA, NAV_ITEMS, SITE, type NavItem } from "@/components/marketing/nav-config";
+import { APPLY_CTA, NAV_ITEMS, type NavItem } from "@/components/marketing/nav-config";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { CtaButton } from "@/components/marketing/cta-button";
+import { SITE } from "@/lib/marketing/site";
 import { cn } from "@/lib/utils";
 
 function isActive(pathname: string, href: string): boolean {
@@ -227,7 +228,7 @@ export function SiteHeader() {
                 Apply for admission
               </CtaButton>
               <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--muted-foreground)]">
-                {SITE.place}
+                {SITE.location.lines[0]} · {SITE.location.area}
               </p>
             </div>
           </div>

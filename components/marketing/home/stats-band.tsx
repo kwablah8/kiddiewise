@@ -36,12 +36,12 @@ export function HomeStatsBand() {
               <dt className="text-2xl font-semibold tracking-[-0.01em] text-white">
                 {value.name}
               </dt>
-              <dd className="mt-2 leading-relaxed text-white/70">{value.blurb}</dd>
+              <dd className="mt-2 leading-relaxed text-white">{value.blurb}</dd>
             </div>
           ))}
         </dl>
 
-        <p className="reveal mt-12 font-mono text-[11px] uppercase tracking-[0.18em] text-white/60">
+        <p className="reveal mt-12 font-mono text-[11px] uppercase tracking-[0.18em] text-white">
           Creche → JHS · {SITE.admissionsNote}
         </p>
       </div>
