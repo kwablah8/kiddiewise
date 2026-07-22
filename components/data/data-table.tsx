@@ -31,6 +31,8 @@ interface DataTableProps<T> {
   pageSize?: number;
   emptyTitle?: string;
   emptyDescription?: string;
+  /** When provided, rows become clickable (and keyboard-activatable via Enter/Space). */
+  onRowClick?: (row: T) => void;
 }
 
 /**
@@ -45,6 +47,7 @@ export function DataTable<T>({
   pageSize = 8,
   emptyTitle = "No records yet",
   emptyDescription,
+  onRowClick,
 }: DataTableProps<T>) {
   const [page, setPage] = useState(0);
   const pageCount = Math.max(1, Math.ceil(data.length / pageSize));
@@ -90,7 +93,23 @@ export function DataTable<T>({
           {rows.map((row) => (
             <TableRow
               key={getRowId(row)}
-              className="border-[var(--border)] hover:bg-[var(--bg)]"
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+              tabIndex={onRowClick ? 0 : undefined}
+              role={onRowClick ? "button" : undefined}
+              onKeyDown={
+                onRowClick
+                  ? (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onRowClick(row);
+                      }
+                    }
+                  : undefined
+              }
+              className={cn(
+                "border-[var(--border)] hover:bg-[var(--bg)]",
+                onRowClick && "cursor-pointer focus-visible:bg-[var(--bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-inset",
+              )}
             >
               {columns.map((col) => (
                 <TableCell
