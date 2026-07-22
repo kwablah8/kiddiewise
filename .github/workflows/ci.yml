@@ -16,3 +16,31 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+
+  rls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm supabase start
+      - run: pnpm supabase db reset
+      # `tests/rls/helpers.ts` reads NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY /
+      # SUPABASE_SERVICE_ROLE_KEY straight from process.env; its `dotenv` load of `.env.local`
+      # is a harmless no-op here (that file is gitignored and never exists on the runner), so
+      # these three must land in the job env before `pnpm test:rls` runs. `--override-name`
+      # renames the CLI's own key names to match, and values are unquoted before being written
+      # to GITHUB_ENV (a raw `"..."` value would be treated as literal quote characters, not
+      # stripped, and would break client URL parsing).
+      - name: Load local Supabase env
+        run: |
+          pnpm supabase status -o env \
+            --override-name api.url=NEXT_PUBLIC_SUPABASE_URL \
+            --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            | grep -E '^(NEXT_PUBLIC_SUPABASE_URL|NEXT_PUBLIC_SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY)=' \
+            | tr -d '"' >> "$GITHUB_ENV"
+      - run: pnpm test:rls
