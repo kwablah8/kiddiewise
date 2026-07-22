@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Pencil, UserRoundX, Users } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
@@ -11,6 +12,7 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { StudentAvatar } from "./student-avatar";
 import { studentStatusTone } from "./student-status";
+import { LinkGuardianDialog } from "./link-guardian-dialog";
 import { useStudent } from "@/lib/queries/people";
 import { formatDate, formatRole } from "@/lib/format";
 import { cardShellClass } from "@/lib/ui";
@@ -23,6 +25,10 @@ interface StudentProfileProps {
 /** Profile card + Guardians panel for a single student (06-UI §6/§7). */
 export function StudentProfile({ id }: StudentProfileProps) {
   const { data, isLoading, isError, refetch } = useStudent(id);
+  const [linkOpen, setLinkOpen] = useState(false);
+  // Bumped on every open so `LinkGuardianDialog` remounts fresh (RHF state reset without an
+  // effect-driven `reset()` call).
+  const [linkDialogKey, setLinkDialogKey] = useState(0);
 
   if (isLoading) return <ProfileSkeleton />;
 
@@ -110,22 +116,21 @@ export function StudentProfile({ id }: StudentProfileProps) {
               type="button"
               variant="outline"
               size="sm"
-              disabled
-              title="Linking additional parents is coming in a future update"
+              onClick={() => {
+                setLinkDialogKey((k) => k + 1);
+                setLinkOpen(true);
+              }}
             >
               Link Parent
             </Button>
           </div>
-          <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-            Linking additional parents will be available in an upcoming update.
-          </p>
 
           <div className="mt-4">
             {data.guardians.length === 0 ? (
               <EmptyState
                 icon={Users}
                 title="No guardians linked"
-                description="Guardians can be linked from the student form."
+                description="Link an existing parent record to this student using Link Parent above."
               />
             ) : (
               <ul className="divide-y divide-[var(--border)]">
@@ -148,6 +153,14 @@ export function StudentProfile({ id }: StudentProfileProps) {
           </div>
         </section>
       </div>
+
+      <LinkGuardianDialog
+        key={linkDialogKey}
+        studentId={id}
+        open={linkOpen}
+        onOpenChange={setLinkOpen}
+        excludeParentIds={data.guardians.map((g) => g.parent_profile_id)}
+      />
     </div>
   );
 }
