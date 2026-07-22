@@ -102,6 +102,9 @@
   /* signature brand surface: maroon → near-black vertical gradient (sidebar) */
   --brand-top: #5C1B22;
   --brand-bottom: #2A0C10;
+  /* Marketing site only (docs/06-UI §8): a warm off-white that alternates with white to
+     give the public pages a softer, editorial section rhythm. Not used in the app shell. */
+  --bg-warm: #FAF7F3;
   /* Dashboard chart series (06-UI §5 "Fee Collection Trend" / "Enrollment Trend"): fee/revenue
      uses --primary (green) directly; enrollment reuses the admin amber accent (--warning-fg,
      the same hue as the amber metric-card chips) so the two chart cards read as distinct
@@ -153,5 +156,39 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* --- Marketing scroll-reveal (docs/06-UI §10; marketing design direction) ---
+   Progressive enhancement only: elements are fully visible by default. Where the browser
+   supports scroll-driven animations AND the visitor has not asked to reduce motion, `.reveal`
+   fades + rises as it scrolls into view. Unsupported browsers and reduced-motion users simply
+   see the resting state — no JS, no hidden content. The d1/d2/d3 helpers stagger a row of
+   siblings by shifting each one's entry range slightly later. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      animation: marketing-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 22%;
+    }
+    .reveal.d1 {
+      animation-range: entry 6% cover 26%;
+    }
+    .reveal.d2 {
+      animation-range: entry 12% cover 30%;
+    }
+    .reveal.d3 {
+      animation-range: entry 18% cover 34%;
+    }
+  }
+}
+
+@keyframes marketing-reveal {
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
