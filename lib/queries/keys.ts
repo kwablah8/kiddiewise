@@ -31,5 +31,7 @@ export const queryKeys = {
     staff: ["academics", "staff"] as const,
     staffMember: (id: string) => ["academics", "staff", id] as const,
     assignments: (classId: string) => ["academics", "assignments", classId] as const,
+    assignmentsByStaff: (staffId: string) =>
+      ["academics", "assignments", "by-staff", staffId] as const,
   },
 } as const;

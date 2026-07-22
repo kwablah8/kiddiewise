@@ -37,9 +37,11 @@ export const staffVM = z.object({
 });
 export type StaffVM = z.infer<typeof staffVM>;
 
-// class_subjects row as shown on a class's assignments panel
+// class_subjects row as shown on a class's assignments panel (and, joined the other way, on a
+// staff member's derived "assigned classes/subjects" panel — hence `class_name` alongside
+// `subject_name`).
 export const assignmentVM = z.object({
-  id: z.string(), class_id: z.string(),
+  id: z.string(), class_id: z.string(), class_name: z.string(),
   subject_id: z.string(), subject_name: z.string(),
   teacher_id: z.string().nullable(), teacher_name: z.string().nullable(),
 });

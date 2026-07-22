@@ -39,6 +39,14 @@ export const useAssignments = (classId: string) =>
     queryFn: () => data.listAssignments(classId),
   });
 
+// Staff detail's derived "subjects taught" panel — same class_subjects rows as
+// `useAssignments`, filtered by teacher instead of class.
+export const useAssignmentsForStaff = (staffId: string) =>
+  useQuery({
+    queryKey: queryKeys.academics.assignmentsByStaff(staffId),
+    queryFn: () => data.listAssignmentsForStaff(staffId),
+  });
+
 // ---- mutations -----------------------------------------------------------
 
 export const useCreateYear = () => {

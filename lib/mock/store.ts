@@ -12,14 +12,14 @@ type StudentRecord = Omit<StudentListItemVM, "guardian_names"> & {
 
 // Academics raw records mirror the generated `Database` row shapes (minus `school_id`/
 // `created_at`); derived VM-only fields (term_count, class_teacher_name, student_count,
-// subject_count, class_count, subject_name, teacher_name) are computed at read time in
-// lib/data/academics.ts, never stored — so they can never go stale after a mutation.
+// subject_count, class_count, class_name, subject_name, teacher_name) are computed at read time
+// in lib/data/academics.ts, never stored — so they can never go stale after a mutation.
 type AcademicYearRecord = Omit<AcademicYearVM, "term_count">;
 type TermRecord = TermVM;
 type ClassRecord = Omit<ClassVM, "class_teacher_name" | "student_count" | "subject_count">;
 type SubjectRecord = Omit<SubjectVM, "class_count">;
 type StaffRecord = Omit<StaffVM, "class_count" | "subject_count">;
-type AssignmentRecord = Omit<AssignmentVM, "subject_name" | "teacher_name">;
+type AssignmentRecord = Omit<AssignmentVM, "class_name" | "subject_name" | "teacher_name">;
 
 // Seed by copying (not referencing) fixtures, and deep-copy each student's guardians array so
 // mutations never leak back into the shared fixture module.

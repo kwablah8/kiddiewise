@@ -86,11 +86,13 @@ function toStaffVM(s: StaffRecord): StaffVM {
 }
 
 function toAssignmentVM(a: AssignmentRecord): AssignmentVM {
+  const cls = store.classes.find((c) => c.id === a.class_id);
   const subject = store.subjects.find((s) => s.id === a.subject_id);
   const teacher = a.teacher_id ? store.staff.find((s) => s.id === a.teacher_id) : null;
   return {
     id: a.id,
     class_id: a.class_id,
+    class_name: cls?.name ?? "",
     subject_id: a.subject_id,
     subject_name: subject?.name ?? "",
     teacher_id: a.teacher_id,
@@ -144,6 +146,15 @@ export function getStaff(id: string): Promise<StaffVM | null> {
 export function listAssignments(classId: string): Promise<AssignmentVM[]> {
   const result = store.classSubjects
     .filter((a) => a.class_id === classId)
+    .map(toAssignmentVM);
+  return simulate(result, []);
+}
+
+// Same class_subjects rows as `listAssignments`, filtered the other way — by teacher rather
+// than class — for the staff detail page's derived "subjects taught" panel (06-UI §6/§7).
+export function listAssignmentsForStaff(staffId: string): Promise<AssignmentVM[]> {
+  const result = store.classSubjects
+    .filter((a) => a.teacher_id === staffId)
     .map(toAssignmentVM);
   return simulate(result, []);
 }

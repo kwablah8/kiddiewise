@@ -142,14 +142,14 @@ export const mockUpcomingEvents: UpcomingEventVM[] = [
 // Raw fixture record shapes mirror the generated `Database` row types (minus
 // `school_id`/`created_at`, which are server/RLS concerns) — NOT the VMs,
 // since VM fields like `term_count`/`class_teacher_name`/`student_count`/
-// `subject_count`/`class_count`/`subject_name`/`teacher_name` are derived by
+// `subject_count`/`class_count`/`class_name`/`subject_name`/`teacher_name` are derived by
 // the store + `lib/data/academics.ts`, never hand-authored here.
 type AcademicYearFixture = Omit<AcademicYearVM, "term_count">;
 type TermFixture = TermVM;
 type ClassFixture = Omit<ClassVM, "class_teacher_name" | "student_count" | "subject_count">;
 type SubjectFixture = Omit<SubjectVM, "class_count">;
 type StaffFixture = Omit<StaffVM, "class_count" | "subject_count">;
-type AssignmentFixture = Omit<AssignmentVM, "subject_name" | "teacher_name">;
+type AssignmentFixture = Omit<AssignmentVM, "class_name" | "subject_name" | "teacher_name">;
 
 // Today (fixture authoring date) sits in Third Term of the 2025/2026 academic
 // year — matches the rest of the dashboard fixtures (events/activities dated
