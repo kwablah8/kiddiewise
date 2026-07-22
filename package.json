@@ -11,7 +11,7 @@
     "db:reset": "supabase db reset",
     "db:new": "supabase migration new",
     "gen:types": "supabase gen types typescript --local > lib/supabase/types.ts",
-    "test:rls": "vitest run tests/rls"
+    "test:rls": "NODE_OPTIONS=--experimental-websocket vitest run tests/rls"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -36,12 +36,14 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.11",
     "prettier": "^3.9.6",
     "server-only": "^0.0.1",
     "supabase": "^2.109.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }
