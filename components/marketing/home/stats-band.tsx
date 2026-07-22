@@ -31,7 +31,7 @@ export function HomeStatsBand() {
           {STATS.map((stat, i) => (
             <div
               key={stat.label}
-              className={`reveal d${i} sm:border-l sm:border-white/12 sm:pl-6`}
+              className={`reveal${i > 0 ? ` d${i}` : ""} sm:border-l sm:border-white/12 sm:pl-6`}
             >
               <dd className="text-[clamp(2.5rem,5vw,3.75rem)] font-bold leading-none tracking-[-0.03em] tabular-nums">
                 {stat.value}

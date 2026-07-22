@@ -53,7 +53,7 @@ export function HomeFeatures() {
         {FEATURES.map((feature, i) => (
           <div
             key={feature.title}
-            className={`reveal d${i} flex gap-5 border-t border-[var(--border)] pt-8`}
+            className={`reveal${i > 0 ? ` d${i}` : ""} flex gap-5 border-t border-[var(--border)] pt-8`}
           >
             <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface)] text-[var(--brand-top)] ring-1 ring-black/[0.05]">
               <Adinkra name={feature.symbol} className="size-6" />

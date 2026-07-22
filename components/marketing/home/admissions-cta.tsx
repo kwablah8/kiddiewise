@@ -10,7 +10,7 @@ export function HomeAdmissionsCta() {
         className="pointer-events-none absolute -top-16 -right-16 size-[24rem] text-white/[0.08]"
       />
       <div className="relative mx-auto max-w-2xl text-center reveal">
-        <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-white/70">
+        <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-white">
           Admissions · 2026 / 2027
         </span>
         <h2
@@ -19,7 +19,7 @@ export function HomeAdmissionsCta() {
         >
           Enrolment is open for the coming year.
         </h2>
-        <p className="mt-5 text-lg leading-relaxed text-white/85">
+        <p className="mt-5 text-lg leading-relaxed text-white">
           Places are limited and Early Years fills first. Start an application, or book a visit —
           we&apos;d love to show you the ridge.
         </p>

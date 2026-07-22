@@ -10,8 +10,11 @@ const ctaVariants = cva(
     variants: {
       variant: {
         // Forest-green primary — the main action; reads on both dark bands and the light header.
+        // No solid ring-offset color (it would print a white "collar" on the maroon/transparent
+        // header contexts) — the offset is transparent, and the ring itself is lightened a touch
+        // so it clears 3:1 against both the maroon band and the light scrolled header.
         primary:
-          "bg-[var(--primary)] text-white shadow-sm hover:bg-[color-mix(in_oklch,var(--primary),black_12%)] hover:shadow-md focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+          "bg-[var(--primary)] text-white shadow-sm hover:bg-[color-mix(in_oklch,var(--primary),black_12%)] hover:shadow-md focus-visible:ring-[color-mix(in_srgb,var(--primary),white_18%)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
         // White solid — the strong action when it sits on a green or maroon band.
         "solid-light":
           "bg-white text-[var(--primary)] shadow-sm hover:bg-white/90 hover:shadow-md focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",

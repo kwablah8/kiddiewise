@@ -23,7 +23,7 @@ export function SiteFooter() {
           </div>
 
           <nav aria-label="Footer" className="flex flex-col gap-3">
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/50">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/70">
               Explore
             </h2>
             {NAV_ITEMS.map((item) => (
@@ -38,13 +38,13 @@ export function SiteFooter() {
           </nav>
 
           <div className="flex flex-col gap-3">
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/50">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/70">
               Visit us
             </h2>
-            <p className="flex items-start gap-2.5 text-sm text-white/75">
+            <address className="flex items-start gap-2.5 text-sm not-italic text-white/75">
               <MapPin className="mt-0.5 size-4 shrink-0 text-white/45" aria-hidden="true" />
               <span>{SITE.address}</span>
-            </p>
+            </address>
             <a
               href={SITE.phoneHref}
               className={`flex items-center gap-2.5 text-sm text-white/75 hover:text-white ${focusRing}`}
@@ -62,7 +62,7 @@ export function SiteFooter() {
           </div>
 
           <nav aria-label="Social" className="flex flex-col gap-3">
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/50">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/70">
               Follow along
             </h2>
             {SOCIAL_LINKS.map((item) => (
