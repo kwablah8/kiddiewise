@@ -48,7 +48,7 @@ export function Wordmark({ tone = "dark", className }: WordmarkProps) {
         <span
           className={cn(
             "mt-1 font-mono text-[9px] uppercase tracking-[0.22em]",
-            light ? "text-white/60" : "text-[var(--muted-foreground)]",
+            light ? "text-white" : "text-[var(--muted-foreground)]",
           )}
         >
           Learners International

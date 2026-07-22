@@ -36,7 +36,7 @@ export function SiteFooter() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`w-fit text-sm text-white hover:text-[var(--m-accent)] ${focusRing}`}
+                className={`w-fit text-sm text-white hover:underline ${focusRing}`}
               >
                 {item.label}
               </Link>
@@ -60,7 +60,7 @@ export function SiteFooter() {
                   <a
                     key={phone}
                     href={`tel:${phone}`}
-                    className={`w-fit hover:text-[var(--m-accent)] ${focusRing}`}
+                    className={`w-fit hover:underline ${focusRing}`}
                   >
                     {phone}
                   </a>
@@ -69,7 +69,7 @@ export function SiteFooter() {
             </div>
             <a
               href={`mailto:${SITE.contact.email}`}
-              className={`flex items-center gap-2.5 text-sm break-all text-white hover:text-[var(--m-accent)] ${focusRing}`}
+              className={`flex items-center gap-2.5 text-sm break-all text-white hover:underline ${focusRing}`}
             >
               <Mail className="size-4 shrink-0 text-[var(--m-accent)]" aria-hidden="true" />
               {SITE.contact.email}
