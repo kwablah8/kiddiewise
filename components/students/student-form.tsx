@@ -336,6 +336,9 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
                 </Select>
               )}
             />
+            {errors.gender && (
+              <p className="text-xs text-[var(--danger)]">{errors.gender.message}</p>
+            )}
           </div>
         </div>
       </section>
@@ -361,7 +364,11 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
               name="enrollment_status"
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id="enrollment_status" className="w-full">
+                  <SelectTrigger
+                    id="enrollment_status"
+                    className="w-full"
+                    aria-invalid={!!errors.enrollment_status}
+                  >
                     <SelectValue placeholder="Select status">
                       {(v: string) => labelFor(STATUS_OPTIONS, v)}
                     </SelectValue>
@@ -376,6 +383,9 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
                 </Select>
               )}
             />
+            {errors.enrollment_status && (
+              <p className="text-xs text-[var(--danger)]">{errors.enrollment_status.message}</p>
+            )}
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="class_id">Class</Label>
@@ -388,11 +398,16 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
                   onValueChange={(v) => field.onChange(v === NONE_VALUE ? null : v)}
                   disabled={classesLoading}
                 >
-                  <SelectTrigger id="class_id" className="w-full sm:w-64">
+                  <SelectTrigger
+                    id="class_id"
+                    className="w-full sm:w-64"
+                    aria-invalid={!!errors.class_id}
+                  >
                     <SelectValue placeholder={classesLoading ? "Loading classes…" : undefined}>
                       {(v: string) => {
+                        if (classesLoading || !classOptions) return "Loading classes…";
                         if (v === NONE_VALUE) return "No class assigned";
-                        const cls = classOptions?.find((c) => c.id === v);
+                        const cls = classOptions.find((c) => c.id === v);
                         return cls ? `${cls.name} (${cls.level})` : "No class assigned";
                       }}
                     </SelectValue>
@@ -408,6 +423,9 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
                 </Select>
               )}
             />
+            {errors.class_id && (
+              <p className="text-xs text-[var(--danger)]">{errors.class_id.message}</p>
+            )}
             <p className="text-xs text-[var(--muted-foreground)]">
               Assigning a class creates an enrollment for the active academic year.
             </p>
