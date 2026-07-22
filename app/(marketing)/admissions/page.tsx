@@ -39,9 +39,9 @@ export default function AdmissionsPage() {
             Join us on the ridge.
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/75 sm:text-xl">
-            Admission to {SITE.name} runs on a simple, personal process — from a first
-            conversation to your child&apos;s first morning in class. Here&apos;s exactly what to
-            expect.
+            Admission to {SITE.name}{" "}
+            runs on a simple, personal process — from a first conversation to your
+            child&apos;s first morning in class. Here&apos;s exactly what to expect.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <CtaButton href="#inquiry" variant="solid-light" size="lg" withArrow>
