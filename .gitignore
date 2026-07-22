@@ -34,3 +34,6 @@ yarn-error.log*
 # claude local
 .claude/
 .superpowers/
+# SLIS rebrand: raw source photography/video/logo (145MB) — optimized copies live in
+# public/slis/ and ARE committed; this raw source folder is not.
+SNAB-Assets/
