@@ -1,6 +1,7 @@
 import * as fx from "./fixtures";
 import type { StudentListItemVM, ParentListItemVM, GuardianVM } from "@/lib/validators/people";
 import type { AcademicYearVM, TermVM, ClassVM, SubjectVM, StaffVM, AssignmentVM } from "@/lib/validators/academics";
+import type { InquiryVM } from "@/lib/validators/inquiries";
 
 // SEAM: in-memory only (resets on reload). Real backend replaces reads/writes in lib/data +
 // lib/actions; the store shape here mirrors the tables (students + student_guardians + profiles
@@ -20,6 +21,9 @@ type ClassRecord = Omit<ClassVM, "class_teacher_name" | "student_count" | "subje
 type SubjectRecord = Omit<SubjectVM, "class_count">;
 type StaffRecord = Omit<StaffVM, "class_count" | "subject_count">;
 type AssignmentRecord = Omit<AssignmentVM, "class_name" | "subject_name" | "teacher_name">;
+// Marketing Admissions/Contact inquiries (03-DATABASE §8 `admissions_inquiries`). Starts empty —
+// these are visitor-submitted, not seeded fixtures.
+type InquiryRecord = InquiryVM;
 
 // Seed by copying (not referencing) fixtures, and deep-copy each student's guardians array so
 // mutations never leak back into the shared fixture module.
@@ -37,6 +41,7 @@ const classes: ClassRecord[] = fx.mockClasses.map((c) => ({ ...c }));
 const subjects: SubjectRecord[] = fx.mockSubjects.map((s) => ({ ...s }));
 const staff: StaffRecord[] = fx.mockStaff.map((s) => ({ ...s }));
 const classSubjects: AssignmentRecord[] = fx.mockClassSubjects.map((a) => ({ ...a }));
+const inquiries: InquiryRecord[] = [];
 
 export const store = {
   students,
@@ -47,6 +52,7 @@ export const store = {
   subjects,
   staff,
   classSubjects,
+  inquiries,
 
   addStudent(rec: StudentRecord) {
     students.unshift(rec);
@@ -149,5 +155,11 @@ export const store = {
   unassign(id: string) {
     const i = classSubjects.findIndex((a) => a.id === id);
     if (i >= 0) classSubjects.splice(i, 1);
+  },
+
+  // ---- Marketing: admissions inquiries --------------------------------------
+
+  addInquiry(rec: InquiryRecord) {
+    inquiries.unshift(rec);
   },
 };

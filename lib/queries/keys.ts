@@ -34,4 +34,7 @@ export const queryKeys = {
     assignmentsByStaff: (staffId: string) =>
       ["academics", "assignments", "by-staff", staffId] as const,
   },
+  inquiries: {
+    all: ["inquiries"] as const,
+  },
 } as const;
