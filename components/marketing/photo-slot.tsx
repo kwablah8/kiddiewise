@@ -47,6 +47,8 @@ interface PhotoSlotProps {
   aspect?: string;
   tone?: PhotoTone;
   symbol?: AdinkraName;
+  /** Hide the visible caption (still exposed as the accessible name) — for small avatar slots. */
+  hideCaption?: boolean;
   className?: string;
 }
 
@@ -55,6 +57,7 @@ export function PhotoSlot({
   aspect = "4 / 3",
   tone = "warm",
   symbol = "nyansapo",
+  hideCaption = false,
   className,
 }: PhotoSlotProps) {
   const t = TONE[tone];
@@ -77,14 +80,16 @@ export function PhotoSlot({
           t.mark,
         )}
       />
-      <span
-        className={cn(
-          "absolute bottom-4 left-4 right-4 font-mono text-[10px] uppercase tracking-[0.18em]",
-          t.caption,
-        )}
-      >
-        {label}
-      </span>
+      {hideCaption ? null : (
+        <span
+          className={cn(
+            "absolute bottom-4 left-4 right-4 font-mono text-[10px] uppercase tracking-[0.18em]",
+            t.caption,
+          )}
+        >
+          {label}
+        </span>
+      )}
     </div>
   );
 }
