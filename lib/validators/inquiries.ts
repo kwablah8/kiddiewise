@@ -24,3 +24,11 @@ export const inquiryVM = inquiryCreateSchema.extend({
   created_at: z.string(),
 });
 export type InquiryVM = z.infer<typeof inquiryVM>;
+
+// Admin status-change input (Admin → Admissions). `status` is the target; the transition guard
+// (lib/inquiries.ts#canTransitionInquiry) decides whether it's legal from the current status.
+export const inquiryStatusUpdateSchema = z.object({
+  id: z.string(),
+  status: inquiryStatus,
+});
+export type InquiryStatusUpdateInput = z.infer<typeof inquiryStatusUpdateSchema>;
