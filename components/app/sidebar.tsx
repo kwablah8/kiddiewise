@@ -31,7 +31,7 @@ interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
-  countKey?: "students" | "staff";
+  countKey?: "students" | "staff" | "new_inquiries";
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -42,7 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Parents", href: "/parents", icon: UserRound },
   { label: "Subjects", href: "/subjects", icon: BookOpen },
   { label: "Classes", href: "/classes", icon: School },
-  { label: "Admissions", href: "/admissions", icon: ClipboardList },
+  { label: "Admissions", href: "/admissions", icon: ClipboardList, countKey: "new_inquiries" },
   { label: "Assessments", href: "/assessments", icon: FileCheck2 },
   { label: "Fees", href: "/fees", icon: Wallet },
   { label: "Grading", href: "/grading", icon: SlidersHorizontal },
@@ -163,7 +163,7 @@ export function Sidebar({
               {!collapsed && (
                 <>
                   <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                  {typeof count === "number" && (
+                  {typeof count === "number" && count > 0 && (
                     <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-white/80">
                       {count}
                     </span>
