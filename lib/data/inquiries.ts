@@ -10,11 +10,11 @@ function byNewest(a: InquiryVM, b: InquiryVM): number {
 // The list is small; the component filters by status/search client-side (instant tabs), so this
 // returns the full set. SEAM: real path is `select * from admissions_inquiries order by created_at desc`.
 export function listInquiries(): Promise<InquiryVM[]> {
-  const result = [...store.inquiries].sort(byNewest);
+  const result = store.inquiries.map((i) => ({ ...i })).sort(byNewest);
   return simulate(result, []);
 }
 
 export function getInquiry(id: string): Promise<InquiryVM | null> {
   const found = store.inquiries.find((i) => i.id === id) ?? null;
-  return simulate(found, null);
+  return simulate(found ? { ...found } : null, null);
 }

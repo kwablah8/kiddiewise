@@ -21,8 +21,8 @@ type ClassRecord = Omit<ClassVM, "class_teacher_name" | "student_count" | "subje
 type SubjectRecord = Omit<SubjectVM, "class_count">;
 type StaffRecord = Omit<StaffVM, "class_count" | "subject_count">;
 type AssignmentRecord = Omit<AssignmentVM, "class_name" | "subject_name" | "teacher_name">;
-// Marketing Admissions/Contact inquiries (03-DATABASE §8 `admissions_inquiries`). Starts empty —
-// these are visitor-submitted, not seeded fixtures.
+// Marketing Admissions/Contact inquiries (03-DATABASE §8 `admissions_inquiries`). Seeded from
+// `mockInquiries`; further rows are appended by the anonymous `submitInquiry` action.
 type InquiryRecord = InquiryVM;
 
 // Seed by copying (not referencing) fixtures, and deep-copy each student's guardians array so
