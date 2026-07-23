@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +31,8 @@ import {
   useStudent,
   useUpdateStudent,
 } from "@/lib/queries/people";
+import { useInquiry, useSetInquiryStatus } from "@/lib/queries/inquiries";
+import { inquiryToStudentPrefill, type InquiryParentNote } from "@/lib/inquiries";
 import {
   studentCreateSchema,
   type StudentCreateInput,
@@ -76,18 +78,56 @@ interface StudentFormProps {
   mode: "create" | "edit";
   /** Required when `mode === "edit"`. */
   studentId?: string;
+  /** Create mode only — prefill this form from an accepted admissions inquiry (Convert flow). */
+  fromInquiryId?: string;
 }
 
 /**
- * One shared form for create + edit (06-UI §6 "Forms"). Only how the record is loaded and
- * where the submit routes to differ by mode — the fields are identical.
+ * One shared form for create + edit (06-UI §6 "Forms"). Only how the record is loaded and where
+ * the submit routes to differ by mode — the fields are identical. In create mode, an optional
+ * `fromInquiryId` loads an inquiry and pre-fills the fields (Admissions → Convert to student).
  */
-export function StudentForm({ mode, studentId }: StudentFormProps) {
+export function StudentForm({ mode, studentId, fromInquiryId }: StudentFormProps) {
   if (mode === "edit") {
     if (!studentId) return null;
     return <EditStudentForm studentId={studentId} />;
   }
+  if (fromInquiryId) return <CreateFromInquiryForm inquiryId={fromInquiryId} />;
   return <StudentFormFields mode="create" />;
+}
+
+/**
+ * Loads the inquiry (+ class options) being converted, then renders the shared create fields with
+ * computed prefill — mirroring EditStudentForm's load-then-render shape. On a load failure it falls
+ * back to a blank form with a toast, so Convert never dead-ends.
+ */
+function CreateFromInquiryForm({ inquiryId }: { inquiryId: string }) {
+  const { data: inquiry, isLoading: inquiryLoading, isError } = useInquiry(inquiryId);
+  const { data: classOptions, isLoading: classesLoading } = useClassOptions();
+
+  const notFound = !inquiryLoading && !isError && !inquiry;
+  const failed = isError || notFound;
+
+  useEffect(() => {
+    if (failed) {
+      toast.error("Couldn't load that inquiry", {
+        description: "Starting a blank student form instead.",
+      });
+    }
+  }, [failed]);
+
+  if (inquiryLoading || classesLoading) return <FormSkeleton />;
+  if (failed || !inquiry) return <StudentFormFields mode="create" />;
+
+  const { prefill, parentNote } = inquiryToStudentPrefill(inquiry, classOptions ?? []);
+  return (
+    <StudentFormFields
+      mode="create"
+      prefill={prefill}
+      parentNote={parentNote}
+      convertInquiryId={inquiryId}
+    />
+  );
 }
 
 /** Loads the record being edited, with its own loading/error/not-found states. */
@@ -140,9 +180,22 @@ interface StudentFormFieldsProps {
   mode: "create" | "edit";
   studentId?: string;
   initialData?: StudentDetailVM;
+  /** Create mode — override the empty defaults with values mapped from an inquiry. */
+  prefill?: Partial<StudentCreateInput>;
+  /** Create mode — when set, the linked inquiry is marked `converted` after a successful save. */
+  convertInquiryId?: string;
+  /** Create mode — inquiry parent contact shown as a read-only note by the Guardians section. */
+  parentNote?: InquiryParentNote;
 }
 
-function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsProps) {
+function StudentFormFields({
+  mode,
+  studentId,
+  initialData,
+  prefill,
+  convertInquiryId,
+  parentNote,
+}: StudentFormFieldsProps) {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -151,6 +204,7 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
   const createStudent = useCreateStudent();
   const updateStudent = useUpdateStudent();
   const linkGuardian = useLinkGuardian();
+  const setInquiryStatus = useSetInquiryStatus();
 
   // Guardians already linked (edit mode only) — shown as pre-checked + locked, since the
   // seam has no "unlink" action yet (only `useLinkGuardian`). Removing a guardian is a Unit C
@@ -179,12 +233,12 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
           guardian_ids: alreadyLinkedIds,
         }
       : {
-          first_name: "",
-          last_name: "",
+          first_name: prefill?.first_name ?? "",
+          last_name: prefill?.last_name ?? "",
           date_of_birth: "",
           gender: "male",
           admission_no: "",
-          class_id: null,
+          class_id: prefill?.class_id ?? null,
           photo_url: null,
           enrollment_status: "active",
           guardian_ids: [],
@@ -226,9 +280,23 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
       if (mode === "create") {
         const { id } = await createStudent.mutateAsync(values);
         await linkNewGuardians(id, values.guardian_ids);
-        toast.success("Student added", {
-          description: `${values.first_name} ${values.last_name} has been enrolled.`,
-        });
+        if (convertInquiryId) {
+          try {
+            await setInquiryStatus.mutateAsync({ id: convertInquiryId, status: "converted" });
+            toast.success("Student enrolled from inquiry", {
+              description: `${values.first_name} ${values.last_name} was added and the inquiry marked converted.`,
+            });
+          } catch {
+            // The inquiry wasn't in a convertible state — the student is still created; don't fail.
+            toast.success("Student added", {
+              description: `${values.first_name} ${values.last_name} was created, but the inquiry couldn't be marked converted.`,
+            });
+          }
+        } else {
+          toast.success("Student added", {
+            description: `${values.first_name} ${values.last_name} has been enrolled.`,
+          });
+        }
         router.push("/students");
       } else if (studentId) {
         await updateStudent.mutateAsync({ id: studentId, ...values });
@@ -438,6 +506,18 @@ function StudentFormFields({ mode, studentId, initialData }: StudentFormFieldsPr
         <p className="text-xs text-[var(--muted-foreground)]">
           Link one or more existing parent records to this student.
         </p>
+        {parentNote && (
+          <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm">
+            <p className="font-medium text-[var(--text)]">From inquiry — parent contact</p>
+            <p className="text-[var(--muted-foreground)]">
+              {parentNote.name} · {parentNote.email}
+              {parentNote.phone ? ` · ${parentNote.phone}` : ""}
+            </p>
+            <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+              Create this parent from the Parents page, then link them below.
+            </p>
+          </div>
+        )}
         <Controller
           control={control}
           name="guardian_ids"
