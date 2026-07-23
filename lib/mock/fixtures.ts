@@ -20,8 +20,10 @@ import type {
   StaffVM,
   AssignmentVM,
 } from "@/lib/validators/academics";
+import type { InquiryVM } from "@/lib/validators/inquiries";
 
-export const mockSidebarCounts: SidebarCountsVM = {
+// students/staff are static demo figures; new_inquiries is derived live in lib/data/sidebar.ts.
+export const mockSidebarCounts: Pick<SidebarCountsVM, "students" | "staff"> = {
   students: 248,
   staff: 32,
 };
@@ -128,6 +130,90 @@ export const mockUpcomingEvents: UpcomingEventVM[] = [
   { id: "e3", title: "Inter-House Sports", start_at: "2026-08-14T09:00:00Z", location: "School Field" },
   { id: "e4", title: "Speech and Prize-Giving Day", start_at: "2026-08-21T10:00:00Z", location: "Main Hall" },
   { id: "e5", title: "Staff Training Workshop", start_at: "2026-08-25T13:00:00Z", location: null },
+];
+
+// Marketing admissions inquiries (03-DATABASE §8). Spans every status so Admissions (Slice 4)
+// renders real variety; `desired_class` values deliberately mix real class names (Basic 1/2/3,
+// JHS 1/2 → match mockClasses) with unmatched ones (KG 2, Creche → the "unassigned" convert path).
+// Dated mid–late July 2026 to sit alongside the other dashboard fixtures. Count of `new` = 3.
+export const mockInquiries: InquiryVM[] = [
+  {
+    id: "inq-01",
+    applicant_name: "Kwame Mensah",
+    parent_name: "Grace Mensah",
+    parent_email: "grace.mensah@example.com",
+    parent_phone: "+233 24 555 1010",
+    desired_class: "JHS 1",
+    message: "We are relocating to Accra and would like to enroll our son for the coming term.",
+    status: "new",
+    created_at: "2026-07-22T08:15:00Z",
+  },
+  {
+    id: "inq-02",
+    applicant_name: "Ama Owusu",
+    parent_name: "Kofi Owusu",
+    parent_email: "kofi.owusu@example.com",
+    parent_phone: "+233 20 555 2020",
+    desired_class: "KG 2",
+    message: "Please advise on the admissions process and available places.",
+    status: "new",
+    created_at: "2026-07-21T14:40:00Z",
+  },
+  {
+    id: "inq-03",
+    applicant_name: "Yaw Boateng",
+    parent_name: "Abena Boateng",
+    parent_email: "abena.boateng@example.com",
+    parent_phone: null,
+    desired_class: "Basic 3",
+    message: null,
+    status: "new",
+    created_at: "2026-07-20T10:05:00Z",
+  },
+  {
+    id: "inq-04",
+    applicant_name: "Efua Sarpong",
+    parent_name: "Daniel Sarpong",
+    parent_email: "daniel.sarpong@example.com",
+    parent_phone: "+233 27 555 3030",
+    desired_class: "Basic 1",
+    message: "Interested in a place for our daughter. She currently attends a school in Kumasi.",
+    status: "reviewing",
+    created_at: "2026-07-18T09:30:00Z",
+  },
+  {
+    id: "inq-05",
+    applicant_name: "Nana Adjei",
+    parent_name: "Comfort Adjei",
+    parent_email: "comfort.adjei@example.com",
+    parent_phone: "+233 24 555 4040",
+    desired_class: "JHS 2",
+    message: "Following up on our visit last week — happy to proceed.",
+    status: "accepted",
+    created_at: "2026-07-15T11:20:00Z",
+  },
+  {
+    id: "inq-06",
+    applicant_name: "Adwoa Danso",
+    parent_name: "Michael Danso",
+    parent_email: "michael.danso@example.com",
+    parent_phone: "+233 20 555 5050",
+    desired_class: "Creche",
+    message: "Enquiring about crèche availability for a two-year-old.",
+    status: "rejected",
+    created_at: "2026-07-12T16:00:00Z",
+  },
+  {
+    id: "inq-07",
+    applicant_name: "Kojo Appiah",
+    parent_name: "Linda Appiah",
+    parent_email: "linda.appiah@example.com",
+    parent_phone: "+233 26 555 6060",
+    desired_class: "Basic 2",
+    message: "Thank you for the warm welcome during our tour.",
+    status: "converted",
+    created_at: "2026-07-08T13:10:00Z",
+  },
 ];
 
 // ---------------------------------------------------------------------------

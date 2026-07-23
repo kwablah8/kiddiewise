@@ -41,7 +41,7 @@ const classes: ClassRecord[] = fx.mockClasses.map((c) => ({ ...c }));
 const subjects: SubjectRecord[] = fx.mockSubjects.map((s) => ({ ...s }));
 const staff: StaffRecord[] = fx.mockStaff.map((s) => ({ ...s }));
 const classSubjects: AssignmentRecord[] = fx.mockClassSubjects.map((a) => ({ ...a }));
-const inquiries: InquiryRecord[] = [];
+const inquiries: InquiryRecord[] = fx.mockInquiries.map((i) => ({ ...i }));
 
 export const store = {
   students,
@@ -161,5 +161,9 @@ export const store = {
 
   addInquiry(rec: InquiryRecord) {
     inquiries.unshift(rec);
+  },
+  updateInquiryStatus(id: string, status: InquiryRecord["status"]) {
+    const i = inquiries.findIndex((x) => x.id === id);
+    if (i >= 0) inquiries[i] = { ...inquiries[i]!, status };
   },
 };
