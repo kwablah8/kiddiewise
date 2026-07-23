@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/app/page-header";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { StatusPill } from "@/components/data/status-pill";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
@@ -32,17 +33,10 @@ export function InquiryDetail({ id }: { id: string }) {
     }
   }
 
-  return (
-    <div className="space-y-6">
-      <Link
-        href="/admissions"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--text)]"
-      >
-        <ArrowLeft className="size-4" aria-hidden="true" />
-        Back to Admissions
-      </Link>
-
-      {isLoading ? (
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Admissions inquiry" />
         <div className={cn(cardShellClass, "space-y-4")}>
           <SkeletonBlock className="h-8 w-56" />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -52,64 +46,74 @@ export function InquiryDetail({ id }: { id: string }) {
           </div>
           <SkeletonBlock className="h-24 w-full" />
         </div>
-      ) : isError ? (
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Admissions inquiry" />
         <div className={cardShellClass}>
           <ErrorState message="Couldn't load this inquiry." onRetry={() => refetch()} />
         </div>
-      ) : !data ? (
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Inquiry not found"
+          action={
+            <Link href="/admissions" className={cn(buttonVariants({ variant: "outline" }))}>
+              Back to Admissions
+            </Link>
+          }
+        />
         <div className={cardShellClass}>
           <EmptyState
+            icon={ClipboardList}
             title="Inquiry not found"
             description="This inquiry may have been removed, or the link is incorrect."
-            action={
-              <Link href="/admissions" className={cn(buttonVariants({ variant: "outline" }))}>
-                Back to Admissions
-              </Link>
-            }
           />
         </div>
-      ) : (
-        <div className={cn(cardShellClass, "space-y-6")}>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-[22px] font-semibold tracking-tight text-[var(--text)]">
-                  {data.applicant_name}
-                </h1>
-                <StatusPill
-                  label={INQUIRY_STATUS_LABEL[data.status]}
-                  tone={inquiryStatusTone(data.status)}
-                />
-              </div>
-              <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-                Submitted {formatDate(data.created_at)}
-              </p>
-            </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={data.applicant_name}
+        subtitle={`Submitted ${formatDate(data.created_at)}`}
+        action={<StatusPill label={INQUIRY_STATUS_LABEL[data.status]} tone={inquiryStatusTone(data.status)} />}
+      />
+
+      <div className={cn(cardShellClass, "space-y-6")}>
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+          <Field label="Desired class" value={data.desired_class} />
+          <Field label="Parent / guardian" value={data.parent_name} />
+          <Field label="Email" value={data.parent_email} />
+          <Field label="Phone" value={data.parent_phone} />
+        </dl>
+
+        {data.message && (
+          <div>
+            <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">
+              Message
+            </p>
+            <p className="mt-1.5 text-sm whitespace-pre-line text-[var(--text)]">{data.message}</p>
           </div>
+        )}
 
-          <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-            <Field label="Desired class" value={data.desired_class} />
-            <Field label="Parent / guardian" value={data.parent_name} />
-            <Field label="Email" value={data.parent_email} />
-            <Field label="Phone" value={data.parent_phone} />
-          </dl>
-
-          {data.message && (
-            <div>
-              <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">
-                Message
-              </p>
-              <p className="mt-1.5 text-sm whitespace-pre-line text-[var(--text)]">{data.message}</p>
-            </div>
-          )}
-
-          <InquiryActions
-            inquiry={{ id: data.id, status: data.status }}
-            onRun={run}
-            pending={setStatus.isPending}
-          />
-        </div>
-      )}
+        <InquiryActions
+          inquiry={{ id: data.id, status: data.status }}
+          onRun={run}
+          pending={setStatus.isPending}
+        />
+      </div>
     </div>
   );
 }
