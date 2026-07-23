@@ -119,20 +119,19 @@ export function InquiriesTable() {
   return (
     <div className={cardShellClass}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter by status">
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
           {FILTERS.map((f) => {
             const active = filter === f.value;
             return (
               <button
                 key={f.value}
                 type="button"
-                role="tab"
-                aria-selected={active}
+                aria-pressed={active}
                 onClick={() => setFilter(f.value)}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition-colors",
                   active
-                    ? "bg-[var(--primary)] text-white"
+                    ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                     : "bg-[var(--bg)] text-[var(--muted-foreground)] hover:text-[var(--text)]",
                   lightFocusRingClass,
                 )}
@@ -141,7 +140,9 @@ export function InquiriesTable() {
                 <span
                   className={cn(
                     "text-xs",
-                    active ? "text-white/80" : "text-[var(--muted-foreground)]",
+                    active
+                      ? "text-[var(--primary-foreground)]/80"
+                      : "text-[var(--muted-foreground)]",
                   )}
                 >
                   {counts[f.value]}
@@ -217,7 +218,11 @@ function InquiryRowActions({ inquiry }: { inquiry: InquiryVM }) {
   }
 
   return (
-    <div onClick={(e) => e.stopPropagation()} className="flex justify-end">
+    <div
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      className="flex justify-end"
+    >
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label={`Actions for ${inquiry.applicant_name}`}
