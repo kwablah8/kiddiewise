@@ -6,13 +6,14 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { lightFocusRingClass } from "@/lib/ui";
 
-/** Section tabs within a child (Profile · Attendance). Results arrives in Slice 3. */
+/** Section tabs within a child (Profile · Attendance · Results). */
 export function ChildTabs({ childId }: { childId: string }) {
   const pathname = usePathname();
   const base = `/parent/children/${childId}`;
   const tabs = [
     { label: "Profile", href: base, exact: true },
     { label: "Attendance", href: `${base}/attendance`, exact: false },
+    { label: "Results", href: `${base}/results`, exact: false },
   ];
 
   return (
