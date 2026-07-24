@@ -1,6 +1,6 @@
 import { simulate } from "./_devState";
 import { store } from "@/lib/mock/store";
-import { deriveTeacherDashboard } from "@/lib/teacher";
+import { deriveTeacherDashboard, teacherClassIds } from "@/lib/teacher";
 import type { TeacherDashboardVM } from "@/lib/validators/teacher";
 
 const EMPTY_DASHBOARD: TeacherDashboardVM = {
@@ -22,4 +22,14 @@ export function getTeacherDashboard(teacherId: string): Promise<TeacherDashboard
     activeTerm: activeTerm ? { ...activeTerm } : null,
   });
   return simulate(vm, EMPTY_DASHBOARD);
+}
+
+export function listTeacherClasses(
+  teacherId: string,
+): Promise<{ id: string; name: string; level: string }[]> {
+  const ids = teacherClassIds(teacherId, store.classes, store.classSubjects);
+  const classes = store.classes
+    .filter((c) => ids.has(c.id))
+    .map((c) => ({ id: c.id, name: c.name, level: c.level }));
+  return simulate(classes, []);
 }
