@@ -10,6 +10,8 @@ import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
 import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
 import type { ParentAnnouncementVM } from "@/lib/validators/parent";
+import { applyAttendanceUpsert, type UpsertMeta } from "@/lib/attendance";
+import type { AttendanceStatus } from "@/lib/validators/attendance";
 
 // SEAM: in-memory only (resets on reload). Real backend replaces reads/writes in lib/data +
 // lib/actions; the store shape here mirrors the tables (students + student_guardians + profiles
@@ -95,6 +97,21 @@ export const store = {
   attendance,
   childSubjectResults,
   terminalReports,
+
+  // Attendance reads/writes (Teacher portal marks; shared with the parent view). Upsert keys on
+  // (student_id, date) — the 0007 unique constraint — via the pure helper, rebuilding in place.
+  getAttendanceFor(classId: string, date: string) {
+    return attendance.filter((r) => r.class_id === classId && r.date === date);
+  },
+  upsertAttendance(
+    entries: { student_id: string; status: AttendanceStatus }[],
+    meta: UpsertMeta,
+  ) {
+    const next = applyAttendanceUpsert(attendance, entries, meta);
+    attendance.length = 0;
+    attendance.push(...next);
+    return entries.length;
+  },
 
   addStudent(rec: StudentRecord) {
     students.unshift(rec);

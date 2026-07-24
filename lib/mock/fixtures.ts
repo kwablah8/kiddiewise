@@ -24,6 +24,7 @@ import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
 import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
 import type { ParentAnnouncementVM, AttendanceStatus } from "@/lib/validators/parent";
+import type { AttendanceRecord } from "@/lib/mock/attendance-records";
 
 // students/staff are static demo figures; new_inquiries is derived live in lib/data/sidebar.ts.
 export const mockSidebarCounts: Pick<SidebarCountsVM, "students" | "staff"> = {
@@ -1285,9 +1286,11 @@ export const mockParentAnnouncements: ParentAnnouncementVM[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Attendance (Parent portal, Slice 2). Per-child dated statuses across the active term's first
-// two weeks. Seeded for prt-01's four children so the parent view is populated. Deterministic —
-// each child has a fixed 12-day pattern (P=present, L=late, A=absent).
+// Attendance — SHARED model (Parent portal reads it; Teacher portal marks it). One rich
+// AttendanceRecord shape. Parent-child seeds: prt-01's four children across the term's first two
+// weeks (07-01..16). Teacher seeds: every student in stf-01's classes across a recent week
+// (07-20..24). Deterministic (P=present, L=late, A=absent); no (student,date) overlap between the
+// two seed sets. class_id is looked up from the student; term_id = the active term (trm-3).
 // ---------------------------------------------------------------------------
 const ATTENDANCE_DATES = [
   "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08",
@@ -1298,21 +1301,58 @@ const ATTENDANCE_STATUS: Record<string, AttendanceStatus> = {
   L: "late",
   A: "absent",
 };
-function attendanceFor(
-  studentId: string,
-  pattern: string,
-): { student_id: string; date: string; status: AttendanceStatus }[] {
+const ATTENDANCE_TERM_ID = "trm-3";
+
+function classIdOf(studentId: string): string {
+  return mockStudents.find((s) => s.id === studentId)?.class_id ?? "";
+}
+
+// Parent-child seeds: a fixed 12-day pattern per child.
+function attendanceFor(studentId: string, pattern: string): AttendanceRecord[] {
+  const classId = classIdOf(studentId);
   return pattern.split("").map((ch, i) => ({
     student_id: studentId,
+    class_id: classId,
+    term_id: ATTENDANCE_TERM_ID,
     date: ATTENDANCE_DATES[i]!,
     status: ATTENDANCE_STATUS[ch]!,
+    marked_by: "stf-01",
   }));
 }
-export const mockAttendance: { student_id: string; date: string; status: AttendanceStatus }[] = [
+
+// Teacher seeds: every student in a class across a recent school week, mostly present.
+const TEACHER_ATTENDANCE_DATES = [
+  "2026-07-20", "2026-07-21", "2026-07-22", "2026-07-23", "2026-07-24",
+];
+function classAttendance(classId: string): AttendanceRecord[] {
+  const studs = mockStudents.filter((s) => s.class_id === classId);
+  const recs: AttendanceRecord[] = [];
+  let i = 0;
+  for (const d of TEACHER_ATTENDANCE_DATES) {
+    for (const s of studs) {
+      const status: AttendanceStatus = i % 11 === 0 ? "absent" : i % 7 === 0 ? "late" : "present";
+      recs.push({
+        student_id: s.id,
+        class_id: classId,
+        term_id: ATTENDANCE_TERM_ID,
+        date: d,
+        status,
+        marked_by: "stf-01",
+      });
+      i++;
+    }
+  }
+  return recs;
+}
+
+export const mockAttendance: AttendanceRecord[] = [
   ...attendanceFor("stu-01", "PPPLPPAPPPPP"), // 10 present, 1 late, 1 absent → 92%
   ...attendanceFor("stu-02", "PPPPPPPPPPPP"), // all present → 100%
   ...attendanceFor("stu-13", "PAPPLPAPPLPA"), // 7 present, 2 late, 3 absent → 75%
   ...attendanceFor("stu-14", "PPLPPPPPLPPP"), // 10 present, 2 late → 100%
+  ...classAttendance("cls-1"),
+  ...classAttendance("cls-3"),
+  ...classAttendance("cls-5"),
 ];
 
 // ---------------------------------------------------------------------------
