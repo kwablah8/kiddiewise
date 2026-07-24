@@ -38,4 +38,12 @@ export const queryKeys = {
     all: ["inquiries"] as const,
     detail: (id: string) => ["inquiries", id] as const,
   },
+  grading: {
+    bands: ["grading", "bands"] as const,
+    types: ["grading", "types"] as const,
+  },
+  assessments: {
+    list: (filters: unknown) => ["assessments", "list", filters] as const,
+    detail: (id: string) => ["assessments", id] as const,
+  },
 } as const;

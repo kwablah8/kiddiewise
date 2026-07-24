@@ -2,6 +2,8 @@ import * as fx from "./fixtures";
 import type { StudentListItemVM, ParentListItemVM, GuardianVM } from "@/lib/validators/people";
 import type { AcademicYearVM, TermVM, ClassVM, SubjectVM, StaffVM, AssignmentVM } from "@/lib/validators/academics";
 import type { InquiryVM } from "@/lib/validators/inquiries";
+import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
+import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
 
 // SEAM: in-memory only (resets on reload). Real backend replaces reads/writes in lib/data +
 // lib/actions; the store shape here mirrors the tables (students + student_guardians + profiles
@@ -24,6 +26,8 @@ type AssignmentRecord = Omit<AssignmentVM, "class_name" | "subject_name" | "teac
 // Marketing Admissions/Contact inquiries (03-DATABASE §8 `admissions_inquiries`). Seeded from
 // `mockInquiries`; further rows are appended by the anonymous `submitInquiry` action.
 type InquiryRecord = InquiryVM;
+type GradeBandRecord = GradeBandVM;
+type AssessmentTypeRecord = AssessmentTypeVM;
 
 // Seed by copying (not referencing) fixtures, and deep-copy each student's guardians array so
 // mutations never leak back into the shared fixture module.
@@ -42,6 +46,11 @@ const subjects: SubjectRecord[] = fx.mockSubjects.map((s) => ({ ...s }));
 const staff: StaffRecord[] = fx.mockStaff.map((s) => ({ ...s }));
 const classSubjects: AssignmentRecord[] = fx.mockClassSubjects.map((a) => ({ ...a }));
 const inquiries: InquiryRecord[] = fx.mockInquiries.map((i) => ({ ...i }));
+const gradeBands: GradeBandRecord[] = fx.mockGradeBands.map((b) => ({ ...b }));
+const assessmentTypes: AssessmentTypeRecord[] = fx.mockAssessmentTypes.map((t) => ({ ...t }));
+// Assessments + results (read-only oversight). Seeded in Task 4; empty here so assessmentTypeInUse compiles.
+const assessments: AssessmentRecord[] = [];
+const results: ResultRecord[] = [];
 
 export const store = {
   students,
@@ -165,5 +174,43 @@ export const store = {
   updateInquiryStatus(id: string, status: InquiryRecord["status"]) {
     const i = inquiries.findIndex((x) => x.id === id);
     if (i >= 0) inquiries[i] = { ...inquiries[i]!, status };
+  },
+
+  // ---- Grading + assessments -------------------------------------------------
+
+  gradeBands,
+  assessmentTypes,
+  assessments,
+  results,
+
+  addGradeBand(rec: GradeBandRecord) {
+    gradeBands.unshift(rec);
+  },
+  updateGradeBand(id: string, patch: Partial<GradeBandRecord>) {
+    const i = gradeBands.findIndex((b) => b.id === id);
+    if (i >= 0) gradeBands[i] = { ...gradeBands[i]!, ...patch };
+  },
+  deleteGradeBand(id: string) {
+    const i = gradeBands.findIndex((b) => b.id === id);
+    if (i >= 0) gradeBands.splice(i, 1);
+  },
+
+  assessmentTypeNameExists(name: string, exceptId?: string) {
+    const needle = name.trim().toLowerCase();
+    return assessmentTypes.some((t) => t.name.trim().toLowerCase() === needle && t.id !== exceptId);
+  },
+  assessmentTypeInUse(id: string) {
+    return assessments.some((a) => a.assessment_type_id === id);
+  },
+  addAssessmentType(rec: AssessmentTypeRecord) {
+    assessmentTypes.unshift(rec);
+  },
+  updateAssessmentType(id: string, patch: Partial<AssessmentTypeRecord>) {
+    const i = assessmentTypes.findIndex((t) => t.id === id);
+    if (i >= 0) assessmentTypes[i] = { ...assessmentTypes[i]!, ...patch };
+  },
+  deleteAssessmentType(id: string) {
+    const i = assessmentTypes.findIndex((t) => t.id === id);
+    if (i >= 0) assessmentTypes.splice(i, 1);
   },
 };

@@ -21,6 +21,7 @@ import type {
   AssignmentVM,
 } from "@/lib/validators/academics";
 import type { InquiryVM } from "@/lib/validators/inquiries";
+import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
 
 // students/staff are static demo figures; new_inquiries is derived live in lib/data/sidebar.ts.
 export const mockSidebarCounts: Pick<SidebarCountsVM, "students" | "staff"> = {
@@ -402,6 +403,23 @@ export const mockClassSubjects: AssignmentFixture[] = [
   { id: "as-19", class_id: "cls-6", subject_id: "sub-02", teacher_id: "stf-03" },
   { id: "as-20", class_id: "cls-6", subject_id: "sub-07", teacher_id: "stf-05" },
   { id: "as-21", class_id: "cls-6", subject_id: "sub-06", teacher_id: null },
+];
+
+// Grading scale — percentage bands, contiguous, covering 0–100 (A/B/C/D/E/F). Editable by the admin.
+export const mockGradeBands: GradeBandVM[] = [
+  { id: "gb-01", min_score: 80, max_score: 100, grade: "A", remark: "Excellent" },
+  { id: "gb-02", min_score: 70, max_score: 79, grade: "B", remark: "Very Good" },
+  { id: "gb-03", min_score: 60, max_score: 69, grade: "C", remark: "Good" },
+  { id: "gb-04", min_score: 50, max_score: 59, grade: "D", remark: "Credit" },
+  { id: "gb-05", min_score: 40, max_score: 49, grade: "E", remark: "Pass" },
+  { id: "gb-06", min_score: 0, max_score: 39, grade: "F", remark: "Fail" },
+];
+
+// Assessment types — weights sum to 100 (Class Test 20 + Mid-Term 30 + End-of-Term 50).
+export const mockAssessmentTypes: AssessmentTypeVM[] = [
+  { id: "atype-01", name: "Class Test", weight: 20 },
+  { id: "atype-02", name: "Mid-Term Exam", weight: 30 },
+  { id: "atype-03", name: "End-of-Term Exam", weight: 50 },
 ];
 
 // ---------------------------------------------------------------------------
