@@ -26,9 +26,13 @@ export function ChildSwitcher() {
 
   if (children.length === 0) return null;
 
+  // Maps each id → display name so the trigger shows "Kwame Asante", not the raw "stu-01".
+  const items = Object.fromEntries(children.map((c) => [c.id, `${c.first_name} ${c.last_name}`]));
+
   return (
     <Select
       value={activeChildId(pathname)}
+      items={items}
       onValueChange={(id) => {
         if (typeof id === "string") router.push(`/parent/children/${id}`);
       }}
