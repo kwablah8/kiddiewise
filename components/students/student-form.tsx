@@ -378,6 +378,14 @@ function StudentFormFields({
 
   async function onSubmit(values: StudentCreateInput) {
     setSubmitError(null);
+    // Guard the inline new guardian's email client-side: newGuardianSchema doesn't enforce `.email()`
+    // (its fields are all optional), but createParent (parentCreateSchema) does — so an invalid
+    // address would otherwise reach the action and surface as a raw ZodError banner. Show it inline.
+    const ng = values.new_guardian;
+    if (ng?.first_name && ng?.last_name && ng?.email && !z.string().email().safeParse(ng.email).success) {
+      setError("new_guardian.email", { type: "manual", message: "Enter a valid email" });
+      return;
+    }
     try {
       if (mode === "create") {
         const { id } = await createStudent.mutateAsync(values);
