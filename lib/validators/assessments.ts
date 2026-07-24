@@ -37,3 +37,15 @@ export interface AssessmentFilters {
   class_id?: string;
   subject_id?: string;
 }
+
+export const assessmentCreateSchema = z.object({
+  class_id: z.string().min(1, "Select a class"),
+  subject_id: z.string().min(1, "Select a subject"),
+  term_id: z.string().min(1, "Select a term"),
+  assessment_type_id: z.string().min(1, "Select a type"),
+  title: z.string().min(1, "Required"),
+  max_score: z.coerce.number().positive("Must be greater than 0"),
+  // Native date input yields "" when empty → store null (the column is nullable).
+  date: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable()),
+});
+export type AssessmentCreateInput = z.infer<typeof assessmentCreateSchema>;

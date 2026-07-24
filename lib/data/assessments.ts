@@ -63,3 +63,16 @@ export function getAssessment(id: string): Promise<AssessmentDetailVM | null> {
     .sort((a, b) => b.score - a.score);
   return simulate({ ...base, results }, null);
 }
+
+// Teacher-scoped list: assessments whose (class_id, subject_id) is one of the teacher's class_subjects.
+export function listTeacherAssessments(teacherId: string): Promise<AssessmentListItemVM[]> {
+  const mine = new Set(
+    store.classSubjects
+      .filter((cs) => cs.teacher_id === teacherId)
+      .map((cs) => `${cs.class_id}:${cs.subject_id}`),
+  );
+  const result = store.assessments
+    .filter((a) => mine.has(`${a.class_id}:${a.subject_id}`))
+    .map(toListItemVM);
+  return simulate(result, []);
+}

@@ -46,6 +46,7 @@ export const queryKeys = {
   assessments: {
     list: (filters: unknown) => ["assessments", "list", filters] as const,
     detail: (id: string) => ["assessments", id] as const,
+    mine: (teacherId: string) => ["assessments", "mine", teacherId] as const,
   },
   teacher: {
     dashboard: (teacherId: string) => ["teacher", "dashboard", teacherId] as const,

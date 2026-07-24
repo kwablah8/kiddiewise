@@ -263,6 +263,10 @@ export const store = {
   assessmentTypeInUse(id: string) {
     return assessments.some((a) => a.assessment_type_id === id);
   },
+  // Teacher creates an assessment (Slice 3a). New assessments have no results yet.
+  addAssessment(rec: AssessmentRecord) {
+    assessments.unshift(rec);
+  },
   addAssessmentType(rec: AssessmentTypeRecord) {
     assessmentTypes.unshift(rec);
   },
