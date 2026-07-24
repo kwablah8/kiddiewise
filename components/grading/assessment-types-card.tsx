@@ -56,9 +56,11 @@ export function AssessmentTypesCard() {
       ) : (
         <>
           <DataTable columns={columns} data={data ?? []} getRowId={(r) => r.id} isLoading={isLoading} pageSize={12} />
-          <p className={`mt-3 text-xs ${total === 100 ? "text-[var(--muted-foreground)]" : "text-[var(--warning-fg)]"}`}>
-            {total === 100 ? "Weights total 100%." : `⚠ Weights total ${total}% — should be 100%.`}
-          </p>
+          {!isLoading && (
+            <p className={`mt-3 text-xs ${total === 100 ? "text-[var(--muted-foreground)]" : "text-[var(--warning-fg)]"}`}>
+              {total === 100 ? "Weights total 100%." : `⚠ Weights total ${total}% — should be 100%.`}
+            </p>
+          )}
         </>
       )}
 
