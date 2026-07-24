@@ -7,7 +7,8 @@ import { FeesFilters } from "@/components/fees/fees-filters";
 import { FeesOverview } from "@/components/fees/fees-overview";
 import { FeeStructureTab } from "@/components/fees/fee-structure-tab";
 import { PaymentHistoryTab } from "@/components/fees/payment-history-tab";
-import { FeesComingSoon } from "@/components/fees/fees-coming-soon";
+import { ClassFeesTab } from "@/components/fees/class-fees-tab";
+import { ExtraFeesTab } from "@/components/fees/extra-fees-tab";
 import type { FeesFilter } from "@/lib/validators/fees";
 
 export default function FeesPage() {
@@ -26,18 +27,8 @@ export default function FeesPage() {
 
       {tab === "overview" && <FeesOverview filter={filter} />}
       {tab === "structure" && <FeeStructureTab filter={filter} />}
-      {tab === "class" && (
-        <FeesComingSoon
-          title="Class Fees"
-          description="Bulk-assign fees to a class, with scholarships and discounts. Coming next."
-        />
-      )}
-      {tab === "extra" && (
-        <FeesComingSoon
-          title="Extra Fees"
-          description="Create extra-fee structures, assign them to students, and manage fee types. Coming next."
-        />
-      )}
+      {tab === "class" && <ClassFeesTab filter={filter} />}
+      {tab === "extra" && <ExtraFeesTab filter={filter} />}
       {tab === "payments" && <PaymentHistoryTab filter={filter} />}
     </div>
   );
