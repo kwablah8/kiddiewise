@@ -41,17 +41,14 @@ export function applyAttendanceUpsert(
   entries: { student_id: string; status: AttendanceStatus }[],
   meta: UpsertMeta,
 ): AttendanceRecord[] {
-  const next = existing.map((r) => ({ ...r }));
+  const next = existing.map((r) => ({ ...r })); // copies — mutating these never touches `existing`
   for (const e of entries) {
-    const idx = next.findIndex((r) => r.student_id === e.student_id && r.date === meta.date);
-    if (idx >= 0) {
-      next[idx] = {
-        ...next[idx],
-        status: e.status,
-        class_id: meta.class_id,
-        term_id: meta.term_id,
-        marked_by: meta.marked_by,
-      };
+    const target = next.find((r) => r.student_id === e.student_id && r.date === meta.date);
+    if (target) {
+      target.status = e.status;
+      target.class_id = meta.class_id;
+      target.term_id = meta.term_id;
+      target.marked_by = meta.marked_by;
     } else {
       next.push({
         student_id: e.student_id,

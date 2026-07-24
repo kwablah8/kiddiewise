@@ -20,6 +20,18 @@ export interface StudentInput {
   class_id: string | null; // null = not currently enrolled in a class
 }
 
+/** Classes a teacher owns: classes they're the class teacher of ∪ classes they teach a subject in. */
+export function teacherClassIds(
+  teacherId: string,
+  classes: Pick<ClassInput, "id" | "class_teacher_id">[],
+  assignments: Pick<AssignmentInput, "class_id" | "teacher_id">[],
+): Set<string> {
+  const ids = new Set<string>();
+  for (const c of classes) if (c.class_teacher_id === teacherId) ids.add(c.id);
+  for (const a of assignments) if (a.teacher_id === teacherId) ids.add(a.class_id);
+  return ids;
+}
+
 /**
  * Derive a teacher's dashboard from academic data. "My classes" = classes I'm the class teacher of ∪
  * classes I teach a subject in (same union as lib/data/academics.ts#toStaffVM). Read-only this slice:
@@ -36,10 +48,7 @@ export function deriveTeacherDashboard(params: {
   const { teacherId, classes, assignments, subjects, students, activeTerm } = params;
 
   const myAssignments = assignments.filter((a) => a.teacher_id === teacherId);
-
-  const myClassIds = new Set<string>();
-  for (const c of classes) if (c.class_teacher_id === teacherId) myClassIds.add(c.id);
-  for (const a of myAssignments) myClassIds.add(a.class_id);
+  const myClassIds = teacherClassIds(teacherId, classes, assignments);
 
   const studentCountByClass = new Map<string, number>();
   for (const s of students) {
