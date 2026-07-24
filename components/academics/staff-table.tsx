@@ -19,9 +19,14 @@ const columns: DataTableColumn<StaffVM>[] = [
     render: (row) => (
       <div className="flex items-center gap-2.5">
         <StaffAvatar firstName={row.first_name} lastName={row.last_name} size="sm" />
-        <span className="font-medium text-[var(--text)]">
-          {row.first_name} {row.last_name}
-        </span>
+        <div className="min-w-0">
+          <p className="font-medium text-[var(--text)]">
+            {row.first_name} {row.last_name}
+          </p>
+          {row.position && (
+            <p className="truncate text-xs text-[var(--muted-foreground)]">{row.position}</p>
+          )}
+        </div>
       </div>
     ),
   },
@@ -29,6 +34,15 @@ const columns: DataTableColumn<StaffVM>[] = [
     key: "staff_no",
     header: "Staff No.",
     render: (row) => <span className="font-medium">{row.staff_no}</span>,
+  },
+  {
+    key: "role",
+    header: "Role",
+    render: (row) => (
+      <span className="inline-flex rounded-full bg-[var(--bg)] px-2.5 py-0.5 text-xs font-medium text-[var(--text)]">
+        {row.role === "teacher" ? "Teacher" : "Administrator"}
+      </span>
+    ),
   },
   {
     key: "email",

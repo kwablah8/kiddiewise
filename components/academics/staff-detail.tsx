@@ -12,8 +12,13 @@ import { ErrorState } from "@/components/states/error-state";
 import { StaffAvatar } from "./staff-avatar";
 import { StaffFormDialog } from "./staff-form";
 import { useAssignmentsForStaff, useClasses, useStaffMember } from "@/lib/queries/academics";
+import type { StaffRole } from "@/lib/validators/academics";
+import { formatDate } from "@/lib/format";
 import { cardShellClass } from "@/lib/ui";
 import { cn } from "@/lib/utils";
+
+const GENDER_LABEL: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
+const roleLabel = (role: StaffRole) => (role === "teacher" ? "Teacher" : "Administrator");
 
 interface StaffDetailProps {
   id: string;
@@ -66,7 +71,7 @@ export function StaffDetail({ id }: StaffDetailProps) {
     <div className="space-y-6">
       <PageHeader
         title={fullName}
-        subtitle={`${data.staff_no}${data.department ? ` · ${data.department}` : " · No Department"}`}
+        subtitle={`${roleLabel(data.role)} · ${data.staff_no}${data.department ? ` · ${data.department}` : ""}`}
         action={
           <Button
             type="button"
@@ -97,17 +102,44 @@ export function StaffDetail({ id }: StaffDetailProps) {
 
           <dl className="mt-6 space-y-4">
             <DetailItem label="Staff No." value={data.staff_no} />
-            <DetailItem label="Email" value={data.email} />
-            <DetailItem label="Phone" value={data.phone ?? "—"} muted={!data.phone} />
+            <DetailItem label="Role" value={roleLabel(data.role)} />
+            <DetailItem label="Position" value={data.position ?? "—"} muted={!data.position} />
             <DetailItem
               label="Department"
               value={data.department ?? "No Department"}
               muted={!data.department}
             />
+            <DetailItem label="Email" value={data.email} />
+            <DetailItem label="Phone" value={data.phone ?? "—"} muted={!data.phone} />
+            <DetailItem
+              label="Gender"
+              value={data.gender ? (GENDER_LABEL[data.gender] ?? data.gender) : "—"}
+              muted={!data.gender}
+            />
+            <DetailItem
+              label="Date of birth"
+              value={data.date_of_birth ? formatDate(data.date_of_birth) : "—"}
+              muted={!data.date_of_birth}
+            />
+            <DetailItem
+              label="Employment date"
+              value={data.hire_date ? formatDate(data.hire_date) : "—"}
+              muted={!data.hire_date}
+            />
+            <DetailItem
+              label="Qualification"
+              value={data.qualification ?? "—"}
+              muted={!data.qualification}
+            />
           </dl>
         </section>
 
-        <AssignedPanel staffId={id} classCount={data.class_count} subjectCount={data.subject_count} />
+        <AssignedPanel
+          staffId={id}
+          role={data.role}
+          classCount={data.class_count}
+          subjectCount={data.subject_count}
+        />
       </div>
 
       <StaffFormDialog key={editKey} mode="edit" staffId={id} open={editOpen} onOpenChange={setEditOpen} />
@@ -122,10 +154,12 @@ export function StaffDetail({ id }: StaffDetailProps) {
  */
 function AssignedPanel({
   staffId,
+  role,
   classCount,
   subjectCount,
 }: {
   staffId: string;
+  role: StaffRole;
   classCount: number;
   subjectCount: number;
 }) {
@@ -170,7 +204,11 @@ function AssignedPanel({
           <EmptyState
             icon={BookOpen}
             title="No classes or subjects assigned yet"
-            description="Assign this teacher to a class or subject from a class's Assignments panel."
+            description={
+              role === "teacher"
+                ? "Assign this teacher to a class or subject from a class's Assignments panel."
+                : "Only teaching staff are assigned classes and subjects."
+            }
           />
         ) : (
           <>
