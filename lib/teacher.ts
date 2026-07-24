@@ -17,7 +17,7 @@ export interface SubjectInput {
   name: string;
 }
 export interface StudentInput {
-  class_id: string;
+  class_id: string | null; // null = not currently enrolled in a class
 }
 
 /**
@@ -43,7 +43,7 @@ export function deriveTeacherDashboard(params: {
 
   const studentCountByClass = new Map<string, number>();
   for (const s of students) {
-    if (myClassIds.has(s.class_id)) {
+    if (s.class_id !== null && myClassIds.has(s.class_id)) {
       studentCountByClass.set(s.class_id, (studentCountByClass.get(s.class_id) ?? 0) + 1);
     }
   }

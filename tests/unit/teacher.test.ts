@@ -55,6 +55,11 @@ describe("deriveTeacherDashboard", () => {
     expect(vm.recentActivities).toEqual([]);
     expect(vm.activeTerm?.name).toBe("Third Term");
   });
+  it("ignores students not enrolled in a class (null class_id)", () => {
+    const withUnenrolled = [...students, { class_id: null }, { class_id: null }];
+    const vm = deriveTeacherDashboard({ teacherId: "stf-01", classes, assignments, subjects, students: withUnenrolled, activeTerm });
+    expect(vm.totals.students).toBe(14); // unenrolled students are not counted
+  });
   it("returns an all-empty dashboard for a teacher with no assignments", () => {
     const vm = deriveTeacherDashboard({ teacherId: "stf-99", classes, assignments, subjects, students, activeTerm: null });
     expect(vm.totals).toEqual({ classes: 0, subjects: 0, students: 0, attendanceRate: null });
