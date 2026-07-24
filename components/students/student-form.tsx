@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type ComponentProps } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,9 +31,11 @@ import {
   useStudent,
   useUpdateStudent,
 } from "@/lib/queries/people";
+import { useAcademicYears, useTerms } from "@/lib/queries/academics";
 import { useInquiry, useSetInquiryStatus } from "@/lib/queries/inquiries";
 import { inquiryToStudentPrefill, type InquiryParentNote } from "@/lib/inquiries";
 import {
+  bloodGroup,
   studentCreateSchema,
   type StudentCreateInput,
   type StudentDetailVM,
@@ -56,6 +58,15 @@ const STATUS_OPTIONS = [
   { value: "transferred", label: "Transferred" },
 ] as const;
 
+const BLOOD_GROUP_OPTIONS = bloodGroup.options.map((value) => ({ value, label: value }));
+
+const RELATIONSHIP_OPTIONS = [
+  { value: "mother", label: "Mother" },
+  { value: "father", label: "Father" },
+  { value: "guardian", label: "Guardian" },
+  { value: "other", label: "Other" },
+] as const;
+
 // Sentinel for the Select's "no class" row — the field itself stores `null`, but base-ui
 // Select items need a concrete string value to compare against.
 const NONE_VALUE = "__none__";
@@ -66,6 +77,20 @@ const NONE_VALUE = "__none__";
 // the label up ourselves sidesteps that timing dependency entirely.
 function labelFor(options: readonly { value: string; label: string }[], value: string): string {
   return options.find((o) => o.value === value)?.label ?? value;
+}
+
+/** Free-text textarea matching `Input`'s token-based styling — no shared ui/textarea primitive exists yet. */
+function FieldTextarea({ className, ...props }: ComponentProps<"textarea">) {
+  return (
+    <textarea
+      data-slot="textarea"
+      className={cn(
+        "min-h-16 w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 resize-y dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 // `studentCreateSchema` has `.default()`s on `enrollment_status`/`guardian_ids`, so its input
@@ -80,6 +105,10 @@ interface StudentFormProps {
   studentId?: string;
   /** Create mode only — prefill this form from an accepted admissions inquiry (Convert flow). */
   fromInquiryId?: string;
+  /** Called instead of navigating after a successful save (e.g. to close a hosting Sheet). */
+  onDone?: () => void;
+  /** "embedded" drops the outer card wrapper so the form sits flush inside a Sheet. */
+  variant?: "page" | "embedded";
 }
 
 /**
@@ -87,13 +116,21 @@ interface StudentFormProps {
  * the submit routes to differ by mode — the fields are identical. In create mode, an optional
  * `fromInquiryId` loads an inquiry and pre-fills the fields (Admissions → Convert to student).
  */
-export function StudentForm({ mode, studentId, fromInquiryId }: StudentFormProps) {
+export function StudentForm({
+  mode,
+  studentId,
+  fromInquiryId,
+  onDone,
+  variant = "page",
+}: StudentFormProps) {
   if (mode === "edit") {
     if (!studentId) return null;
-    return <EditStudentForm studentId={studentId} />;
+    return <EditStudentForm studentId={studentId} onDone={onDone} variant={variant} />;
   }
-  if (fromInquiryId) return <CreateFromInquiryForm inquiryId={fromInquiryId} />;
-  return <StudentFormFields mode="create" />;
+  if (fromInquiryId) {
+    return <CreateFromInquiryForm inquiryId={fromInquiryId} onDone={onDone} variant={variant} />;
+  }
+  return <StudentFormFields mode="create" onDone={onDone} variant={variant} />;
 }
 
 /**
@@ -101,7 +138,15 @@ export function StudentForm({ mode, studentId, fromInquiryId }: StudentFormProps
  * computed prefill — mirroring EditStudentForm's load-then-render shape. On a load failure it falls
  * back to a blank form with a toast, so Convert never dead-ends.
  */
-function CreateFromInquiryForm({ inquiryId }: { inquiryId: string }) {
+function CreateFromInquiryForm({
+  inquiryId,
+  onDone,
+  variant = "page",
+}: {
+  inquiryId: string;
+  onDone?: () => void;
+  variant?: "page" | "embedded";
+}) {
   const { data: inquiry, isLoading: inquiryLoading, isError } = useInquiry(inquiryId);
   const { data: classOptions, isLoading: classesLoading } = useClassOptions();
 
@@ -116,8 +161,8 @@ function CreateFromInquiryForm({ inquiryId }: { inquiryId: string }) {
     }
   }, [failed]);
 
-  if (inquiryLoading || classesLoading) return <FormSkeleton />;
-  if (failed || !inquiry) return <StudentFormFields mode="create" />;
+  if (inquiryLoading || classesLoading) return <FormSkeleton variant={variant} />;
+  if (failed || !inquiry) return <StudentFormFields mode="create" onDone={onDone} variant={variant} />;
 
   const { prefill, parentNote } = inquiryToStudentPrefill(inquiry, classOptions ?? []);
   return (
@@ -126,46 +171,60 @@ function CreateFromInquiryForm({ inquiryId }: { inquiryId: string }) {
       prefill={prefill}
       parentNote={parentNote}
       convertInquiryId={inquiryId}
+      onDone={onDone}
+      variant={variant}
     />
   );
 }
 
 /** Loads the record being edited, with its own loading/error/not-found states. */
-function EditStudentForm({ studentId }: { studentId: string }) {
+function EditStudentForm({
+  studentId,
+  onDone,
+  variant = "page",
+}: {
+  studentId: string;
+  onDone?: () => void;
+  variant?: "page" | "embedded";
+}) {
   const { data, isLoading, isError, refetch } = useStudent(studentId);
 
-  if (isLoading) return <FormSkeleton />;
+  if (isLoading) return <FormSkeleton variant={variant} />;
 
   if (isError) {
-    return (
-      <div className={cardShellClass}>
-        <ErrorState message="Couldn't load this student." onRetry={() => refetch()} />
-      </div>
-    );
+    const content = <ErrorState message="Couldn't load this student." onRetry={() => refetch()} />;
+    return variant === "embedded" ? content : <div className={cardShellClass}>{content}</div>;
   }
 
   if (!data) {
-    return (
-      <div className={cardShellClass}>
-        <EmptyState
-          title="Student not found"
-          description="This student may have been removed, or the link is incorrect."
-          action={
-            <Link href="/students" className={cn(buttonVariants({ variant: "outline" }))}>
-              Back to Students
-            </Link>
-          }
-        />
-      </div>
+    const content = (
+      <EmptyState
+        title="Student not found"
+        description="This student may have been removed, or the link is incorrect."
+        action={
+          <Link href="/students" className={cn(buttonVariants({ variant: "outline" }))}>
+            Back to Students
+          </Link>
+        }
+      />
     );
+    return variant === "embedded" ? content : <div className={cardShellClass}>{content}</div>;
   }
 
-  return <StudentFormFields mode="edit" studentId={studentId} initialData={data} />;
+  return (
+    <StudentFormFields
+      mode="edit"
+      studentId={studentId}
+      initialData={data}
+      onDone={onDone}
+      variant={variant}
+    />
+  );
 }
 
-function FormSkeleton() {
-  return (
-    <div className={cn(cardShellClass, "space-y-6")}>
+function FormSkeleton({ variant = "page" }: { variant?: "page" | "embedded" }) {
+  const skeleton = (
+    <div className="space-y-6">
       <SkeletonBlock className="h-14 w-14 rounded-full" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -174,6 +233,7 @@ function FormSkeleton() {
       </div>
     </div>
   );
+  return variant === "embedded" ? skeleton : <div className={cardShellClass}>{skeleton}</div>;
 }
 
 interface StudentFormFieldsProps {
@@ -186,6 +246,10 @@ interface StudentFormFieldsProps {
   convertInquiryId?: string;
   /** Create mode — inquiry parent contact shown as a read-only note by the Guardians section. */
   parentNote?: InquiryParentNote;
+  /** Called instead of navigating after a successful save (e.g. to close a hosting Sheet). */
+  onDone?: () => void;
+  /** "embedded" drops the outer card wrapper so the form sits flush inside a Sheet. */
+  variant?: "page" | "embedded";
 }
 
 function StudentFormFields({
@@ -195,12 +259,15 @@ function StudentFormFields({
   prefill,
   convertInquiryId,
   parentNote,
+  onDone,
+  variant = "page",
 }: StudentFormFieldsProps) {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const { data: classOptions, isLoading: classesLoading } = useClassOptions();
   const { data: parents, isLoading: parentsLoading } = useParents();
+  const { data: academicYears, isLoading: yearsLoading } = useAcademicYears();
   const createStudent = useCreateStudent();
   const updateStudent = useUpdateStudent();
   const linkGuardian = useLinkGuardian();
@@ -231,6 +298,22 @@ function StudentFormFields({
           photo_url: initialData.photo_url,
           enrollment_status: initialData.enrollment_status,
           guardian_ids: alreadyLinkedIds,
+          other_names: initialData.other_names,
+          blood_group: initialData.blood_group,
+          enrollment_date: initialData.enrollment_date,
+          medical_conditions: initialData.medical_conditions,
+          allergies: initialData.allergies,
+          prev_school_name: initialData.prev_school_name,
+          prev_class_ended: initialData.prev_class_ended,
+          prev_average_score: initialData.prev_average_score,
+          prev_year_attended: initialData.prev_year_attended,
+          email: initialData.email,
+          phone: initialData.phone,
+          address: initialData.address,
+          city: initialData.city,
+          town: initialData.town,
+          initial_academic_year_id: initialData.initial_academic_year_id,
+          initial_term_id: initialData.initial_term_id,
         }
       : {
           first_name: prefill?.first_name ?? "",
@@ -242,6 +325,23 @@ function StudentFormFields({
           photo_url: null,
           enrollment_status: "active",
           guardian_ids: [],
+          other_names: null,
+          blood_group: null,
+          enrollment_date: null,
+          medical_conditions: null,
+          allergies: null,
+          prev_school_name: null,
+          prev_class_ended: null,
+          prev_average_score: null,
+          prev_year_attended: null,
+          email: null,
+          phone: null,
+          address: null,
+          city: null,
+          town: null,
+          initial_academic_year_id: null,
+          initial_term_id: null,
+          new_guardian: null,
         },
   });
 
@@ -250,6 +350,8 @@ function StudentFormFields({
   const firstName = useWatch({ control, name: "first_name" });
   const lastName = useWatch({ control, name: "last_name" });
   const photoUrl = useWatch({ control, name: "photo_url" });
+  const selectedYearId = useWatch({ control, name: "initial_academic_year_id" });
+  const { data: terms, isLoading: termsLoading } = useTerms(selectedYearId ?? undefined);
 
   function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -301,14 +403,16 @@ function StudentFormFields({
             description: `${values.first_name} ${values.last_name} has been enrolled.`,
           });
         }
-        router.push("/students");
+        if (onDone) onDone();
+        else router.push("/students");
       } else if (studentId) {
         await updateStudent.mutateAsync({ id: studentId, ...values });
         await linkNewGuardians(studentId, values.guardian_ids);
         toast.success("Student updated", {
           description: `Changes to ${values.first_name} ${values.last_name} have been saved.`,
         });
-        router.push(`/students/${studentId}`);
+        if (onDone) onDone();
+        else router.push(`/students/${studentId}`);
       }
     } catch (err) {
       const message =
@@ -328,7 +432,7 @@ function StudentFormFields({
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className={cn(cardShellClass, "space-y-8")}
+      className={cn(variant === "page" && cardShellClass, "space-y-8")}
     >
       <section className="flex items-center gap-4">
         <StudentAvatar
@@ -375,6 +479,18 @@ function StudentFormFields({
             )}
           </div>
           <div className="space-y-1.5">
+            <Label htmlFor="other_names">Other names</Label>
+            <Input
+              id="other_names"
+              placeholder="Optional"
+              aria-invalid={!!errors.other_names}
+              {...register("other_names", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.other_names && (
+              <p className="text-xs text-[var(--danger)]">{errors.other_names.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
             <Label htmlFor="date_of_birth">Date of birth</Label>
             <Input
               id="date_of_birth"
@@ -412,6 +528,54 @@ function StudentFormFields({
               <p className="text-xs text-[var(--danger)]">{errors.gender.message}</p>
             )}
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="blood_group">Blood group</Label>
+            <Controller
+              control={control}
+              name="blood_group"
+              render={({ field }) => (
+                <Select
+                  value={field.value ?? NONE_VALUE}
+                  onValueChange={(v) => field.onChange(v === NONE_VALUE ? null : v)}
+                >
+                  <SelectTrigger
+                    id="blood_group"
+                    className="w-full"
+                    aria-invalid={!!errors.blood_group}
+                  >
+                    <SelectValue placeholder="Select blood group">
+                      {(v: string) =>
+                        v === NONE_VALUE ? "None" : labelFor(BLOOD_GROUP_OPTIONS, v)
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE_VALUE}>None</SelectItem>
+                    {BLOOD_GROUP_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.blood_group && (
+              <p className="text-xs text-[var(--danger)]">{errors.blood_group.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="enrollment_date">Enrollment date</Label>
+            <Input
+              id="enrollment_date"
+              type="date"
+              aria-invalid={!!errors.enrollment_date}
+              {...register("enrollment_date", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.enrollment_date && (
+              <p className="text-xs text-[var(--danger)]">{errors.enrollment_date.message}</p>
+            )}
+          </div>
         </div>
       </section>
 
@@ -422,6 +586,7 @@ function StudentFormFields({
             <Label htmlFor="admission_no">Admission No.</Label>
             <Input
               id="admission_no"
+              placeholder="Auto-generated if left empty"
               aria-invalid={!!errors.admission_no}
               {...register("admission_no")}
             />
@@ -505,6 +670,149 @@ function StudentFormFields({
         </div>
       </section>
 
+      <section className="space-y-4">
+        <h3 className="text-sm font-semibold text-[var(--text)]">Medical</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="medical_conditions">Medical conditions</Label>
+            <FieldTextarea
+              id="medical_conditions"
+              placeholder="Optional"
+              aria-invalid={!!errors.medical_conditions}
+              {...register("medical_conditions", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.medical_conditions && (
+              <p className="text-xs text-[var(--danger)]">{errors.medical_conditions.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="allergies">Allergies</Label>
+            <FieldTextarea
+              id="allergies"
+              placeholder="Optional"
+              aria-invalid={!!errors.allergies}
+              {...register("allergies", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.allergies && (
+              <p className="text-xs text-[var(--danger)]">{errors.allergies.message}</p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-sm font-semibold text-[var(--text)]">Previous school</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="prev_school_name">School name</Label>
+            <Input
+              id="prev_school_name"
+              placeholder="Optional"
+              aria-invalid={!!errors.prev_school_name}
+              {...register("prev_school_name", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.prev_school_name && (
+              <p className="text-xs text-[var(--danger)]">{errors.prev_school_name.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="prev_class_ended">Class ended</Label>
+            <Input
+              id="prev_class_ended"
+              placeholder="Optional"
+              aria-invalid={!!errors.prev_class_ended}
+              {...register("prev_class_ended", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.prev_class_ended && (
+              <p className="text-xs text-[var(--danger)]">{errors.prev_class_ended.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="prev_average_score">Average score (%)</Label>
+            <Input
+              id="prev_average_score"
+              placeholder="Optional"
+              aria-invalid={!!errors.prev_average_score}
+              {...register("prev_average_score", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.prev_average_score && (
+              <p className="text-xs text-[var(--danger)]">{errors.prev_average_score.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="prev_year_attended">Year attended</Label>
+            <Input
+              id="prev_year_attended"
+              placeholder="Optional"
+              aria-invalid={!!errors.prev_year_attended}
+              {...register("prev_year_attended", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.prev_year_attended && (
+              <p className="text-xs text-[var(--danger)]">{errors.prev_year_attended.message}</p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-sm font-semibold text-[var(--text)]">Contact</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="student_email">Email</Label>
+            <Input
+              id="student_email"
+              type="email"
+              placeholder="Optional"
+              aria-invalid={!!errors.email}
+              {...register("email", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.email && <p className="text-xs text-[var(--danger)]">{errors.email.message}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="student_phone">Phone</Label>
+            <Input
+              id="student_phone"
+              placeholder="Optional"
+              aria-invalid={!!errors.phone}
+              {...register("phone", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.phone && <p className="text-xs text-[var(--danger)]">{errors.phone.message}</p>}
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="address">Address</Label>
+            <FieldTextarea
+              id="address"
+              placeholder="Optional"
+              aria-invalid={!!errors.address}
+              {...register("address", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.address && (
+              <p className="text-xs text-[var(--danger)]">{errors.address.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="city">City</Label>
+            <Input
+              id="city"
+              placeholder="Optional"
+              aria-invalid={!!errors.city}
+              {...register("city", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.city && <p className="text-xs text-[var(--danger)]">{errors.city.message}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="town">Town</Label>
+            <Input
+              id="town"
+              placeholder="Optional"
+              aria-invalid={!!errors.town}
+              {...register("town", { setValueAs: (v) => (v === "" ? null : v) })}
+            />
+            {errors.town && <p className="text-xs text-[var(--danger)]">{errors.town.message}</p>}
+          </div>
+        </div>
+      </section>
+
       <section className="space-y-2">
         <h3 className="text-sm font-semibold text-[var(--text)]">Guardians</h3>
         <p className="text-xs text-[var(--muted-foreground)]">
@@ -535,6 +843,197 @@ function StudentFormFields({
             />
           )}
         />
+
+        {mode === "create" && (
+          <div className="space-y-4 border-t border-[var(--border)] pt-4">
+            <div>
+              <h4 className="text-sm font-medium text-[var(--text)]">New guardian</h4>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                No parent record yet? Add one here — it&apos;s created and linked as this
+                student&apos;s primary guardian on save.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="new_guardian_first_name">First name</Label>
+                <Input
+                  id="new_guardian_first_name"
+                  placeholder="Optional"
+                  aria-invalid={!!errors.new_guardian?.first_name}
+                  {...register("new_guardian.first_name")}
+                />
+                {errors.new_guardian?.first_name && (
+                  <p className="text-xs text-[var(--danger)]">
+                    {errors.new_guardian.first_name.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="new_guardian_last_name">Last name</Label>
+                <Input
+                  id="new_guardian_last_name"
+                  placeholder="Optional"
+                  aria-invalid={!!errors.new_guardian?.last_name}
+                  {...register("new_guardian.last_name")}
+                />
+                {errors.new_guardian?.last_name && (
+                  <p className="text-xs text-[var(--danger)]">
+                    {errors.new_guardian.last_name.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="new_guardian_relationship">Relationship</Label>
+                <Controller
+                  control={control}
+                  name="new_guardian.relationship"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ?? "guardian"}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger id="new_guardian_relationship" className="w-full">
+                        <SelectValue placeholder="Select relationship">
+                          {(v: string) => labelFor(RELATIONSHIP_OPTIONS, v)}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RELATIONSHIP_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="new_guardian_occupation">Occupation</Label>
+                <Input
+                  id="new_guardian_occupation"
+                  placeholder="Optional"
+                  {...register("new_guardian.occupation")}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="new_guardian_phone">Phone</Label>
+                <Input
+                  id="new_guardian_phone"
+                  placeholder="Optional"
+                  {...register("new_guardian.phone")}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="new_guardian_email">Email</Label>
+                <Input
+                  id="new_guardian_email"
+                  type="email"
+                  placeholder="Optional"
+                  aria-invalid={!!errors.new_guardian?.email}
+                  {...register("new_guardian.email")}
+                />
+                {errors.new_guardian?.email && (
+                  <p className="text-xs text-[var(--danger)]">
+                    {errors.new_guardian.email.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-4">
+        <h3 className="text-sm font-semibold text-[var(--text)]">
+          Initial class assignment (optional)
+        </h3>
+        <p className="text-xs text-[var(--muted-foreground)]">
+          Pin this student&apos;s enrollment to a specific academic year and term instead of the
+          school&apos;s current active one.
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="initial_academic_year_id">Academic year</Label>
+            <Controller
+              control={control}
+              name="initial_academic_year_id"
+              render={({ field }) => (
+                <Select
+                  value={field.value ?? NONE_VALUE}
+                  onValueChange={(v) => field.onChange(v === NONE_VALUE ? null : v)}
+                  disabled={yearsLoading}
+                >
+                  <SelectTrigger
+                    id="initial_academic_year_id"
+                    className="w-full"
+                    aria-invalid={!!errors.initial_academic_year_id}
+                  >
+                    <SelectValue placeholder={yearsLoading ? "Loading years…" : undefined}>
+                      {(v: string) => {
+                        if (yearsLoading || !academicYears) return "Loading years…";
+                        if (v === NONE_VALUE) return "Use current active year";
+                        return academicYears.find((y) => y.id === v)?.name ?? "Use current active year";
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE_VALUE}>Use current active year</SelectItem>
+                    {academicYears?.map((y) => (
+                      <SelectItem key={y.id} value={y.id}>
+                        {y.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.initial_academic_year_id && (
+              <p className="text-xs text-[var(--danger)]">
+                {errors.initial_academic_year_id.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="initial_term_id">Term</Label>
+            <Controller
+              control={control}
+              name="initial_term_id"
+              render={({ field }) => (
+                <Select
+                  value={field.value ?? NONE_VALUE}
+                  onValueChange={(v) => field.onChange(v === NONE_VALUE ? null : v)}
+                  disabled={termsLoading}
+                >
+                  <SelectTrigger
+                    id="initial_term_id"
+                    className="w-full"
+                    aria-invalid={!!errors.initial_term_id}
+                  >
+                    <SelectValue placeholder={termsLoading ? "Loading terms…" : undefined}>
+                      {(v: string) => {
+                        if (termsLoading || !terms) return "Loading terms…";
+                        if (v === NONE_VALUE) return "Use current active term";
+                        return terms.find((t) => t.id === v)?.name ?? "Use current active term";
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE_VALUE}>Use current active term</SelectItem>
+                    {terms?.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.initial_term_id && (
+              <p className="text-xs text-[var(--danger)]">{errors.initial_term_id.message}</p>
+            )}
+          </div>
+        </div>
       </section>
 
       {submitError && <p className="text-sm text-[var(--danger)]">{submitError}</p>}
