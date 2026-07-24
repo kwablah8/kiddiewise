@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { SubjectsTable } from "@/components/academics/subjects-table";
+import { SubjectsStats } from "@/components/academics/subjects-stats";
 import { SubjectFormDialog } from "@/components/academics/subject-form";
 
 export default function SubjectsPage() {
@@ -22,6 +23,7 @@ export default function SubjectsPage() {
         subtitle="Manage the subjects taught across classes."
         action={<Button onClick={openCreate}>New Subject</Button>}
       />
+      <SubjectsStats />
       <SubjectsTable onNewSubject={openCreate} />
       <SubjectFormDialog key={createKey} mode="create" open={createOpen} onOpenChange={setCreateOpen} />
     </div>
