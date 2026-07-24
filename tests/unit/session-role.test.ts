@@ -1,0 +1,22 @@
+import { describe, expect, it } from "vitest";
+import { mockRoleForEmail, profileForMockRole, mockTeacherProfile } from "@/lib/auth/session";
+
+describe("mockRoleForEmail", () => {
+  it("maps the seeded teacher email to teacher", () => {
+    expect(mockRoleForEmail("efua.owusu@school.edu.gh")).toBe("teacher");
+    expect(mockRoleForEmail("  Efua.Owusu@School.edu.gh ")).toBe("teacher"); // trim + case-insensitive
+  });
+  it("defaults every other email to school_admin", () => {
+    expect(mockRoleForEmail("ama.mensah@greenfield.edu.gh")).toBe("school_admin");
+    expect(mockRoleForEmail("nobody@example.com")).toBe("school_admin");
+  });
+});
+
+describe("profileForMockRole", () => {
+  it("returns the teacher profile linked to the stf-01 fixture", () => {
+    const p = profileForMockRole("teacher");
+    expect(p.role).toBe("teacher");
+    expect(p.id).toBe("stf-01"); // so class_subjects.teacher_id resolves
+    expect(p).toBe(mockTeacherProfile);
+  });
+});

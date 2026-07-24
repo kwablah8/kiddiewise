@@ -3,13 +3,13 @@
 import { createContext, useContext, useSyncExternalStore, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { Profile } from "@/lib/types";
-import { clearMockSessionActive, isMockSessionActive, mockAdminProfile } from "./session";
+import { activeMockRole, clearMockSessionActive, profileForMockRole } from "./session";
 
 // SEAM: replace with Supabase auth. This whole module becomes a thin wrapper around
 // `supabase.auth.getUser()` / `onAuthStateChange` + a `profiles` fetch; the context shape
 // (`{ profile, isLoading, signOut }`) is the final, stable interface consumers rely on.
 
-type SyncState = "loading" | "signed-in" | "signed-out";
+type SyncState = "loading" | "signed-out" | "school_admin" | "teacher";
 
 function subscribe(onStoreChange: () => void): () => void {
   window.addEventListener("storage", onStoreChange);
@@ -17,7 +17,7 @@ function subscribe(onStoreChange: () => void): () => void {
 }
 
 function getSnapshot(): SyncState {
-  return isMockSessionActive() ? "signed-in" : "signed-out";
+  return activeMockRole() ?? "signed-out";
 }
 
 // The server never knows the client's localStorage flag — render "loading" until the
@@ -45,7 +45,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }
 
   const value: SessionContextValue = {
-    profile: state === "signed-in" ? mockAdminProfile : null,
+    profile: state === "school_admin" || state === "teacher" ? profileForMockRole(state) : null,
     isLoading: state === "loading",
     signOut,
   };

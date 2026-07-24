@@ -1,8 +1,7 @@
 import type { Profile } from "@/lib/types";
 
-// SEAM: replace with Supabase auth. In the real integration this constant disappears —
-// `useSession` will call `supabase.auth.getUser()` and fetch the matching `profiles` row
-// by `auth.uid()` instead of returning a hardcoded profile.
+// SEAM: replace with Supabase auth. In the real integration these constants disappear — `useSession`
+// calls `supabase.auth.getUser()` and fetches the matching `profiles` row by `auth.uid()`.
 export const mockAdminProfile: Profile = {
   id: "00000000-0000-0000-0000-000000000001",
   school_id: "00000000-0000-0000-0000-0000000000a1",
@@ -18,19 +17,54 @@ export const mockAdminProfile: Profile = {
   created_at: "2026-01-05T08:00:00Z",
 };
 
-const SESSION_STORAGE_KEY = "sm.mockSession";
+// Mirrors the `stf-01` staff fixture. id === "stf-01" ON PURPOSE so class_subjects.teacher_id and
+// classes.class_teacher_id resolve to this teacher (mock-only; post-Supabase, profiles.id IS the teacher).
+export const mockTeacherProfile: Profile = {
+  id: "stf-01",
+  school_id: "00000000-0000-0000-0000-0000000000a1",
+  first_name: "Efua",
+  last_name: "Owusu",
+  email: "efua.owusu@school.edu.gh",
+  role: "teacher",
+  phone: "+233 24 100 1001",
+  department: "Mathematics",
+  staff_no: "TCH-1",
+  avatar_url: null,
+  is_active: true,
+  created_at: "2026-01-05T08:00:00Z",
+};
 
-// SEAM: replace with Supabase's real session persistence (cookies via @supabase/ssr).
-// This is a client-only flag standing in for "is there an active auth session".
-export function isMockSessionActive(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(SESSION_STORAGE_KEY) === "1";
+export type MockRole = "school_admin" | "teacher";
+
+const MOCK_PROFILES: Record<MockRole, Profile> = {
+  school_admin: mockAdminProfile,
+  teacher: mockTeacherProfile,
+};
+
+export function profileForMockRole(role: MockRole): Profile {
+  return MOCK_PROFILES[role];
 }
 
-// SEAM: replace with the real sign-in call (`supabase.auth.signInWithPassword`).
-export function setMockSessionActive(): void {
+// Demo-login helper: which mock identity a typed email signs in as (default admin). SEAM: the real login
+// learns the role from the fetched `profiles` row, not from the email.
+export function mockRoleForEmail(email: string): MockRole {
+  return email.trim().toLowerCase() === mockTeacherProfile.email ? "teacher" : "school_admin";
+}
+
+const SESSION_STORAGE_KEY = "sm.mockSession";
+
+// SEAM: client-only stand-in for "is there an active auth session, and as whom". Stores the active role.
+export function setMockSessionActive(role: MockRole = "school_admin"): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(SESSION_STORAGE_KEY, "1");
+  window.localStorage.setItem(SESSION_STORAGE_KEY, role);
+}
+
+export function activeMockRole(): MockRole | null {
+  if (typeof window === "undefined") return null;
+  const v = window.localStorage.getItem(SESSION_STORAGE_KEY);
+  if (v === "school_admin" || v === "teacher") return v;
+  if (v === "1") return "school_admin"; // migrate the legacy boolean flag
+  return null;
 }
 
 // SEAM: replace with `supabase.auth.signOut()`.
