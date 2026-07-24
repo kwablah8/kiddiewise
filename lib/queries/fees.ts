@@ -79,3 +79,11 @@ export function useCreateExtraFeeStructure() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
   });
 }
+
+export function useRecordPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: actions.recordPayment,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}

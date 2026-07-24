@@ -182,3 +182,14 @@ export const extraFeeStructureCreateSchema = z.object({
   description: z.string().nullable().default(null),
 });
 export type ExtraFeeStructureCreateInput = z.infer<typeof extraFeeStructureCreateSchema>;
+
+// ---- Record Payment ----
+export const recordPaymentSchema = z.object({
+  student_id: z.string().min(1, "Required"),
+  amount: z.coerce.number().positive("Enter an amount"),
+  method: paymentMethod.default("cash"),
+  reference: z.string().nullable().default(null),
+  paid_at: z.string().min(1, "Required"),
+  fee_label: z.string().nullable().default(null),
+});
+export type RecordPaymentInput = z.infer<typeof recordPaymentSchema>;

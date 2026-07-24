@@ -10,7 +10,7 @@ import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
 import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
 import type { ParentAnnouncementVM } from "@/lib/validators/parent";
-import type { FeeStructureVM, ExtraFeeStructureVM } from "@/lib/validators/fees";
+import type { FeeStructureVM, ExtraFeeStructureVM, PaymentVM } from "@/lib/validators/fees";
 import { applyAttendanceUpsert, type UpsertMeta } from "@/lib/attendance";
 import type { AttendanceStatus } from "@/lib/validators/attendance";
 
@@ -115,6 +115,9 @@ export const store = {
   },
   addExtraFeeStructure(rec: ExtraFeeStructureVM) {
     extraFeeStructures.unshift(rec);
+  },
+  addPayment(rec: PaymentVM) {
+    payments.unshift(rec);
   },
 
   // Attendance reads/writes (Teacher portal marks; shared with the parent view). Upsert keys on

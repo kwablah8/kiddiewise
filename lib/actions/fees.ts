@@ -4,10 +4,12 @@ import {
   bulkAssignFeesSchema,
   assignIndividualFeeSchema,
   extraFeeStructureCreateSchema,
+  recordPaymentSchema,
   type FeeStructureCreateInput,
   type BulkAssignFeesInput,
   type AssignIndividualFeeInput,
   type ExtraFeeStructureCreateInput,
+  type RecordPaymentInput,
 } from "@/lib/validators/fees";
 
 // SEAM: becomes a Server Action writing to `fee_items` / `invoices`; signature + validation stay
@@ -52,6 +54,28 @@ export async function assignIndividualFee(
   const data = assignIndividualFeeSchema.parse(input);
   if (!store.students.some((s) => s.id === data.student_id)) throw new Error("Student not found.");
   return { id: data.student_id };
+}
+
+// SEAM: real path inserts a `payments` row (and the invoice's amount_paid/status recompute via a
+// trigger/RPC). Here we append to the mock payments; each student's paid-to-date is derived from
+// these payments, so recording one updates the Overview, Class Fees and Payment History at once.
+export async function recordPayment(input: RecordPaymentInput): Promise<{ id: string }> {
+  const data = recordPaymentSchema.parse(input);
+  const student = store.students.find((s) => s.id === data.student_id);
+  if (!student) throw new Error("Student not found.");
+  const id = crypto.randomUUID();
+  store.addPayment({
+    id,
+    student_id: student.id,
+    student_name: `${student.first_name} ${student.last_name}`,
+    class_name: student.class_name ?? "—",
+    amount: data.amount,
+    method: data.method,
+    reference: data.reference ?? null,
+    paid_at: data.paid_at,
+    fee_label: data.fee_label ?? "School fees",
+  });
+  return { id };
 }
 
 export async function createExtraFeeStructure(

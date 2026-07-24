@@ -9,6 +9,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { Button } from "@/components/ui/button";
 import { BulkAssignDialog } from "./bulk-assign-dialog";
 import { AssignIndividualDialog } from "./assign-individual-dialog";
+import { RecordPaymentDialog } from "./record-payment-dialog";
 import { feeStatusTone } from "./fee-status";
 import { useClassFees } from "@/lib/queries/fees";
 import { useClasses } from "@/lib/queries/academics";
@@ -47,8 +48,29 @@ export function ClassFeesTab({ filter }: { filter: FeesFilter }) {
   const [bulkKey, setBulkKey] = useState(0);
   const [indivOpen, setIndivOpen] = useState(false);
   const [indivKey, setIndivKey] = useState(0);
+  const [paymentTarget, setPaymentTarget] = useState<StudentFeeVM | null>(null);
   const isEmpty = !isLoading && !isError && (data?.length ?? 0) === 0;
   const selectedClass = filter.class_id ? classes?.find((c) => c.id === filter.class_id) : undefined;
+
+  const allColumns: DataTableColumn<StudentFeeVM>[] = [
+    ...columns,
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (r) => (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={r.balance <= 0}
+          onClick={() => setPaymentTarget(r)}
+        >
+          Record Payment
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-4">
@@ -93,7 +115,7 @@ export function ClassFeesTab({ filter }: { filter: FeesFilter }) {
           />
         ) : (
           <DataTable
-            columns={columns}
+            columns={allColumns}
             data={data ?? []}
             getRowId={(row) => row.id}
             isLoading={isLoading}
@@ -116,6 +138,13 @@ export function ClassFeesTab({ filter }: { filter: FeesFilter }) {
         open={indivOpen}
         onOpenChange={setIndivOpen}
       />
+      {paymentTarget && (
+        <RecordPaymentDialog
+          key={paymentTarget.id}
+          target={paymentTarget}
+          onClose={() => setPaymentTarget(null)}
+        />
+      )}
     </div>
   );
 }

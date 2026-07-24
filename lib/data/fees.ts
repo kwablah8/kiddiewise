@@ -22,6 +22,16 @@ function classNameFor(classId: string | undefined): string | null {
   return classId ? (store.classes.find((c) => c.id === classId)?.name ?? null) : null;
 }
 
+// Each student's paid-to-date = the sum of their recorded payments. Payments are the single source
+// of truth for "paid" (golden rule 9), so recording one flows into every fees view.
+function paidByStudent(): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const p of store.payments) {
+    map.set(p.student_id, (map.get(p.student_id) ?? 0) + p.amount);
+  }
+  return map;
+}
+
 const EMPTY_OVERVIEW: FeesOverviewVM = {
   total_expected: 0,
   total_paid: 0,
@@ -52,7 +62,10 @@ function matches(
 // derive the figures via the pure `summarizeFees` helper (golden rule 9). Extra fees are school-wide
 // in the mock, so they're shown as-is regardless of the class/term filter.
 export function getFeesOverview(filter: FeesFilter = {}): Promise<FeesOverviewVM> {
-  const records = store.studentFeeRecords.filter((r) => matches(r, filter));
+  const paid = paidByStudent();
+  const records = store.studentFeeRecords
+    .filter((r) => matches(r, filter))
+    .map((r) => ({ expected: r.expected, arrears: r.arrears, paid: paid.get(r.student_id) ?? 0 }));
   return simulate(summarizeFees(records, store.extraFeeRecords), EMPTY_OVERVIEW);
 }
 
@@ -77,10 +90,12 @@ export function listPayments(filter: FeesFilter = {}): Promise<PaymentVM[]> {
 
 // Class Fees — per-student fee position (derived balance + status) for the filtered scope.
 export function listClassFees(filter: FeesFilter = {}): Promise<StudentFeeVM[]> {
+  const paid = paidByStudent();
   const result = store.studentFeeRecords
     .filter((r) => matches(r, filter))
     .map((r): StudentFeeVM => {
       const due = r.expected + r.arrears;
+      const paidAmount = paid.get(r.student_id) ?? 0;
       return {
         id: r.id,
         student_id: r.student_id,
@@ -89,10 +104,10 @@ export function listClassFees(filter: FeesFilter = {}): Promise<StudentFeeVM[]> 
         expected: r.expected,
         discount: r.discount,
         scholarship_type: r.scholarship_type,
-        paid: r.paid,
+        paid: paidAmount,
         arrears: r.arrears,
-        balance: Math.max(0, due - r.paid),
-        status: statusFor(r.paid, due),
+        balance: Math.max(0, due - paidAmount),
+        status: statusFor(paidAmount, due),
       };
     })
     .sort((a, b) => a.student_name.localeCompare(b.student_name));
