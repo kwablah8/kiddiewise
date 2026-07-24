@@ -45,6 +45,7 @@ const columns: DataTableColumn<StudentListItemVM>[] = [
   {
     key: "admission_no",
     header: "Admission No.",
+    hideOnMobile: true,
     render: (row) => <span className="font-medium">{row.admission_no}</span>,
   },
   {
@@ -73,6 +74,7 @@ const columns: DataTableColumn<StudentListItemVM>[] = [
   {
     key: "gender",
     header: "Gender",
+    hideOnMobile: true,
     render: (row) => formatRole(row.gender),
   },
   {

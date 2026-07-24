@@ -20,6 +20,7 @@ import { useInquiries, useSetInquiryStatus } from "@/lib/queries/inquiries";
 import type { InquiryStatus, InquiryVM } from "@/lib/validators/inquiries";
 import { inquiryActionsFor } from "@/lib/inquiries";
 import { INQUIRY_STATUS_LABEL, inquiryStatusTone } from "@/components/admissions/inquiry-status";
+import { InquirySheet } from "@/components/admissions/inquiry-sheet";
 import { formatDate } from "@/lib/format";
 import { cardShellClass, lightFocusRingClass } from "@/lib/ui";
 import { cn } from "@/lib/utils";
@@ -37,9 +38,12 @@ const FILTERS: { value: FilterValue; label: string }[] = [
 
 /** Admissions inquiry list — segmented status filter with counts, search, table, row triage. */
 export function InquiriesTable() {
-  const router = useRouter();
   const [filter, setFilter] = useState<FilterValue>("all");
   const [search, setSearch] = useState("");
+  // Row click opens the detail in a side sheet (not a dedicated route). `activeId` may linger while
+  // the sheet plays its close animation; only `open` drives visibility.
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const { data, isLoading, isError, refetch } = useInquiries();
 
   const counts = useMemo(() => {
@@ -79,12 +83,14 @@ export function InquiriesTable() {
     {
       key: "desired_class",
       header: "Desired class",
+      hideOnMobile: true,
       render: (row) =>
         row.desired_class ?? <span className="text-[var(--muted-foreground)]">—</span>,
     },
     {
       key: "parent",
       header: "Parent",
+      hideOnMobile: true,
       render: (row) => (
         <div className="min-w-0">
           <p className="truncate text-[var(--text)]">{row.parent_name}</p>
@@ -95,6 +101,7 @@ export function InquiriesTable() {
     {
       key: "created_at",
       header: "Submitted",
+      hideOnMobile: true,
       render: (row) => (
         <span className="text-[var(--muted-foreground)]">{formatDate(row.created_at)}</span>
       ),
@@ -115,6 +122,11 @@ export function InquiriesTable() {
   ];
 
   const isEmpty = !isLoading && !isError && (data?.length ?? 0) === 0;
+
+  function openInquiry(id: string) {
+    setActiveId(id);
+    setSheetOpen(true);
+  }
 
   return (
     <div className={cardShellClass}>
@@ -181,12 +193,14 @@ export function InquiriesTable() {
             data={filtered}
             getRowId={(row) => row.id}
             isLoading={isLoading}
-            onRowClick={(row) => router.push(`/enquiries/${row.id}`)}
+            onRowClick={(row) => openInquiry(row.id)}
             emptyTitle="No matching inquiries"
             emptyDescription="Try a different search or status filter."
           />
         )}
       </div>
+
+      <InquirySheet id={activeId} open={sheetOpen} onOpenChange={setSheetOpen} />
     </div>
   );
 }
