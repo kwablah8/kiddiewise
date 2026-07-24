@@ -79,9 +79,15 @@ export function AttendanceMarker({ teacherId }: { teacherId: string }) {
       <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-1.5">
           <Label>Class</Label>
-          <Select value={classId ?? undefined} onValueChange={changeClass} disabled={classesLoading}>
+          <Select value={classId} onValueChange={changeClass} disabled={classesLoading}>
             <SelectTrigger className="w-56">
-              <SelectValue placeholder={classesLoading ? "Loading classes…" : "Select a class"} />
+              <SelectValue placeholder={classesLoading ? "Loading classes…" : "Select a class"}>
+                {(v: string) => {
+                  if (classesLoading) return "Loading classes…";
+                  const c = (classes ?? []).find((x) => x.id === v);
+                  return c ? `${c.name} · ${c.level}` : "Select a class";
+                }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {(classes ?? []).map((c) => (
