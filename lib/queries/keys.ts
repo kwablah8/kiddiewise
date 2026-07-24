@@ -49,4 +49,8 @@ export const queryKeys = {
   teacher: {
     dashboard: (teacherId: string) => ["teacher", "dashboard", teacherId] as const,
   },
+  parent: {
+    children: ["parent", "children"] as const,
+    announcements: ["parent", "announcements"] as const,
+  },
 } as const;

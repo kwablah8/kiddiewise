@@ -1,0 +1,26 @@
+import { z } from "zod";
+
+// Dashboard child card. attendance_pct + latest_result are nullable: their real values arrive with
+// Slices 2–3 (attendance + results); Slice 1 returns null and the card renders a gentle placeholder.
+export const childSummaryVM = z.object({
+  id: z.string(),
+  first_name: z.string(),
+  last_name: z.string(),
+  photo_url: z.string().nullable(),
+  class_name: z.string().nullable(),
+  attendance_pct: z.number().nullable(),
+  latest_result: z
+    .object({ subject: z.string(), score: z.number(), grade: z.string() })
+    .nullable(),
+});
+export type ChildSummaryVM = z.infer<typeof childSummaryVM>;
+
+// Announcement targeted at parents (03-DATABASE announcements.audience). Mock is school-wide.
+export const parentAnnouncementVM = z.object({
+  id: z.string(),
+  title: z.string(),
+  body: z.string(),
+  audience: z.enum(["parents", "everyone"]),
+  created_at: z.string(),
+});
+export type ParentAnnouncementVM = z.infer<typeof parentAnnouncementVM>;

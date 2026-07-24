@@ -23,6 +23,7 @@ import type {
 import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
 import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
+import type { ParentAnnouncementVM } from "@/lib/validators/parent";
 
 // students/staff are static demo figures; new_inquiries is derived live in lib/data/sidebar.ts.
 export const mockSidebarCounts: Pick<SidebarCountsVM, "students" | "staff"> = {
@@ -857,3 +858,30 @@ function seedResults(): ResultRecord[] {
   return out;
 }
 export const mockResults: ResultRecord[] = seedResults();
+
+// ---------------------------------------------------------------------------
+// Parent-facing announcements (Parent portal, Slice 1). Newest first at read time.
+// ---------------------------------------------------------------------------
+export const mockParentAnnouncements: ParentAnnouncementVM[] = [
+  {
+    id: "ann-01",
+    title: "Third term resumes Monday",
+    body: "Classes resume on Monday. Please ensure pupils arrive by 7:30am in full uniform.",
+    audience: "everyone",
+    created_at: "2026-07-20T09:00:00Z",
+  },
+  {
+    id: "ann-02",
+    title: "PTA meeting this Saturday",
+    body: "Our termly Parent–Teacher Association meeting holds this Saturday at 10:00am in the school hall.",
+    audience: "parents",
+    created_at: "2026-07-18T14:00:00Z",
+  },
+  {
+    id: "ann-03",
+    title: "Mid-term exams begin 28 July",
+    body: "Mid-term assessments run the week of 28 July. Revision timetables have gone home with pupils.",
+    audience: "everyone",
+    created_at: "2026-07-15T08:00:00Z",
+  },
+];

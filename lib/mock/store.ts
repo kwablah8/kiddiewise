@@ -4,6 +4,7 @@ import type { AcademicYearVM, TermVM, ClassVM, SubjectVM, StaffVM, AssignmentVM 
 import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
 import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
+import type { ParentAnnouncementVM } from "@/lib/validators/parent";
 
 // SEAM: in-memory only (resets on reload). Real backend replaces reads/writes in lib/data +
 // lib/actions; the store shape here mirrors the tables (students + student_guardians + profiles
@@ -51,6 +52,8 @@ const assessmentTypes: AssessmentTypeRecord[] = fx.mockAssessmentTypes.map((t) =
 // Assessments + results (read-only oversight). Seeded by copying the fixtures.
 const assessments: AssessmentRecord[] = fx.mockAssessments.map((a) => ({ ...a }));
 const results: ResultRecord[] = fx.mockResults.map((r) => ({ ...r }));
+// Parent-facing announcements (Parent portal). Copy-on-seed like the rest.
+const announcements: ParentAnnouncementVM[] = fx.mockParentAnnouncements.map((a) => ({ ...a }));
 
 export const store = {
   students,
@@ -62,6 +65,7 @@ export const store = {
   staff,
   classSubjects,
   inquiries,
+  announcements,
 
   addStudent(rec: StudentRecord) {
     students.unshift(rec);
