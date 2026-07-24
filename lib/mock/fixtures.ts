@@ -23,7 +23,7 @@ import type {
 import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
 import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
-import type { ParentAnnouncementVM } from "@/lib/validators/parent";
+import type { ParentAnnouncementVM, AttendanceStatus } from "@/lib/validators/parent";
 
 // students/staff are static demo figures; new_inquiries is derived live in lib/data/sidebar.ts.
 export const mockSidebarCounts: Pick<SidebarCountsVM, "students" | "staff"> = {
@@ -1282,4 +1282,35 @@ export const mockParentAnnouncements: ParentAnnouncementVM[] = [
     audience: "everyone",
     created_at: "2026-07-15T08:00:00Z",
   },
+];
+
+// ---------------------------------------------------------------------------
+// Attendance (Parent portal, Slice 2). Per-child dated statuses across the active term's first
+// two weeks. Seeded for prt-01's four children so the parent view is populated. Deterministic —
+// each child has a fixed 12-day pattern (P=present, L=late, A=absent).
+// ---------------------------------------------------------------------------
+const ATTENDANCE_DATES = [
+  "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08",
+  "2026-07-09", "2026-07-10", "2026-07-13", "2026-07-14", "2026-07-15", "2026-07-16",
+];
+const ATTENDANCE_STATUS: Record<string, AttendanceStatus> = {
+  P: "present",
+  L: "late",
+  A: "absent",
+};
+function attendanceFor(
+  studentId: string,
+  pattern: string,
+): { student_id: string; date: string; status: AttendanceStatus }[] {
+  return pattern.split("").map((ch, i) => ({
+    student_id: studentId,
+    date: ATTENDANCE_DATES[i]!,
+    status: ATTENDANCE_STATUS[ch]!,
+  }));
+}
+export const mockAttendance: { student_id: string; date: string; status: AttendanceStatus }[] = [
+  ...attendanceFor("stu-01", "PPPLPPAPPPPP"), // 10 present, 1 late, 1 absent → 92%
+  ...attendanceFor("stu-02", "PPPPPPPPPPPP"), // all present → 100%
+  ...attendanceFor("stu-13", "PAPPLPAPPLPA"), // 7 present, 2 late, 3 absent → 75%
+  ...attendanceFor("stu-14", "PPLPPPPPLPPP"), // 10 present, 2 late → 100%
 ];

@@ -1,16 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { mockRoleForEmail, profileForMockRole, mockTeacherProfile } from "@/lib/auth/session";
+import {
+  mockRoleForEmail,
+  profileForMockRole,
+  mockTeacherProfile,
+  mockParentProfile,
+} from "@/lib/auth/session";
 
+// Reference the profile-email constants (not hardcoded strings) so these stay correct if the demo
+// emails change.
 describe("mockRoleForEmail", () => {
-  it("maps the seeded teacher email to teacher", () => {
-    expect(mockRoleForEmail("efua.owusu@school.edu.gh")).toBe("teacher");
-    expect(mockRoleForEmail("  Efua.Owusu@School.edu.gh ")).toBe("teacher"); // trim + case-insensitive
+  it("maps the seeded teacher email to teacher (trim + case-insensitive)", () => {
+    expect(mockRoleForEmail(mockTeacherProfile.email)).toBe("teacher");
+    expect(mockRoleForEmail(`  ${mockTeacherProfile.email.toUpperCase()} `)).toBe("teacher");
   });
   it("maps the seeded parent email to parent", () => {
-    expect(mockRoleForEmail("yaw.mensah@example.com")).toBe("parent");
+    expect(mockRoleForEmail(mockParentProfile.email)).toBe("parent");
   });
   it("defaults every other email to school_admin", () => {
-    expect(mockRoleForEmail("ama.mensah@greenfield.edu.gh")).toBe("school_admin");
     expect(mockRoleForEmail("nobody@example.com")).toBe("school_admin");
   });
 });
