@@ -94,6 +94,57 @@ components** only where interactivity requires it (forms, tables with client sta
   reaches the browser, and these paths still enforce tenancy in code (verify the caller is a
   school_admin for the target `school_id`).
 
+### The data seam (current implementation)
+
+Until Supabase is wired, every feature runs against a **typed in-memory seam** that mirrors the
+architecture above one-to-one, so the swap is mechanical. The layers (full contract in
+`docs/07-ENGINEERING-STANDARDS.md` §3):
+
+`fixtures → store → lib/data (read + derive) → lib/queries (hooks + keys) → components`,
+and for writes `component → lib/queries mutation → lib/actions (validate + persist)`.
+
+- `lib/mock/` holds seed **fixtures** and a single in-memory **store** (the stand-in database),
+  tagged `// SEAM:`; it resets on reload.
+- `lib/data/*` returns **copies** of store rows (copy-on-read) and performs all **derivation**
+  (joins, computed fields) — never the component. `lib/data/_devState.ts#simulate` fakes the four
+  UI states via `?mockState=loading|empty|error`.
+- `lib/actions/*` validate with Zod, then mutate the store.
+- Pure business rules live in unit-tested `lib/<domain>.ts` helpers (e.g. `lib/attendance.ts`,
+  `lib/grading.ts`).
+
+Swapping to Supabase changes only the **bodies** of `lib/data/*` and `lib/actions/*` (plus the
+`useSession` source). View-model shapes, Zod schemas, query keys, and every component stay put.
+
+### Cross-portal data flow & consistency
+
+The four portals are **views over one shared schema**, not four datasets — this is what makes the
+app work together end to end:
+
+- **Single source of truth.** Each fact is written once to its canonical table. A teacher marks
+  `attendance`; that same table backs the parent's attendance percentage, the admin's class
+  register, and the dashboard attendance rate. No fact is copied between portals.
+- **Derive, don't duplicate.** Cross-cutting numbers (attendance %, class roll counts, averages,
+  dashboard totals) are **derived on read** — via DB views/RPC (`docs/03-DATABASE.md` §12) or a
+  pure `lib/` helper — so they can never drift from the rows they summarise.
+- **RLS scopes each read.** The same query returns each caller their slice: a teacher sees their
+  classes, a parent their children, an admin the whole school. One query, many scopes.
+- **Writes propagate by invalidation, not cross-wiring.** A mutation invalidates the shared
+  **query keys** it affects; every mounted view keyed on that data refetches. Portals never call
+  into each other. For live cross-*user* updates, selective **Realtime** (§8) pushes the same
+  invalidation.
+
+**Worked example — a teacher saves attendance for a class:**
+
+1. `saveAttendance` upserts `attendance` rows (one per student, unique `(student_id, date)`).
+2. It invalidates the `["attendance", …]` keys.
+3. Everything deriving from those rows updates: the teacher's roster reloads; the **parent**
+   child-attendance summary/percentage updates; the **admin** class register and
+   `dashboard_stats` attendance rate recompute. Nothing was written twice — each surface simply
+   re-derives.
+
+The same shape holds for results/grades (teacher enters → parent results view + admin terminal
+report), enrollments (admin enrols → teacher roster + class counts), and announcements.
+
 ---
 
 ## 4. Supabase clients
@@ -206,3 +257,7 @@ path — most screens use standard React Query fetch + revalidate. Subscriptions
 | A5 | Server Components for reads, Server Actions for writes, React Query for interactive data | Fast first paint, simple mutations, good client UX |
 | A6 | Service-role work isolated to server/Edge Functions | Keeps privileged key off the client |
 | A7 | Responsive web only for MVP; Expo app later on same Supabase project | Focus; reuse backend |
+| A8 | Typed in-memory mock seam (`lib/mock` + `lib/data`/`lib/actions`) with `// SEAM:` markers | Build UI now; swap to Supabase by replacing read/write bodies only, no component churn |
+| A9 | One source of truth per fact; portals are derived, RLS-scoped views — never copies | Cross-portal consistency for free; a single write reflects everywhere |
+| A10 | Cross-cutting numbers derived on read (DB view/RPC or pure `lib/` helper), never stored twice | Aggregates can't drift from their rows |
+| A11 | Writes propagate to other portals via React Query key invalidation (+ selective Realtime) | Decoupled portals; no cross-wiring between surfaces |

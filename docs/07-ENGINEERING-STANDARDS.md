@@ -23,28 +23,57 @@ would sign off on — clean, modular, maintainable, and boring in the best way.
   camelCase for functions/variables; UPPER_SNAKE for constants.
 - **Feature-first organisation:** group by domain (students, attendance, results…), not by
   file type. Shared primitives live in `components/ui`, cross-cutting logic in `lib/`.
-- **Where things live** (see `CLAUDE.md` §5):
-  - `lib/validators/` — Zod schemas (source of truth for shapes)
-  - `lib/queries/` — React Query hooks + data access
-  - `lib/supabase/` — clients + generated types
-  - `lib/permissions/` — role/scope helpers mirroring RLS
-  - `supabase/migrations/` — schema + RLS (the DB source of truth)
-- **No business logic in components.** Components render and dispatch; logic lives in
-  `lib/`, server actions, or the database.
+- **Where things live** (see `CLAUDE.md` §5) — one responsibility per layer:
+  - `lib/validators/` — Zod schemas: source of truth for shapes (view-models **and** write
+    inputs). Types are `z.infer`red, never hand-written.
+  - `lib/data/` — **reads**: return view-models, doing all joins/derivation here (copy-on-read).
+  - `lib/actions/` — **writes**: validate input, then persist. No read/derive logic.
+  - `lib/queries/` — React Query hooks + **centralized query keys** (`lib/queries/keys.ts`);
+    the only data layer a component imports.
+  - `lib/<domain>.ts` — **pure business logic** (grading, attendance, routing), unit-tested.
+  - `lib/mock/` — the SEAM: fixtures + in-memory store standing in for Supabase.
+  - `lib/supabase/` — clients + generated types · `lib/auth/` — session + access helpers ·
+    `lib/permissions/` — role/scope helpers mirroring RLS.
+  - `supabase/migrations/` — schema + RLS (the DB source of truth).
+- **No business logic in components.** Components render and dispatch; logic lives in `lib/`,
+  server actions, or the database. A component reaches data **only** through a `lib/queries` hook —
+  never `lib/data`, `lib/actions`, or `lib/mock` directly.
 
 ---
 
 ## 3. Data layer
 
-- **Reads:** Server Components for first paint; React Query for interactive/paginated data.
-  Centralise query keys and hooks in `lib/queries/` — never scatter raw Supabase calls
-  through components.
-- **Writes:** Server Actions (or route handlers) validated by Zod before hitting Supabase;
-  on success, invalidate the relevant query keys / revalidate the route.
+Data flows through **one seam**, each layer with a single job — this is how separation of
+concerns is enforced in practice:
+
+```
+validators (Zod contracts)
+  → data (read + derive)      → queries (hooks + keys)  → components   [reads]
+  → actions (validate + write) → queries (mutation)      → components   [writes]
+```
+
+- **Reads (`lib/data/*`):** return view-models; do all joins and derived fields here (never in
+  components). Copy-on-read so callers can't mutate the source. Server Components for first
+  paint; React Query for interactive/paginated data. Query keys + hooks are centralised in
+  `lib/queries/` — never scatter raw Supabase calls through components.
+- **Writes (`lib/actions/*`):** validate input with **Zod first**, then persist. The hook that
+  calls the action **invalidates the shared query keys** it affects on success (and revalidates
+  the route for SSR reads). Actions don't read or derive.
+- **Pure logic (`lib/<domain>.ts`):** business rules (grade derivation, roster building, access
+  routing) live in pure, unit-tested helpers — not in data, actions, or components.
+- **Cross-portal consistency is invalidation, not duplication.** Because portals are derived
+  views of shared tables (`docs/02-ARCHITECTURE.md` §3), a write only needs to invalidate the
+  affected keys; every other portal's view re-derives on its next fetch. Never write the same
+  fact into two places to "keep them in sync." When a mutation spans domains, invalidate **all**
+  affected key groups (e.g. `useLinkGuardian` invalidates both `students` and `parents`;
+  `saveAttendance` invalidates `attendance`, which the parent summary and dashboard rate derive from).
 - **Never trust the client for `school_id`** — the server/DB derives it from the session.
-- **Privileged operations** (account provisioning, batch report generation) run server-side
-  with the service-role key only; verify the caller's authority in code before acting.
+- **Privileged operations** (account provisioning, batch report generation) run server-side with
+  the service-role key only; verify the caller's authority in code before acting.
 - Prefer **DB views / RPC** for aggregates (dashboard stats, trends) over client-side math.
+- **The seam is a swap boundary.** Today `lib/data`/`lib/actions` read/write the `lib/mock` store
+  (`// SEAM:`-tagged); wiring Supabase replaces only those bodies. Keep signatures, view-model
+  shapes, Zod schemas, and query keys identical so components and hooks never change.
 
 ---
 

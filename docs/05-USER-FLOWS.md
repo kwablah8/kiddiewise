@@ -82,6 +82,12 @@ flowchart TD
 
 Re-opening the same class+date loads existing marks for editing (upsert on `(student, date)`).
 
+**Downstream (one write, many views).** The save writes `attendance` only, then invalidates the
+`attendance` keys. Everything else re-derives from those rows: the **parent** child sees an updated
+attendance history + percentage (`student_attendance_summary`); the **admin** class register and
+the school-wide attendance rate in `dashboard_stats` recompute. Nothing is copied between portals
+(`docs/02-ARCHITECTURE.md` §3).
+
 ---
 
 ## 5. Teacher: enter results
@@ -102,6 +108,12 @@ flowchart TD
 
 Drafts (`is_submitted = false`) are editable; submitted results are what parents eventually
 see (once the terminal report is published).
+
+**Downstream (one write, many views).** Submitting writes `results` (grade derived from
+`grade_bands`, never stored twice). Those rows then feed the **admin** terminal-report generation
+(totals, average, position) and `class_performance`, and — once the admin publishes the terminal
+report — the **parent** results view. Grades are always derived from the current scale, so a scale
+change re-grades every view consistently.
 
 ---
 

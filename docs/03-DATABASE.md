@@ -419,8 +419,15 @@ anon.
 
 ## 12. Derived data (views / RPC)
 
-Provide read-only views or RPC functions for dashboard aggregates so the client never
-aggregates sensitive data itself:
+**Principle: derive, don't duplicate.** Any number that summarises other rows is computed on
+read, never stored as a second copy that could drift. These same derivations back **multiple
+portals** off one set of base tables — e.g. `attendance` feeds the teacher roster, the parent's
+`student_attendance_summary`, and the school-wide attendance rate in `dashboard_stats`; a single
+upsert updates all three because none of them holds an independent copy (see
+`docs/02-ARCHITECTURE.md` §3, "Cross-portal data flow & consistency").
+
+Provide read-only views or RPC functions for aggregates so the client never aggregates sensitive
+data itself:
 
 - `dashboard_stats(school_id)` — totals: students, staff, revenue, attendance rate.
 - `enrollment_trend(school_id)` — enrollments per month.
@@ -428,4 +435,6 @@ aggregates sensitive data itself:
 - `class_performance(school_id)` — per class: student count + average score.
 - `student_attendance_summary(student_id, term_id)` — present/total → percentage.
 
-All respect RLS (defined as SECURITY INVOKER where possible).
+All respect RLS (defined as SECURITY INVOKER where possible), so each derivation returns only the
+caller's scope. In the current mock seam these same computations live in `lib/data/*` (and pure
+`lib/<domain>.ts` helpers); at integration they move into these views/RPC with identical shapes.
