@@ -23,7 +23,7 @@ const resultColumns: DataTableColumn<AssessmentResultVM>[] = [
   { key: "remark", header: "Remark", render: (r) => <span className="text-[var(--muted-foreground)]">{r.remark ?? "—"}</span> },
 ];
 
-export function AssessmentDetail({ id }: { id: string }) {
+export function AssessmentDetail({ id, backHref = "/assessments" }: { id: string; backHref?: string }) {
   const { data, isLoading, isError, refetch } = useAssessment(id);
 
   if (isLoading) {
@@ -48,7 +48,7 @@ export function AssessmentDetail({ id }: { id: string }) {
     return (
       <div className="space-y-6">
         <PageHeader title="Assessment not found"
-          action={<Link href="/assessments" className={cn(buttonVariants({ variant: "outline" }))}>Back to Assessments</Link>} />
+          action={<Link href={backHref} className={cn(buttonVariants({ variant: "outline" }))}>Back to Assessments</Link>} />
         <div className={cardShellClass}>
           <EmptyState icon={FileQuestion} title="Assessment not found"
             description="This assessment may have been removed, or the link is incorrect." />
