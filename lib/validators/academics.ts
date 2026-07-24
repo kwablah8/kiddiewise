@@ -28,10 +28,24 @@ export const subjectVM = z.object({
 });
 export type SubjectVM = z.infer<typeof subjectVM>;
 
+// A staff member's auth role (drives portal access + staff_no prefix). Non-teaching staff are
+// filed under `school_admin`; `position` carries the finer job title. (03-DATABASE user_role.)
+export const staffRole = z.enum(["teacher", "school_admin"]);
+export type StaffRole = z.infer<typeof staffRole>;
+export const staffGender = z.enum(["male", "female", "other"]);
+export type StaffGender = z.infer<typeof staffGender>;
+
 export const staffVM = z.object({
   id: z.string(), first_name: z.string(), last_name: z.string(),
   email: z.string(), phone: z.string().nullable(),
-  staff_no: z.string(), department: z.string().nullable(),
+  staff_no: z.string(),
+  role: staffRole,
+  position: z.string().nullable(),          // free-text title, e.g. "Head Teacher", "Accountant"
+  department: z.string().nullable(),
+  gender: staffGender.nullable(),
+  date_of_birth: z.string().nullable(),
+  hire_date: z.string().nullable(),         // employment / joined date
+  qualification: z.string().nullable(),
   is_active: z.boolean(),
   class_count: z.number(), subject_count: z.number(),   // derived from class_subjects + class_teacher
 });
@@ -85,8 +99,14 @@ export const subjectUpdateSchema = subjectCreateSchema.partial().extend({ id: z.
 export const staffCreateSchema = z.object({
   first_name: z.string().min(1, "Required"), last_name: z.string().min(1, "Required"),
   email: z.string().email("Enter a valid email"),
+  role: staffRole.default("teacher"),
   phone: z.string().nullable().default(null),
+  position: z.string().nullable().default(null),
   department: z.string().nullable().default(null),
+  gender: staffGender.nullable().default(null),
+  date_of_birth: z.string().nullable().default(null),
+  hire_date: z.string().nullable().default(null),
+  qualification: z.string().nullable().default(null),
 });
 export type StaffCreateInput = z.infer<typeof staffCreateSchema>;
 export const staffUpdateSchema = staffCreateSchema.partial().extend({ id: z.string() });

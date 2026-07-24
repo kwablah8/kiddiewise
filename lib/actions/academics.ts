@@ -157,15 +157,21 @@ export async function updateSubject(
 export async function createStaff(input: StaffCreateInput): Promise<{ id: string }> {
   const data = staffCreateSchema.parse(input);
   const id = crypto.randomUUID();
-  const staff_no = store.nextStaffNo();
+  const staff_no = store.nextStaffNo(data.role);
   store.addStaff({
     id,
     first_name: data.first_name,
     last_name: data.last_name,
     email: data.email,
+    role: data.role,
     phone: data.phone ?? null,
+    position: data.position ?? null,
     staff_no,
     department: data.department ?? null,
+    gender: data.gender ?? null,
+    date_of_birth: data.date_of_birth ?? null,
+    hire_date: data.hire_date ?? null,
+    qualification: data.qualification ?? null,
     is_active: true,
   });
   return { id };
@@ -180,7 +186,18 @@ export async function updateStaff(
   // NOTE: `phone`/`department` carry `.nullable().default(null)` on staffCreateSchema, so under
   // `.partial()` they never parse to `undefined` (see the identical note in updateClass above)
   // — always taken from `data`.
-  const patch: Partial<StaffRecord> = { phone: data.phone, department: data.department };
+  // `role` + the nullable `.default(null)` fields never parse to `undefined` under `.partial()`
+  // (same note as above), so they're always taken from `data` — the form always submits them.
+  const patch: Partial<StaffRecord> = {
+    role: data.role,
+    phone: data.phone,
+    position: data.position,
+    department: data.department,
+    gender: data.gender,
+    date_of_birth: data.date_of_birth,
+    hire_date: data.hire_date,
+    qualification: data.qualification,
+  };
   if (data.first_name !== undefined) patch.first_name = data.first_name;
   if (data.last_name !== undefined) patch.last_name = data.last_name;
   if (data.email !== undefined) patch.email = data.email;

@@ -5,7 +5,7 @@ import type {
   GuardianVM,
   BloodGroup,
 } from "@/lib/validators/people";
-import type { AcademicYearVM, TermVM, ClassVM, SubjectVM, StaffVM, AssignmentVM } from "@/lib/validators/academics";
+import type { AcademicYearVM, TermVM, ClassVM, SubjectVM, StaffVM, StaffRole, AssignmentVM } from "@/lib/validators/academics";
 import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
 import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
@@ -196,14 +196,17 @@ export const store = {
     if (i >= 0) subjects[i] = { ...subjects[i]!, ...patch };
   },
 
-  // staff_no auto-assign: TCH-<n> where n = max existing numeric suffix + 1.
-  nextStaffNo() {
+  // staff_no auto-assign, role-aware prefix: teachers get TCH-<n>, administrators ADM-<n>, where
+  // n = max existing numeric suffix for that prefix + 1.
+  nextStaffNo(role: StaffRole = "teacher") {
+    const prefix = role === "teacher" ? "TCH" : "ADM";
+    const re = new RegExp(`^${prefix}-(\\d+)$`);
     const max = staff.reduce((acc, s) => {
-      const match = /^TCH-(\d+)$/.exec(s.staff_no);
+      const match = re.exec(s.staff_no);
       const n = match ? Number(match[1]) : 0;
       return Math.max(acc, n);
     }, 0);
-    return `TCH-${max + 1}`;
+    return `${prefix}-${max + 1}`;
   },
   addStaff(rec: StaffRecord) {
     staff.unshift(rec);
