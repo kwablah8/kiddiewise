@@ -77,6 +77,9 @@ const results: ResultRecord[] = fx.mockResults.map((r) => ({ ...r }));
 const announcements: ParentAnnouncementVM[] = fx.mockParentAnnouncements.map((a) => ({ ...a }));
 // Per-child attendance records (Parent portal). Copy-on-seed like the rest.
 const attendance = fx.mockAttendance.map((a) => ({ ...a }));
+// Per-child subject results + published terminal reports (Parent portal).
+const childSubjectResults = fx.mockChildSubjectResults.map((r) => ({ ...r }));
+const terminalReports = fx.mockTerminalReports.map((r) => ({ ...r }));
 
 export const store = {
   students,
@@ -90,6 +93,8 @@ export const store = {
   inquiries,
   announcements,
   attendance,
+  childSubjectResults,
+  terminalReports,
 
   addStudent(rec: StudentRecord) {
     students.unshift(rec);

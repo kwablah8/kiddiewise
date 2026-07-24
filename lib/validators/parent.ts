@@ -59,3 +59,32 @@ export const attendanceSummaryVM = z.object({
   pct: z.number().nullable(),
 });
 export type AttendanceSummaryVM = z.infer<typeof attendanceSummaryVM>;
+
+// Results (Slice 3): a per-subject term score with its derived grade/remark and the teacher's note.
+// Only submitted results reach the parent (SEAM: real path filters on is_submitted).
+export const subjectResultVM = z.object({
+  subject: z.string(),
+  score: z.number(),
+  grade: z.string(),
+  remark: z.string(),
+  teacher_comment: z.string().nullable(),
+});
+export type SubjectResultVM = z.infer<typeof subjectResultVM>;
+
+export const childResultsVM = z.object({
+  term_name: z.string(),
+  subjects: z.array(subjectResultVM),
+});
+export type ChildResultsVM = z.infer<typeof childResultsVM>;
+
+// The published terminal report for a term. Only published reports are ever returned (SEAM: RLS
+// checks is_published) — an unpublished/absent report resolves to null.
+export const terminalReportVM = z.object({
+  id: z.string(),
+  term_name: z.string(),
+  published: z.boolean(),
+  overall_average: z.number().nullable(),
+  overall_grade: z.string().nullable(),
+  class_teacher_remark: z.string(),
+});
+export type TerminalReportVM = z.infer<typeof terminalReportVM>;

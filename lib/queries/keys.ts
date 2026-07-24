@@ -55,5 +55,7 @@ export const queryKeys = {
     announcements: ["parent", "announcements"] as const,
     child: (id: string) => ["parent", "child", id] as const,
     attendance: (id: string) => ["parent", "attendance", id] as const,
+    results: (id: string) => ["parent", "results", id] as const,
+    report: (id: string) => ["parent", "report", id] as const,
   },
 } as const;

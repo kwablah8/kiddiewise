@@ -1314,3 +1314,48 @@ export const mockAttendance: { student_id: string; date: string; status: Attenda
   ...attendanceFor("stu-13", "PAPPLPAPPLPA"), // 7 present, 2 late, 3 absent → 75%
   ...attendanceFor("stu-14", "PPLPPPPPLPPP"), // 10 present, 2 late → 100%
 ];
+
+// ---------------------------------------------------------------------------
+// Results + terminal reports (Parent portal, Slice 3). Per-subject term scores (out of 100; the
+// grade/remark are derived at read time from the school's grade bands) and one published terminal
+// report per child. Seeded for prt-01's children; stu-14 deliberately has NO report so the parent
+// view can show the "not published yet" state. SEAM: teachers author these in the real app.
+// ---------------------------------------------------------------------------
+export const mockChildSubjectResults: {
+  student_id: string;
+  subject: string;
+  score: number;
+  teacher_comment: string | null;
+}[] = [
+  // stu-01 — Kwame Asante (Basic 1)
+  { student_id: "stu-01", subject: "English Language", score: 84, teacher_comment: "Reads fluently and writes with growing confidence." },
+  { student_id: "stu-01", subject: "Mathematics", score: 78, teacher_comment: "Strong with numbers; keep practising word problems." },
+  { student_id: "stu-01", subject: "Integrated Science", score: 71, teacher_comment: "Curious and asks thoughtful questions." },
+  { student_id: "stu-01", subject: "Creative Arts", score: 92, teacher_comment: "Wonderfully imaginative work all term." },
+  // stu-02 — Ama Boateng (Basic 1)
+  { student_id: "stu-02", subject: "English Language", score: 90, teacher_comment: "An excellent reader and clear writer." },
+  { student_id: "stu-02", subject: "Mathematics", score: 88, teacher_comment: "Confident and accurate." },
+  { student_id: "stu-02", subject: "Integrated Science", score: 82, teacher_comment: "Enjoys practical activities." },
+  { student_id: "stu-02", subject: "Creative Arts", score: 79, teacher_comment: "Neat and careful." },
+  // stu-13 — Nana Agyemang (JHS 1)
+  { student_id: "stu-13", subject: "English Language", score: 65, teacher_comment: "Improving steadily; read more widely." },
+  { student_id: "stu-13", subject: "Mathematics", score: 58, teacher_comment: "Needs more practice with algebra." },
+  { student_id: "stu-13", subject: "Integrated Science", score: 74, teacher_comment: "Good grasp of core concepts." },
+  { student_id: "stu-13", subject: "Social Studies", score: 69, teacher_comment: "Participates well in discussion." },
+  // stu-14 — Akua Kusi (JHS 1) — report intentionally not published
+  { student_id: "stu-14", subject: "English Language", score: 81, teacher_comment: "Articulate and well-organised." },
+  { student_id: "stu-14", subject: "Mathematics", score: 76, teacher_comment: "Solid problem-solving." },
+  { student_id: "stu-14", subject: "Integrated Science", score: 85, teacher_comment: "Excellent lab work." },
+  { student_id: "stu-14", subject: "Social Studies", score: 72, teacher_comment: "Thoughtful essays." },
+];
+
+export const mockTerminalReports: {
+  student_id: string;
+  published: boolean;
+  class_teacher_remark: string;
+}[] = [
+  { student_id: "stu-01", published: true, class_teacher_remark: "A diligent pupil who has had an excellent term. Keep it up!" },
+  { student_id: "stu-02", published: true, class_teacher_remark: "Ama is a joy to teach and a model to her classmates." },
+  { student_id: "stu-13", published: true, class_teacher_remark: "A steady term with real improvement. Focus on Mathematics next term." },
+  // stu-14: report prepared but NOT yet published.
+];

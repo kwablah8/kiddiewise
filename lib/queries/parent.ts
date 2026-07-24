@@ -44,3 +44,23 @@ export function useChildAttendance(childId: string) {
     enabled: !!parentId && !!childId,
   });
 }
+
+export function useChildResults(childId: string) {
+  const { profile } = useSession();
+  const parentId = profile?.id ?? "";
+  return useQuery({
+    queryKey: queryKeys.parent.results(childId),
+    queryFn: () => data.getChildResults(parentId, childId),
+    enabled: !!parentId && !!childId,
+  });
+}
+
+export function useChildReport(childId: string) {
+  const { profile } = useSession();
+  const parentId = profile?.id ?? "";
+  return useQuery({
+    queryKey: queryKeys.parent.report(childId),
+    queryFn: () => data.getChildReport(parentId, childId),
+    enabled: !!parentId && !!childId,
+  });
+}

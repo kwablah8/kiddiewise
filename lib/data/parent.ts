@@ -1,12 +1,20 @@
 import { simulate } from "./_devState";
 import { store } from "@/lib/mock/store";
 import { childrenOf, isGuardianOf } from "@/lib/parent/scope";
+import { scoreToGrade } from "@/lib/grading";
 import type {
   ChildProfileVM,
+  ChildResultsVM,
   ChildSummaryVM,
   AttendanceRecordVM,
   ParentAnnouncementVM,
+  TerminalReportVM,
 } from "@/lib/validators/parent";
+
+// The current term's display name (SEAM: real path reads the active term for the school).
+function activeTermName(): string {
+  return store.terms.find((t) => t.is_active)?.name ?? "This term";
+}
 
 // SEAM: real path is `select … from students join student_guardians … where guardian = auth.uid()`,
 // enforced by RLS. Here we scope in-memory via the pure `childrenOf` helper.
@@ -74,4 +82,48 @@ export function getChildAttendance(
     .map((a) => ({ date: a.date, status: a.status }))
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   return simulate(records, []);
+}
+
+// Child term results — per-subject scores with grade/remark derived from the school's grade bands
+// (scores are out of 100). Guardian-gated; a non-linked child resolves to null.
+export function getChildResults(parentId: string, childId: string): Promise<ChildResultsVM | null> {
+  if (!isGuardianOf(parentId, childId, store.students)) return simulate(null, null);
+  const termName = activeTermName();
+  const subjects = store.childSubjectResults
+    .filter((r) => r.student_id === childId)
+    .map((r) => {
+      const g = scoreToGrade(r.score, 100, store.gradeBands);
+      return {
+        subject: r.subject,
+        score: r.score,
+        grade: g?.grade ?? "—",
+        remark: g?.remark ?? "—",
+        teacher_comment: r.teacher_comment,
+      };
+    });
+  const vm: ChildResultsVM = { term_name: termName, subjects };
+  // `empty` state → a term with no submitted results yet.
+  return simulate(vm, { term_name: termName, subjects: [] });
+}
+
+// The published terminal report for a child's current term. Only published reports are returned;
+// an unpublished/absent one resolves to null (SEAM: RLS checks is_published).
+export function getChildReport(parentId: string, childId: string): Promise<TerminalReportVM | null> {
+  if (!isGuardianOf(parentId, childId, store.students)) return simulate(null, null);
+  const rep = store.terminalReports.find((r) => r.student_id === childId && r.published);
+  if (!rep) return simulate(null, null);
+  const scores = store.childSubjectResults.filter((r) => r.student_id === childId);
+  const average = scores.length
+    ? Math.round(scores.reduce((sum, r) => sum + r.score, 0) / scores.length)
+    : null;
+  const overall = average !== null ? scoreToGrade(average, 100, store.gradeBands) : null;
+  const vm: TerminalReportVM = {
+    id: `rep-${childId}`,
+    term_name: activeTermName(),
+    published: true,
+    overall_average: average,
+    overall_grade: overall?.grade ?? null,
+    class_teacher_remark: rep.class_teacher_remark,
+  };
+  return simulate(vm, null);
 }
