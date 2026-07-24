@@ -22,6 +22,7 @@ import type {
 } from "@/lib/validators/academics";
 import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
+import type { FeeStructureVM, PaymentVM, FeeTerm, PaymentMethod } from "@/lib/validators/fees";
 import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
 import type { ParentAnnouncementVM, AttendanceStatus } from "@/lib/validators/parent";
 import type { AttendanceRecord } from "@/lib/mock/attendance-records";
@@ -1466,4 +1467,135 @@ export const mockTerminalReports: {
   { student_id: "stu-02", published: true, class_teacher_remark: "Ama is a joy to teach and a model to her classmates." },
   { student_id: "stu-13", published: true, class_teacher_remark: "A steady term with real improvement. Focus on Mathematics next term." },
   // stu-14: report prepared but NOT yet published.
+];
+
+// ---------------------------------------------------------------------------
+// Fees (Fee Management, core spine). Structures per class + per-student fee records (spanning
+// paid/partial/pending, some with scholarships/discounts and arrears) + recorded payments +
+// a few extra-fee records for the Overview's extra-fees cards. All GHS. Deterministic.
+// ---------------------------------------------------------------------------
+const feeActiveYear = mockAcademicYears.find((y) => y.is_active) ?? mockAcademicYears[0]!;
+
+export const mockFeeStructures: FeeStructureVM[] = [
+  ...mockClasses.slice(0, 6).map(
+    (c, i): FeeStructureVM => ({
+      id: `fs-${c.id}`,
+      class_id: c.id,
+      class_name: c.name,
+      academic_year_id: feeActiveYear.id,
+      academic_year_name: feeActiveYear.name,
+      term: "full_year",
+      amount: 1500 + i * 250,
+      due_date: "2026-09-15",
+      late_fee: 50,
+      description: `${c.name} annual school fees`,
+      is_mandatory: true,
+    }),
+  ),
+  {
+    id: "fs-pta",
+    class_id: mockClasses[0]!.id,
+    class_name: mockClasses[0]!.name,
+    academic_year_id: feeActiveYear.id,
+    academic_year_name: feeActiveYear.name,
+    term: "first",
+    amount: 200,
+    due_date: "2026-09-30",
+    late_fee: null,
+    description: "PTA levy",
+    is_mandatory: true,
+  },
+  {
+    id: "fs-exam",
+    class_id: mockClasses[3]!.id,
+    class_name: mockClasses[3]!.name,
+    academic_year_id: feeActiveYear.id,
+    academic_year_name: feeActiveYear.name,
+    term: "second",
+    amount: 150,
+    due_date: "2027-01-20",
+    late_fee: null,
+    description: "BECE mock examination fee",
+    is_mandatory: false,
+  },
+];
+
+export interface StudentFeeRecordFixture {
+  id: string;
+  student_id: string;
+  student_name: string;
+  class_id: string;
+  class_name: string;
+  academic_year_id: string;
+  term: FeeTerm;
+  expected: number;
+  discount: number;
+  scholarship_type: string | null;
+  paid: number;
+  arrears: number;
+}
+
+function seedFeeRecords(): StudentFeeRecordFixture[] {
+  const active = mockStudents.filter((s) => s.enrollment_status === "active");
+  return active.map((s, i): StudentFeeRecordFixture => {
+    const base = 1500 + (i % 6) * 250;
+    const hasScholarship = i % 7 === 0;
+    const discount = hasScholarship ? Math.round(base * 0.25) : 0;
+    const expected = base - discount;
+    const arrears = i % 4 === 0 ? 300 : 0;
+    const due = expected + arrears;
+    const mod = i % 5; // 0,1 → full · 2,3 → partial · 4 → pending
+    const paid = mod <= 1 ? due : mod <= 3 ? Math.round(due * 0.5) : 0;
+    return {
+      id: `sfr-${s.id}`,
+      student_id: s.id,
+      student_name: `${s.first_name} ${s.last_name}`,
+      class_id: s.class_id ?? "",
+      class_name: s.class_name ?? "—",
+      academic_year_id: feeActiveYear.id,
+      term: "full_year",
+      expected,
+      discount,
+      scholarship_type: hasScholarship ? "Partial Scholarship" : null,
+      paid,
+      arrears,
+    };
+  });
+}
+export const mockStudentFeeRecords: StudentFeeRecordFixture[] = seedFeeRecords();
+
+const PAYMENT_DATES = [
+  "2026-09-05", "2026-09-12", "2026-09-20", "2026-10-03", "2026-10-15",
+  "2026-11-02", "2026-11-18", "2026-12-01", "2027-01-14", "2027-02-09",
+];
+const PAYMENT_METHODS: PaymentMethod[] = ["cash", "bank_transfer", "mobile_money", "cheque"];
+
+function seedPayments(): PaymentVM[] {
+  return mockStudentFeeRecords
+    .filter((r) => r.paid > 0)
+    .map((r, i): PaymentVM => ({
+      id: `pay-${r.student_id}`,
+      student_id: r.student_id,
+      student_name: r.student_name,
+      class_name: r.class_name,
+      amount: r.paid,
+      method: PAYMENT_METHODS[i % PAYMENT_METHODS.length]!,
+      reference: i % 3 === 0 ? `RCT-${1000 + i}` : null,
+      paid_at: PAYMENT_DATES[i % PAYMENT_DATES.length]!,
+      fee_label: "Annual school fees",
+    }));
+}
+export const mockPayments: PaymentVM[] = seedPayments();
+
+// A few extra-fee records so the Overview's Extra-Fees cards show non-zero figures (the full Extra
+// Fees tab is a later slice).
+export const mockExtraFeeRecords: { id: string; amount: number; paid: number }[] = [
+  { id: "ex-1", amount: 300, paid: 300 },
+  { id: "ex-2", amount: 500, paid: 250 },
+  { id: "ex-3", amount: 150, paid: 150 },
+  { id: "ex-4", amount: 400, paid: 0 },
+  { id: "ex-5", amount: 250, paid: 250 },
+  { id: "ex-6", amount: 600, paid: 300 },
+  { id: "ex-7", amount: 200, paid: 200 },
+  { id: "ex-8", amount: 350, paid: 100 },
 ];

@@ -10,6 +10,7 @@ import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
 import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
 import type { ParentAnnouncementVM } from "@/lib/validators/parent";
+import type { FeeStructureVM } from "@/lib/validators/fees";
 import { applyAttendanceUpsert, type UpsertMeta } from "@/lib/attendance";
 import type { AttendanceStatus } from "@/lib/validators/attendance";
 
@@ -82,6 +83,11 @@ const attendance = fx.mockAttendance.map((a) => ({ ...a }));
 // Per-child subject results + published terminal reports (Parent portal).
 const childSubjectResults = fx.mockChildSubjectResults.map((r) => ({ ...r }));
 const terminalReports = fx.mockTerminalReports.map((r) => ({ ...r }));
+// Fees (core spine). Copy-on-seed like the rest.
+const feeStructures: FeeStructureVM[] = fx.mockFeeStructures.map((f) => ({ ...f }));
+const studentFeeRecords = fx.mockStudentFeeRecords.map((r) => ({ ...r }));
+const payments = fx.mockPayments.map((p) => ({ ...p }));
+const extraFeeRecords = fx.mockExtraFeeRecords.map((e) => ({ ...e }));
 
 export const store = {
   students,
@@ -97,6 +103,14 @@ export const store = {
   attendance,
   childSubjectResults,
   terminalReports,
+  feeStructures,
+  studentFeeRecords,
+  payments,
+  extraFeeRecords,
+
+  addFeeStructure(rec: FeeStructureVM) {
+    feeStructures.unshift(rec);
+  },
 
   // Attendance reads/writes (Teacher portal marks; shared with the parent view). Upsert keys on
   // (student_id, date) — the 0007 unique constraint — via the pure helper, rebuilding in place.

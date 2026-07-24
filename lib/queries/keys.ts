@@ -56,6 +56,11 @@ export const queryKeys = {
   attendance: {
     roster: (classId: string, date: string) => ["attendance", "roster", classId, date] as const,
   },
+  fees: {
+    overview: (filter: unknown) => ["fees", "overview", filter] as const,
+    structures: (filter: unknown) => ["fees", "structures", filter] as const,
+    payments: (filter: unknown) => ["fees", "payments", filter] as const,
+  },
   parent: {
     children: ["parent", "children"] as const,
     announcements: ["parent", "announcements"] as const,
