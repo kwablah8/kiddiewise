@@ -34,11 +34,29 @@ export const mockTeacherProfile: Profile = {
   created_at: "2026-01-05T08:00:00Z",
 };
 
-export type MockRole = "school_admin" | "teacher";
+// Mirrors the `prt-01` guardian fixtures (Yaw Mensah, guardian of stu-01 + stu-02). id === "prt-01"
+// ON PURPOSE so student_guardians links resolve (mock-only; post-Supabase, profiles.id IS the parent).
+export const mockParentProfile: Profile = {
+  id: "prt-01",
+  school_id: "00000000-0000-0000-0000-0000000000a1",
+  first_name: "Yaw",
+  last_name: "Mensah",
+  email: "yaw.mensah@example.com",
+  role: "parent",
+  phone: "+233 24 111 2222",
+  department: null,
+  staff_no: null,
+  avatar_url: null,
+  is_active: true,
+  created_at: "2026-01-05T08:00:00Z",
+};
+
+export type MockRole = "school_admin" | "teacher" | "parent";
 
 const MOCK_PROFILES: Record<MockRole, Profile> = {
   school_admin: mockAdminProfile,
   teacher: mockTeacherProfile,
+  parent: mockParentProfile,
 };
 
 export function profileForMockRole(role: MockRole): Profile {
@@ -48,7 +66,10 @@ export function profileForMockRole(role: MockRole): Profile {
 // Demo-login helper: which mock identity a typed email signs in as (default admin). SEAM: the real login
 // learns the role from the fetched `profiles` row, not from the email.
 export function mockRoleForEmail(email: string): MockRole {
-  return email.trim().toLowerCase() === mockTeacherProfile.email ? "teacher" : "school_admin";
+  const e = email.trim().toLowerCase();
+  if (e === mockTeacherProfile.email) return "teacher";
+  if (e === mockParentProfile.email) return "parent";
+  return "school_admin";
 }
 
 const SESSION_STORAGE_KEY = "sm.mockSession";
@@ -62,7 +83,7 @@ export function setMockSessionActive(role: MockRole = "school_admin"): void {
 export function activeMockRole(): MockRole | null {
   if (typeof window === "undefined") return null;
   const v = window.localStorage.getItem(SESSION_STORAGE_KEY);
-  if (v === "school_admin" || v === "teacher") return v;
+  if (v === "school_admin" || v === "teacher" || v === "parent") return v;
   if (v === "1") return "school_admin"; // migrate the legacy boolean flag
   return null;
 }
