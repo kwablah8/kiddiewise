@@ -19,6 +19,23 @@ export async function createStudent(input: StudentCreateInput): Promise<{ id: st
   if (store.admissionExists(admission_no)) {
     throw new Error("A student with this admission number already exists.");
   }
+
+  // Resolve the inline new guardian (if any) BEFORE creating the student, so a provided-but-invalid
+  // guardian throws up front rather than orphaning a guardian-less student. Uses the SAME strict
+  // email rule as createParent (parentCreateSchema) — a loose gate could pass an address that
+  // createParent then rejects mid-flow, after the student was already stored.
+  const g = data.new_guardian;
+  const newGuardian =
+    g && g.first_name && g.last_name && g.email
+      ? parentCreateSchema.parse({
+          first_name: g.first_name,
+          last_name: g.last_name,
+          email: g.email,
+          phone: g.phone || null,
+          occupation: g.occupation || null,
+        })
+      : null;
+
   const id = crypto.randomUUID();
   const cls = data.class_id ? store.classes.find((c) => c.id === data.class_id) : null;
   // SEAM: guardian_ids is validated above but not auto-linked here — the real
@@ -53,20 +70,13 @@ export async function createStudent(input: StudentCreateInput): Promise<{ id: st
     initial_term_id: data.initial_term_id,
     guardians: [],
   });
-  // Inline new guardian: create a parent + link as primary, only if it's filled enough to be real.
-  const g = data.new_guardian;
-  if (g && g.first_name && g.last_name && g.email && /.+@.+\..+/.test(g.email)) {
-    const { id: parentId } = await createParent({
-      first_name: g.first_name,
-      last_name: g.last_name,
-      email: g.email,
-      phone: g.phone || null,
-      occupation: g.occupation || null,
-    });
+  // Inline new guardian (pre-validated above): create the parent + link as primary guardian.
+  if (newGuardian) {
+    const { id: parentId } = await createParent(newGuardian);
     await linkGuardian({
       student_id: id,
       parent_profile_id: parentId,
-      relationship: g.relationship ?? "guardian",
+      relationship: g?.relationship ?? "guardian",
       is_primary: true,
     });
   }
