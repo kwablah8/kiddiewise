@@ -21,6 +21,12 @@ export const useStudent = (id: string) =>
 export const useStudentStats = () =>
   useQuery({ queryKey: queryKeys.students.stats, queryFn: data.getStudentStats });
 
+export const useStudentAcademics = (id: string) =>
+  useQuery({
+    queryKey: queryKeys.students.academics(id),
+    queryFn: () => data.getStudentAcademics(id),
+  });
+
 export const useParents = () =>
   useQuery({ queryKey: queryKeys.parents.all, queryFn: data.listParents });
 

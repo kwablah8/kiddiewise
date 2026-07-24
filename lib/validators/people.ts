@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { subjectResultVM } from "@/lib/validators/parent";
 
 export const bloodGroup = z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]);
 export type BloodGroup = z.infer<typeof bloodGroup>;
@@ -128,6 +129,24 @@ export const linkGuardianSchema = z.object({
   is_primary: z.boolean(),
 });
 export type LinkGuardianInput = z.infer<typeof linkGuardianSchema>;
+
+// Academic performance (admin view of a single student): this term's per-subject results (same
+// shape the parent portal reads, subject/score/grade/remark/teacher_comment) plus the published
+// terminal report, if any. Ungated — unlike the parent portal's guardian-scoped equivalent, this
+// is the admin's own read of the school's data, so there is no guardian check.
+export const studentAcademicsVM = z.object({
+  term_name: z.string(),
+  subjects: z.array(subjectResultVM),
+  report: z
+    .object({
+      published: z.boolean(),
+      class_teacher_remark: z.string(),
+      overall_average: z.number().nullable(),
+      overall_grade: z.string().nullable(),
+    })
+    .nullable(),
+});
+export type StudentAcademicsVM = z.infer<typeof studentAcademicsVM>;
 
 export const studentStatsVM = z.object({
   total: z.number(),

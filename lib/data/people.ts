@@ -1,12 +1,14 @@
 import { simulate } from "./_devState";
 import { store } from "@/lib/mock/store";
 import { computeStudentStats } from "@/lib/students";
+import { scoreToGrade } from "@/lib/grading";
 import type {
   StudentListItemVM,
   StudentDetailVM,
   ParentListItemVM,
   ClassOptionVM,
   StudentStatsVM,
+  StudentAcademicsVM,
 } from "@/lib/validators/people";
 
 type StudentRecord = (typeof store)["students"][number];
@@ -79,6 +81,52 @@ export function getStudent(id: string): Promise<StudentDetailVM | null> {
   const found = store.students.find((s) => s.id === id);
   const result = found ? toDetailVM(found) : null;
   return simulate(result, null);
+}
+
+// The current term's display name (SEAM: real path reads the active term for the school). Mirrors
+// the private helper of the same name in lib/data/parent.ts.
+function activeTermName(): string {
+  return store.terms.find((t) => t.is_active)?.name ?? "This term";
+}
+
+// Academic performance for a single student — the admin's own read of this term's results plus
+// the published terminal report, if any. Mirrors getChildResults/getChildReport in
+// lib/data/parent.ts, minus the guardian gate (an admin may read any student in their school;
+// SEAM: RLS scopes this to `school_id`, not a guardian link).
+export function getStudentAcademics(studentId: string): Promise<StudentAcademicsVM> {
+  const termName = activeTermName();
+  const subjects = store.childSubjectResults
+    .filter((r) => r.student_id === studentId)
+    .map((r) => {
+      const g = scoreToGrade(r.score, 100, store.gradeBands);
+      return {
+        subject: r.subject,
+        score: r.score,
+        grade: g?.grade ?? "—",
+        remark: g?.remark ?? "—",
+        teacher_comment: r.teacher_comment,
+      };
+    });
+
+  let report: StudentAcademicsVM["report"] = null;
+  const rep = store.terminalReports.find((r) => r.student_id === studentId && r.published);
+  if (rep) {
+    const scores = store.childSubjectResults.filter((r) => r.student_id === studentId);
+    const average = scores.length
+      ? Math.round(scores.reduce((sum, r) => sum + r.score, 0) / scores.length)
+      : null;
+    const overall = average !== null ? scoreToGrade(average, 100, store.gradeBands) : null;
+    report = {
+      published: true,
+      class_teacher_remark: rep.class_teacher_remark,
+      overall_average: average,
+      overall_grade: overall?.grade ?? null,
+    };
+  }
+
+  const vm: StudentAcademicsVM = { term_name: termName, subjects, report };
+  // `empty` state → this term, no results yet, no report.
+  return simulate(vm, { term_name: termName, subjects: [], report: null });
 }
 
 export function listParents(): Promise<ParentListItemVM[]> {

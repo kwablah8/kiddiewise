@@ -13,7 +13,8 @@ import { ErrorState } from "@/components/states/error-state";
 import { StudentAvatar } from "./student-avatar";
 import { studentStatusTone } from "./student-status";
 import { LinkGuardianDialog } from "./link-guardian-dialog";
-import { useStudent } from "@/lib/queries/people";
+import { useStudent, useStudentAcademics } from "@/lib/queries/people";
+import { performanceBand } from "@/lib/grading";
 import { formatDate, formatRole } from "@/lib/format";
 import { cardShellClass } from "@/lib/ui";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ interface StudentProfileProps {
 /** Profile card + Guardians panel for a single student (06-UI §6/§7). */
 export function StudentProfile({ id }: StudentProfileProps) {
   const { data, isLoading, isError, refetch } = useStudent(id);
+  const academics = useStudentAcademics(id);
   const [linkOpen, setLinkOpen] = useState(false);
   // Bumped on every open so `LinkGuardianDialog` remounts fresh (RHF state reset without an
   // effect-driven `reset()` call).
@@ -74,6 +76,9 @@ export function StudentProfile({ id }: StudentProfileProps) {
       data.prev_year_attended,
   );
   const hasContact = Boolean(data.email || data.phone || data.address || data.city || data.town);
+  const hasAcademics = Boolean(
+    academics.data && (academics.data.subjects.length > 0 || academics.data.report),
+  );
 
   return (
     <div className="space-y-6">
@@ -221,6 +226,85 @@ export function StudentProfile({ id }: StudentProfileProps) {
             <DetailItem label="City" value={data.city ?? "—"} muted={!data.city} />
             <DetailItem label="Town" value={data.town ?? "—"} muted={!data.town} />
           </dl>
+        </section>
+      )}
+
+      {(academics.isLoading || academics.isError || hasAcademics) && (
+        <section className={cardShellClass}>
+          <h3 className="text-base font-semibold text-[var(--text)]">Academic performance</h3>
+
+          {academics.isLoading && (
+            <div className="mt-4 space-y-3">
+              <SkeletonBlock className="h-16 w-full" />
+              <SkeletonBlock className="h-10 w-full" />
+              <SkeletonBlock className="h-10 w-full" />
+            </div>
+          )}
+
+          {academics.isError && (
+            <div className="mt-4">
+              <ErrorState
+                message="Couldn't load academic performance."
+                onRetry={() => academics.refetch()}
+              />
+            </div>
+          )}
+
+          {!academics.isLoading && !academics.isError && academics.data && (
+            <div className="mt-4 space-y-5">
+              {academics.data.report && (
+                <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)] p-4">
+                  <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">
+                    Terminal report · {academics.data.term_name}
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                    Overall:{" "}
+                    {academics.data.report.overall_average !== null
+                      ? `${academics.data.report.overall_average}%`
+                      : "—"}
+                    {academics.data.report.overall_grade
+                      ? ` · Grade ${academics.data.report.overall_grade}`
+                      : ""}
+                  </p>
+                  {academics.data.report.class_teacher_remark && (
+                    <p className="mt-2 text-sm text-[var(--text)] italic">
+                      &ldquo;{academics.data.report.class_teacher_remark}&rdquo;
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {academics.data.subjects.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">
+                    {academics.data.term_name} results
+                  </p>
+                  <ul className="mt-2 divide-y divide-[var(--border)]">
+                    {academics.data.subjects.map((s) => (
+                      <li key={s.subject} className="py-3 first:pt-0 last:pb-0">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="min-w-0 truncate font-medium text-[var(--text)]">
+                            {s.subject}
+                          </span>
+                          <span className="flex shrink-0 items-center gap-2">
+                            <span className="text-sm text-[var(--muted-foreground)]">
+                              {s.score}%
+                            </span>
+                            <StatusPill label={s.grade} tone={performanceBand(s.score).tone} />
+                          </span>
+                        </div>
+                        {s.teacher_comment && (
+                          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                            {s.teacher_comment}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </section>
       )}
 
