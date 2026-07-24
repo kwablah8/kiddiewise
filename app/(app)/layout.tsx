@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { SessionProvider, useSession } from "@/lib/auth/useSession";
 import { AppShell } from "@/components/app/app-shell";
+import { ParentShell } from "@/components/parent/parent-shell";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { Toaster } from "@/components/ui/sonner";
 import { homePathForRole, isPathAllowedForRole } from "@/lib/auth/access";
@@ -50,7 +51,12 @@ function AppGuard({ children }: { children: ReactNode }) {
     return <FullPageSkeleton />;
   }
 
-  return <AppShell profile={profile}>{children}</AppShell>;
+  // Parents get the lightweight top-bar shell; admins (and teachers) keep the sidebar AppShell.
+  return profile.role === "parent" ? (
+    <ParentShell profile={profile}>{children}</ParentShell>
+  ) : (
+    <AppShell profile={profile}>{children}</AppShell>
+  );
 }
 
 export default function AppLayout({ children }: { children: ReactNode }) {
