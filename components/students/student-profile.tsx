@@ -66,6 +66,14 @@ export function StudentProfile({ id }: StudentProfileProps) {
   }
 
   const fullName = `${data.first_name} ${data.last_name}`;
+  const hasMedical = Boolean(data.medical_conditions || data.allergies);
+  const hasPrevSchool = Boolean(
+    data.prev_school_name ||
+      data.prev_class_ended ||
+      data.prev_average_score ||
+      data.prev_year_attended,
+  );
+  const hasContact = Boolean(data.email || data.phone || data.address || data.city || data.town);
 
   return (
     <div className="space-y-6">
@@ -106,6 +114,13 @@ export function StudentProfile({ id }: StudentProfileProps) {
             <DetailItem label="Date of birth" value={formatDate(data.date_of_birth)} />
             <DetailItem label="Gender" value={formatRole(data.gender)} />
             <DetailItem label="Class" value={data.class_name ?? "—"} muted={!data.class_name} />
+            <DetailItem label="Other names" value={data.other_names ?? "—"} muted={!data.other_names} />
+            <DetailItem label="Blood group" value={data.blood_group ?? "—"} muted={!data.blood_group} />
+            <DetailItem
+              label="Enrollment date"
+              value={data.enrollment_date ? formatDate(data.enrollment_date) : "—"}
+              muted={!data.enrollment_date}
+            />
           </dl>
         </section>
 
@@ -142,7 +157,7 @@ export function StudentProfile({ id }: StudentProfileProps) {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-[var(--text)]">{g.name}</p>
                       <p className="truncate text-xs text-[var(--muted-foreground)]">
-                        {formatRole(g.relationship)} · {g.email}
+                        {formatRole(g.relationship)} · {g.occupation ?? g.email}
                       </p>
                     </div>
                     {g.is_primary && <Badge className="shrink-0">Primary</Badge>}
@@ -153,6 +168,61 @@ export function StudentProfile({ id }: StudentProfileProps) {
           </div>
         </section>
       </div>
+
+      {hasMedical && (
+        <section className={cardShellClass}>
+          <h3 className="text-base font-semibold text-[var(--text)]">Medical</h3>
+          <dl className="mt-4 grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
+            <DetailItem
+              label="Medical conditions"
+              value={data.medical_conditions ?? "—"}
+              muted={!data.medical_conditions}
+            />
+            <DetailItem label="Allergies" value={data.allergies ?? "—"} muted={!data.allergies} />
+          </dl>
+        </section>
+      )}
+
+      {hasPrevSchool && (
+        <section className={cardShellClass}>
+          <h3 className="text-base font-semibold text-[var(--text)]">Previous school</h3>
+          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
+            <DetailItem
+              label="School name"
+              value={data.prev_school_name ?? "—"}
+              muted={!data.prev_school_name}
+            />
+            <DetailItem
+              label="Class ended"
+              value={data.prev_class_ended ?? "—"}
+              muted={!data.prev_class_ended}
+            />
+            <DetailItem
+              label="Average score"
+              value={data.prev_average_score ? `${data.prev_average_score}%` : "—"}
+              muted={!data.prev_average_score}
+            />
+            <DetailItem
+              label="Year attended"
+              value={data.prev_year_attended ?? "—"}
+              muted={!data.prev_year_attended}
+            />
+          </dl>
+        </section>
+      )}
+
+      {hasContact && (
+        <section className={cardShellClass}>
+          <h3 className="text-base font-semibold text-[var(--text)]">Contact</h3>
+          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3">
+            <DetailItem label="Email" value={data.email ?? "—"} muted={!data.email} />
+            <DetailItem label="Phone" value={data.phone ?? "—"} muted={!data.phone} />
+            <DetailItem label="Address" value={data.address ?? "—"} muted={!data.address} />
+            <DetailItem label="City" value={data.city ?? "—"} muted={!data.city} />
+            <DetailItem label="Town" value={data.town ?? "—"} muted={!data.town} />
+          </dl>
+        </section>
+      )}
 
       <LinkGuardianDialog
         key={linkDialogKey}
