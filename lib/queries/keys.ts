@@ -60,6 +60,9 @@ export const queryKeys = {
     overview: (filter: unknown) => ["fees", "overview", filter] as const,
     structures: (filter: unknown) => ["fees", "structures", filter] as const,
     payments: (filter: unknown) => ["fees", "payments", filter] as const,
+    classFees: (filter: unknown) => ["fees", "class-fees", filter] as const,
+    extraStructures: (filter: unknown) => ["fees", "extra-structures", filter] as const,
+    extraAssignments: (filter: unknown) => ["fees", "extra-assignments", filter] as const,
   },
   parent: {
     children: ["parent", "children"] as const,

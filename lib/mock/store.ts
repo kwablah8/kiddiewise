@@ -10,7 +10,7 @@ import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
 import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
 import type { ParentAnnouncementVM } from "@/lib/validators/parent";
-import type { FeeStructureVM } from "@/lib/validators/fees";
+import type { FeeStructureVM, ExtraFeeStructureVM } from "@/lib/validators/fees";
 import { applyAttendanceUpsert, type UpsertMeta } from "@/lib/attendance";
 import type { AttendanceStatus } from "@/lib/validators/attendance";
 
@@ -88,6 +88,7 @@ const feeStructures: FeeStructureVM[] = fx.mockFeeStructures.map((f) => ({ ...f 
 const studentFeeRecords = fx.mockStudentFeeRecords.map((r) => ({ ...r }));
 const payments = fx.mockPayments.map((p) => ({ ...p }));
 const extraFeeRecords = fx.mockExtraFeeRecords.map((e) => ({ ...e }));
+const extraFeeStructures: ExtraFeeStructureVM[] = fx.mockExtraFeeStructures.map((e) => ({ ...e }));
 
 export const store = {
   students,
@@ -107,9 +108,13 @@ export const store = {
   studentFeeRecords,
   payments,
   extraFeeRecords,
+  extraFeeStructures,
 
   addFeeStructure(rec: FeeStructureVM) {
     feeStructures.unshift(rec);
+  },
+  addExtraFeeStructure(rec: ExtraFeeStructureVM) {
+    extraFeeStructures.unshift(rec);
   },
 
   // Attendance reads/writes (Teacher portal marks; shared with the parent view). Upsert keys on

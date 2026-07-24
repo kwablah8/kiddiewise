@@ -22,7 +22,13 @@ import type {
 } from "@/lib/validators/academics";
 import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
-import type { FeeStructureVM, PaymentVM, FeeTerm, PaymentMethod } from "@/lib/validators/fees";
+import type {
+  FeeStructureVM,
+  PaymentVM,
+  FeeTerm,
+  PaymentMethod,
+  ExtraFeeStructureVM,
+} from "@/lib/validators/fees";
 import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
 import type { ParentAnnouncementVM, AttendanceStatus } from "@/lib/validators/parent";
 import type { AttendanceRecord } from "@/lib/mock/attendance-records";
@@ -1587,15 +1593,31 @@ function seedPayments(): PaymentVM[] {
 }
 export const mockPayments: PaymentVM[] = seedPayments();
 
-// A few extra-fee records so the Overview's Extra-Fees cards show non-zero figures (the full Extra
-// Fees tab is a later slice).
-export const mockExtraFeeRecords: { id: string; amount: number; paid: number }[] = [
-  { id: "ex-1", amount: 300, paid: 300 },
-  { id: "ex-2", amount: 500, paid: 250 },
-  { id: "ex-3", amount: 150, paid: 150 },
-  { id: "ex-4", amount: 400, paid: 0 },
-  { id: "ex-5", amount: 250, paid: 250 },
-  { id: "ex-6", amount: 600, paid: 300 },
-  { id: "ex-7", amount: 200, paid: 200 },
-  { id: "ex-8", amount: 350, paid: 100 },
+// Assigned extra fees — the single source for BOTH the Overview's extra-fees cards (amount/paid)
+// and the Extra Fees tab's "Assigned Extra Fees" list (golden rule 9).
+export const mockExtraFeeRecords: {
+  id: string;
+  student_name: string;
+  class_name: string;
+  fee_name: string;
+  amount: number;
+  paid: number;
+}[] = [
+  { id: "ex-1", student_name: "Kwame Asante", class_name: "Basic 1", fee_name: "School Bus", amount: 300, paid: 300 },
+  { id: "ex-2", student_name: "Ama Boateng", class_name: "Basic 1", fee_name: "School Bus", amount: 500, paid: 250 },
+  { id: "ex-3", student_name: "Kwesi Owusu", class_name: "Basic 3", fee_name: "Feeding", amount: 150, paid: 150 },
+  { id: "ex-4", student_name: "Efua Mensah", class_name: "JHS 1", fee_name: "Excursion", amount: 400, paid: 0 },
+  { id: "ex-5", student_name: "Yaw Darko", class_name: "Basic 2", fee_name: "School Bus", amount: 250, paid: 250 },
+  { id: "ex-6", student_name: "Adwoa Frimpong", class_name: "Basic 3", fee_name: "Feeding", amount: 600, paid: 300 },
+  { id: "ex-7", student_name: "Kofi Antwi", class_name: "Basic 2", fee_name: "Uniform", amount: 200, paid: 200 },
+  { id: "ex-8", student_name: "Akua Kusi", class_name: "JHS 1", fee_name: "Excursion", amount: 350, paid: 100 },
+];
+
+// Extra-fee definitions (the "structures" list on the Extra Fees tab).
+export const mockExtraFeeStructures: ExtraFeeStructureVM[] = [
+  { id: "efs-1", name: "School Bus", description: "Return daily transport", amount: 500, frequency: "termly", scope: "All classes" },
+  { id: "efs-2", name: "Feeding", description: "Hot lunch programme", amount: 600, frequency: "termly", scope: "All classes" },
+  { id: "efs-3", name: "Uniform", description: "Full set (2 pairs)", amount: 200, frequency: "one_time", scope: "All classes" },
+  { id: "efs-4", name: "Excursion", description: "End-of-term educational trip", amount: 400, frequency: "one_time", scope: "JHS 1" },
+  { id: "efs-5", name: "ICT Lab", description: "Computer lab maintenance", amount: 150, frequency: "annual", scope: "All classes" },
 ];

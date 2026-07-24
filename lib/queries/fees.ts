@@ -27,10 +27,55 @@ export function usePayments(filter: FeesFilter) {
   });
 }
 
+export function useClassFees(filter: FeesFilter) {
+  return useQuery({
+    queryKey: queryKeys.fees.classFees(filter),
+    queryFn: () => data.listClassFees(filter),
+  });
+}
+
+export function useExtraFeeStructures(filter: FeesFilter) {
+  return useQuery({
+    queryKey: queryKeys.fees.extraStructures(filter),
+    queryFn: () => data.listExtraFeeStructures(filter),
+  });
+}
+
+export function useExtraFeeAssignments(filter: FeesFilter) {
+  return useQuery({
+    queryKey: queryKeys.fees.extraAssignments(filter),
+    queryFn: () => data.listExtraFeeAssignments(filter),
+  });
+}
+
 export function useCreateFeeStructure() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: actions.createFeeStructure,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}
+
+export function useBulkAssignFees() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: actions.bulkAssignFees,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}
+
+export function useAssignIndividualFee() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: actions.assignIndividualFee,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}
+
+export function useCreateExtraFeeStructure() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: actions.createExtraFeeStructure,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
   });
 }

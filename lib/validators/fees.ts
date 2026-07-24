@@ -90,3 +90,95 @@ export interface FeesFilter {
   academic_year_id?: string;
   term?: FeeTerm;
 }
+
+// ---- Class Fees ----
+export const feeStatus = z.enum(["paid", "partial", "pending"]);
+export type FeeStatus = z.infer<typeof feeStatus>;
+
+export const FEE_STATUS_LABEL: Record<FeeStatus, string> = {
+  paid: "Paid",
+  partial: "Partial",
+  pending: "Pending",
+};
+
+export const scholarshipType = z.enum(["none", "partial", "full", "bursary"]);
+export type ScholarshipType = z.infer<typeof scholarshipType>;
+
+export const SCHOLARSHIP_LABEL: Record<ScholarshipType, string> = {
+  none: "No Scholarship",
+  partial: "Partial Scholarship",
+  full: "Full Scholarship",
+  bursary: "Bursary",
+};
+
+// A student's fee position for a class (derived balance + status). Backs the Class Fees table.
+export const studentFeeVM = z.object({
+  id: z.string(),
+  student_id: z.string(),
+  student_name: z.string(),
+  class_name: z.string(),
+  expected: z.number(),
+  discount: z.number(),
+  scholarship_type: z.string().nullable(),
+  paid: z.number(),
+  arrears: z.number(),
+  balance: z.number(),
+  status: feeStatus,
+});
+export type StudentFeeVM = z.infer<typeof studentFeeVM>;
+
+export const bulkAssignFeesSchema = z.object({
+  class_id: z.string().min(1, "Select a class"),
+  amount: z.coerce.number().positive("Enter an amount"),
+  term: feeTerm.default("full_year"),
+  due_date: z.string().nullable().default(null),
+  scholarship_type: scholarshipType.default("none"),
+  discount: z.coerce.number().min(0, "0–100").max(100, "0–100").default(0),
+});
+export type BulkAssignFeesInput = z.infer<typeof bulkAssignFeesSchema>;
+
+export const assignIndividualFeeSchema = bulkAssignFeesSchema
+  .omit({ class_id: true })
+  .extend({ student_id: z.string().min(1, "Select a student") });
+export type AssignIndividualFeeInput = z.infer<typeof assignIndividualFeeSchema>;
+
+// ---- Extra Fees ----
+export const extraFeeFrequency = z.enum(["one_time", "termly", "monthly", "annual"]);
+export type ExtraFeeFrequency = z.infer<typeof extraFeeFrequency>;
+
+export const EXTRA_FREQUENCY_LABEL: Record<ExtraFeeFrequency, string> = {
+  one_time: "One-time",
+  termly: "Termly",
+  monthly: "Monthly",
+  annual: "Annual",
+};
+
+export const extraFeeStructureVM = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  amount: z.number(),
+  frequency: extraFeeFrequency,
+  scope: z.string(), // "All classes" or a class name
+});
+export type ExtraFeeStructureVM = z.infer<typeof extraFeeStructureVM>;
+
+export const extraFeeAssignmentVM = z.object({
+  id: z.string(),
+  student_name: z.string(),
+  class_name: z.string(),
+  fee_name: z.string(),
+  amount: z.number(),
+  paid: z.number(),
+  balance: z.number(),
+  status: feeStatus,
+});
+export type ExtraFeeAssignmentVM = z.infer<typeof extraFeeAssignmentVM>;
+
+export const extraFeeStructureCreateSchema = z.object({
+  name: z.string().min(1, "Required"),
+  amount: z.coerce.number().positive("Enter an amount"),
+  frequency: extraFeeFrequency.default("one_time"),
+  description: z.string().nullable().default(null),
+});
+export type ExtraFeeStructureCreateInput = z.infer<typeof extraFeeStructureCreateSchema>;
