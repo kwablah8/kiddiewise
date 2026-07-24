@@ -55,7 +55,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #15803D; /* forest green — admin accent (06-UI §2) */
+  --primary: #1D4ED8; /* blue — admin accent (headings, primary actions, links, focus) */
   --primary-foreground: #FFFFFF;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -110,10 +110,9 @@
      give the public pages a softer, editorial section rhythm. Not used in the app shell. */
   --bg-warm: #FAF7F3;
   /* Dashboard chart series (06-UI §5 "Fee Collection Trend" / "Enrollment Trend"): fee/revenue
-     uses --primary (green) directly; enrollment reuses the admin amber accent (--warning-fg,
+     uses --primary (blue) directly; enrollment reuses the admin amber accent (--warning-fg,
      the same hue as the amber metric-card chips) so the two chart cards read as distinct
-     series while staying inside the green+amber admin palette (06-UI §2) — no blue/indigo/
-     purple, which belong to the teacher portal. */
+     series across the blue+amber admin palette. */
   --chart-enrollment: var(--warning-fg);
 }
 
