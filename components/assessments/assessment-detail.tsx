@@ -62,6 +62,8 @@ export function AssessmentDetail({ id, backHref = "/assessments" }: { id: string
       <PageHeader
         title={data.title}
         subtitle={`${data.class_name} · ${data.subject_name} · ${data.type_name} · ${data.term_name}`}
+        backHref={backHref}
+        backLabel="Assessments"
         action={data.is_submitted ? <StatusPill label="Submitted" tone="success" /> : <StatusPill label="Not submitted" tone="neutral" />}
       />
       <div className={cardShellClass}>

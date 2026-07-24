@@ -13,6 +13,8 @@ export default async function NewStudentPage({ searchParams }: NewStudentPagePro
       <PageHeader
         title="New Student"
         subtitle="Add a student record, assign a class, and link guardians."
+        backHref="/students"
+        backLabel="Students"
       />
       <StudentForm mode="create" fromInquiryId={fromInquiry} />
     </div>

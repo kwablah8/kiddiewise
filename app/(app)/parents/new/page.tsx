@@ -4,7 +4,12 @@ import { ParentForm } from "@/components/parents/parent-form";
 export default function NewParentPage() {
   return (
     <div className="space-y-6">
-      <PageHeader title="New Parent" subtitle="Add a parent record to link to students." />
+      <PageHeader
+        title="New Parent"
+        subtitle="Add a parent record to link to students."
+        backHref="/parents"
+        backLabel="Parents"
+      />
       <ParentForm />
     </div>
   );

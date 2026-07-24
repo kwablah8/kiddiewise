@@ -72,6 +72,8 @@ export function StaffDetail({ id }: StaffDetailProps) {
       <PageHeader
         title={fullName}
         subtitle={`${roleLabel(data.role)} · ${data.staff_no}${data.department ? ` · ${data.department}` : ""}`}
+        backHref="/staff"
+        backLabel="Staff"
         action={
           <Button
             type="button"

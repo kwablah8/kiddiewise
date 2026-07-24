@@ -85,6 +85,8 @@ export function StudentProfile({ id }: StudentProfileProps) {
       <PageHeader
         title={fullName}
         subtitle={`Admission No. ${data.admission_no}${data.class_name ? ` · ${data.class_name}` : ""}`}
+        backHref="/students"
+        backLabel="Students"
         action={
           <Link
             href={`/students/${id}/edit`}

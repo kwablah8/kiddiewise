@@ -74,6 +74,8 @@ export function ClassDetail({ id }: ClassDetailProps) {
       <PageHeader
         title={data.name}
         subtitle={`${data.level}${data.capacity ? ` · Capacity ${data.capacity}` : ""}`}
+        backHref="/classes"
+        backLabel="Classes"
         action={
           <Button
             type="button"

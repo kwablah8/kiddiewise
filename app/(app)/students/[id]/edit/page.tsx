@@ -13,6 +13,8 @@ export default async function EditStudentPage({ params }: EditStudentPageProps) 
       <PageHeader
         title="Edit Student"
         subtitle="Update student details, class assignment, and guardians."
+        backHref={`/students/${id}`}
+        backLabel="Student"
       />
       <StudentForm mode="edit" studentId={id} />
     </div>
