@@ -48,9 +48,9 @@ const classSubjects: AssignmentRecord[] = fx.mockClassSubjects.map((a) => ({ ...
 const inquiries: InquiryRecord[] = fx.mockInquiries.map((i) => ({ ...i }));
 const gradeBands: GradeBandRecord[] = fx.mockGradeBands.map((b) => ({ ...b }));
 const assessmentTypes: AssessmentTypeRecord[] = fx.mockAssessmentTypes.map((t) => ({ ...t }));
-// Assessments + results (read-only oversight). Seeded in Task 4; empty here so assessmentTypeInUse compiles.
-const assessments: AssessmentRecord[] = [];
-const results: ResultRecord[] = [];
+// Assessments + results (read-only oversight). Seeded by copying the fixtures.
+const assessments: AssessmentRecord[] = fx.mockAssessments.map((a) => ({ ...a }));
+const results: ResultRecord[] = fx.mockResults.map((r) => ({ ...r }));
 
 export const store = {
   students,

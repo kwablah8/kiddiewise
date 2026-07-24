@@ -22,6 +22,7 @@ import type {
 } from "@/lib/validators/academics";
 import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
+import type { AssessmentRecord, ResultRecord } from "@/lib/mock/assessment-records";
 
 // students/staff are static demo figures; new_inquiries is derived live in lib/data/sidebar.ts.
 export const mockSidebarCounts: Pick<SidebarCountsVM, "students" | "staff"> = {
@@ -826,3 +827,33 @@ export const mockParents: ParentListItemVM[] = parentsBase.map((p) => ({
     .filter((s) => s.guardians.some((g) => g.parent_profile_id === p.id))
     .map((s) => `${s.first_name} ${s.last_name}`),
 }));
+
+// ---------------------------------------------------------------------------
+// Assessments + Results (read-only oversight) — Slice 5.
+// ---------------------------------------------------------------------------
+
+// Assessments the admin monitors (created by teachers in the real app; seeded here). Active term trm-3.
+export const mockAssessments: AssessmentRecord[] = [
+  { id: "asm-01", class_id: "cls-1", subject_id: "sub-01", term_id: "trm-3", assessment_type_id: "atype-02", title: "Mid-Term Exam", max_score: 30, date: "2026-06-05", is_submitted: true },
+  { id: "asm-02", class_id: "cls-1", subject_id: "sub-02", term_id: "trm-3", assessment_type_id: "atype-01", title: "Class Test 1", max_score: 20, date: "2026-05-20", is_submitted: true },
+  { id: "asm-03", class_id: "cls-4", subject_id: "sub-01", term_id: "trm-3", assessment_type_id: "atype-03", title: "End-of-Term Exam", max_score: 100, date: "2026-07-10", is_submitted: false },
+  { id: "asm-04", class_id: "cls-4", subject_id: "sub-02", term_id: "trm-3", assessment_type_id: "atype-01", title: "Class Test 2", max_score: 20, date: "2026-06-18", is_submitted: true },
+  { id: "asm-05", class_id: "cls-5", subject_id: "sub-03", term_id: "trm-3", assessment_type_id: "atype-02", title: "Mid-Term Exam", max_score: 40, date: "2026-06-06", is_submitted: true },
+  { id: "asm-06", class_id: "cls-3", subject_id: "sub-01", term_id: "trm-3", assessment_type_id: "atype-01", title: "Class Test 1", max_score: 25, date: null, is_submitted: false },
+];
+
+// Deterministic pseudo-score in [40, 98]% of maxScore, from the student+assessment ids — no RNG, so
+// the oversight view is stable across reloads. Generated over each assessment's class roster.
+function seedResults(): ResultRecord[] {
+  const out: ResultRecord[] = [];
+  for (const a of mockAssessments) {
+    const roster = mockStudents.filter((s) => s.class_id === a.class_id);
+    roster.forEach((s, i) => {
+      const h = [...(s.id + a.id)].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+      const pct = 40 + ((h + i * 7) % 59); // 40..98
+      out.push({ id: `res-${a.id}-${s.id}`, assessment_id: a.id, student_id: s.id, score: Math.round((pct / 100) * a.max_score) });
+    });
+  }
+  return out;
+}
+export const mockResults: ResultRecord[] = seedResults();
