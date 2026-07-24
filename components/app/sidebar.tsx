@@ -157,7 +157,7 @@ export function Sidebar({
       )}
 
       {/* Nav */}
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const count = item.countKey ? counts?.[item.countKey] : undefined;
@@ -169,7 +169,7 @@ export function Sidebar({
               title={collapsed ? item.label : undefined}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 collapsed && "justify-center px-0",
                 isActive
                   ? "bg-white/15 text-white"
