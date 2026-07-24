@@ -91,7 +91,12 @@ function ReportCard({ report }: { report: TerminalReportVM }) {
           </p>
         )}
       </div>
-      <Button type="button" variant="outline" onClick={handleDownload}>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleDownload}
+        className="w-full sm:w-auto"
+      >
         <Download className="size-4" aria-hidden="true" />
         View / Download
       </Button>

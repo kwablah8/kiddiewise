@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useParentChildren } from "@/lib/queries/parent";
+import { cn } from "@/lib/utils";
 
 // Reads the active child id from /parent/children/[id] paths (undefined on the dashboard).
 function activeChildId(pathname: string): string | undefined {
@@ -17,8 +18,8 @@ function activeChildId(pathname: string): string | undefined {
 }
 
 /** Top-bar child switcher. Selecting a child drills into their pages. Hidden until there are
- *  children to switch between. */
-export function ChildSwitcher() {
+ *  children to switch between. `className` is merged into the trigger (e.g. `w-full` on mobile). */
+export function ChildSwitcher({ className }: { className?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const { data } = useParentChildren();
@@ -37,7 +38,7 @@ export function ChildSwitcher() {
         if (typeof id === "string") router.push(`/parent/children/${id}`);
       }}
     >
-      <SelectTrigger aria-label="Choose a child" className="h-9 min-w-44">
+      <SelectTrigger aria-label="Choose a child" className={cn("h-9 min-w-44", className)}>
         <SelectValue placeholder="View a child" />
       </SelectTrigger>
       <SelectContent>

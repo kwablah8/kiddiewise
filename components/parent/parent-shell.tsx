@@ -63,9 +63,9 @@ export function ParentShell({ profile, children }: ParentShellProps) {
             </button>
           </div>
         </div>
-        {/* Child switcher moves below the bar on the narrowest screens */}
+        {/* Child switcher moves below the bar on the narrowest screens (full-width tap target) */}
         <div className="border-t border-[var(--border)] px-4 py-2 sm:hidden">
-          <ChildSwitcher />
+          <ChildSwitcher className="w-full" />
         </div>
       </header>
 
