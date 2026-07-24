@@ -33,6 +33,7 @@ const columns: DataTableColumn<StaffVM>[] = [
   {
     key: "staff_no",
     header: "Staff No.",
+    hideOnMobile: true,
     render: (row) => <span className="font-medium">{row.staff_no}</span>,
   },
   {
@@ -47,11 +48,13 @@ const columns: DataTableColumn<StaffVM>[] = [
   {
     key: "email",
     header: "Email",
+    hideOnMobile: true,
     render: (row) => row.email,
   },
   {
     key: "department",
     header: "Department",
+    hideOnMobile: true,
     render: (row) =>
       row.department ?? <span className="text-[var(--muted-foreground)]">No Department</span>,
   },
@@ -59,12 +62,14 @@ const columns: DataTableColumn<StaffVM>[] = [
     key: "classes",
     header: "Classes",
     align: "right",
+    hideOnMobile: true,
     render: (row) => row.class_count,
   },
   {
     key: "subjects",
     header: "Subjects",
     align: "right",
+    hideOnMobile: true,
     render: (row) => row.subject_count,
   },
   {

@@ -21,6 +21,9 @@ export interface DataTableColumn<T> {
   align?: "left" | "right";
   render: (row: T) => ReactNode;
   className?: string;
+  /** Hide this column below the `sm` breakpoint (progressive disclosure on phones). The row still
+   *  scrolls horizontally for any columns that remain wider than the screen. */
+  hideOnMobile?: boolean;
 }
 
 interface DataTableProps<T> {
@@ -82,6 +85,7 @@ export function DataTable<T>({
                 className={cn(
                   "h-9 text-[11px] font-medium tracking-wide text-[var(--label)] uppercase",
                   col.align === "right" && "text-right",
+                  col.hideOnMobile && "hidden sm:table-cell",
                 )}
               >
                 {col.header}
@@ -117,6 +121,7 @@ export function DataTable<T>({
                   className={cn(
                     "py-3 text-sm whitespace-nowrap text-[var(--text)]",
                     col.align === "right" && "text-right",
+                    col.hideOnMobile && "hidden sm:table-cell",
                     col.className,
                   )}
                 >
