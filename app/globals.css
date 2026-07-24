@@ -98,6 +98,10 @@
   --success-fg: #15803D;
   --warning-bg: #FEF3C7;
   --warning-fg: #B45309;
+  --info-bg: #E0F2FE;    /* teacher blue chip (06-UI §8) */
+  --info-fg: #0369A1;
+  --indigo-bg: #E0E7FF;  /* teacher indigo chip (06-UI §8) */
+  --indigo-fg: #4338CA;
   --danger: #DC2626;
   /* signature brand surface: maroon → near-black vertical gradient (sidebar) */
   --brand-top: #5C1B22;
