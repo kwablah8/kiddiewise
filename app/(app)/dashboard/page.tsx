@@ -21,6 +21,7 @@ import { StatsRow } from "@/components/dashboard/stats-row";
 import { FeeTrendChart } from "@/components/dashboard/fee-trend-chart";
 import { EnrollmentTrendChart } from "@/components/dashboard/enrollment-trend-chart";
 import { ClassPerformanceTable } from "@/components/dashboard/class-performance-table";
+import { RecentEnquiries } from "@/components/dashboard/recent-enquiries";
 import { useRecentActivities, useUpcomingEvents } from "@/lib/queries/dashboard";
 import { formatDate, formatMonthShort } from "@/lib/format";
 
@@ -155,7 +156,8 @@ export default function DashboardPage() {
         <EnrollmentTrendChart />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <RecentEnquiries />
         <RecentActivitiesPanel />
         <UpcomingEventsPanel />
       </div>

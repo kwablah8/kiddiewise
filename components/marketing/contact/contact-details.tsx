@@ -15,7 +15,6 @@ const ROWS = [
     value: SITE.contact.email,
     href: `mailto:${SITE.contact.email}`,
   },
-  { icon: Clock, label: "Office hours", value: "Mon – Fri, 7:30am – 4:30pm", href: undefined },
 ] as const;
 
 /** Contact details card: address/phone/email/hours + a map placeholder (01-REQ "Contact"). */
@@ -49,6 +48,31 @@ export function ContactDetails() {
             </div>
           );
         })}
+
+        {/* Office hours: multi-line (weekday / weekend) plus the weekend community drop-off note. */}
+        <div className="flex items-start gap-4">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--m-brand),white_90%)] text-[var(--m-brand)]">
+            <Clock className="size-5" aria-hidden="true" />
+          </span>
+          <div>
+            <dt className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+              Office hours
+            </dt>
+            <dd className="mt-1 space-y-0.5">
+              {SITE.hours.entries.map((entry) => (
+                <p key={entry.days} className="text-base text-[var(--text)]">
+                  <span className="font-medium">{entry.days}</span>
+                  <span className="text-[var(--muted-foreground)]"> · {entry.time}</span>
+                </p>
+              ))}
+              {SITE.hours.note ? (
+                <p className="mt-1.5 text-sm leading-relaxed text-[var(--muted-foreground)]">
+                  {SITE.hours.note}
+                </p>
+              ) : null}
+            </dd>
+          </div>
+        </div>
       </dl>
 
       {/* SEAM: real map embed later (or a Storage-hosted static map image) */}
