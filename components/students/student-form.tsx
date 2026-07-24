@@ -280,6 +280,10 @@ function StudentFormFields({
       if (mode === "create") {
         const { id } = await createStudent.mutateAsync(values);
         await linkNewGuardians(id, values.guardian_ids);
+        // SEAM: create-student + mark-converted are two non-atomic writes here. On the mock a
+        // partial failure only softens the toast, but at Supabase integration this pair must be
+        // one transaction (or made idempotent on the inquiry id) so a mid-flow failure can't leave
+        // a student created with the inquiry still `accepted` (re-convertible → duplicate student).
         if (convertInquiryId) {
           try {
             await setInquiryStatus.mutateAsync({ id: convertInquiryId, status: "converted" });

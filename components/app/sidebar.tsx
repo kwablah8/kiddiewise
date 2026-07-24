@@ -42,6 +42,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Parents", href: "/parents", icon: UserRound },
   { label: "Subjects", href: "/subjects", icon: BookOpen },
   { label: "Classes", href: "/classes", icon: School },
+  // Label "Admissions" (per spec) but href "/enquiries" ON PURPOSE: the public marketing site owns
+  // /admissions, so the admin inquiry module lives at /enquiries. Don't "fix" one to match the other.
   { label: "Admissions", href: "/enquiries", icon: ClipboardList, countKey: "new_inquiries" },
   { label: "Assessments", href: "/assessments", icon: FileCheck2 },
   { label: "Fees", href: "/fees", icon: Wallet },

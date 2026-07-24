@@ -26,6 +26,10 @@ export async function submitInquiry(input: InquiryCreateInput): Promise<{ id: st
 // SEAM: real path is `update admissions_inquiries set status = $2 where id = $1` — the admin RLS
 // policy (inq_admin_all, 0010) already scopes this to the caller's school. This mock validates the
 // input, guards the transition against lib/inquiries#INQUIRY_TRANSITIONS, then mutates the store.
+// INTEGRATION CONTRACT: RLS scopes *who* may write, NOT *which* transition is legal — a bare UPDATE
+// would silently drop the state-machine guard (e.g. allow new→converted, or mutating a terminal
+// row). The `canTransitionInquiry` check MUST be preserved server-side (in an RPC / Edge Function,
+// or a trigger-backed CHECK), not just here in the client action.
 export async function setInquiryStatus(
   input: InquiryStatusUpdateInput,
 ): Promise<{ id: string }> {
