@@ -1,5 +1,10 @@
 import * as fx from "./fixtures";
-import type { StudentListItemVM, ParentListItemVM, GuardianVM } from "@/lib/validators/people";
+import type {
+  StudentListItemVM,
+  ParentListItemVM,
+  GuardianVM,
+  BloodGroup,
+} from "@/lib/validators/people";
 import type { AcademicYearVM, TermVM, ClassVM, SubjectVM, StaffVM, AssignmentVM } from "@/lib/validators/academics";
 import type { InquiryVM } from "@/lib/validators/inquiries";
 import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
@@ -12,6 +17,22 @@ import type { ParentAnnouncementVM } from "@/lib/validators/parent";
 type StudentRecord = Omit<StudentListItemVM, "guardian_names"> & {
   date_of_birth: string;
   guardians: GuardianVM[];
+  other_names: string | null;
+  blood_group: BloodGroup | null;
+  enrollment_date: string | null;
+  medical_conditions: string | null;
+  allergies: string | null;
+  prev_school_name: string | null;
+  prev_class_ended: string | null;
+  prev_average_score: string | null;
+  prev_year_attended: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  town: string | null;
+  initial_academic_year_id: string | null;
+  initial_term_id: string | null;
 };
 
 // Academics raw records mirror the generated `Database` row shapes (minus `school_id`/
@@ -76,6 +97,14 @@ export const store = {
   },
   admissionExists(no: string, exceptId?: string) {
     return students.some((s) => s.admission_no === no && s.id !== exceptId);
+  },
+  // Auto admission number: KID-#### where #### = max existing numeric suffix + 1 (mirrors nextStaffNo()).
+  nextAdmissionNo() {
+    const max = students.reduce((acc, s) => {
+      const m = /^KID-(\d+)$/.exec(s.admission_no);
+      return Math.max(acc, m ? Number(m[1]) : 0);
+    }, 0);
+    return `KID-${String(max + 1).padStart(4, "0")}`;
   },
   addParent(p: ParentListItemVM) {
     parents.unshift(p);

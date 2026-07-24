@@ -1,10 +1,12 @@
 import { simulate } from "./_devState";
 import { store } from "@/lib/mock/store";
+import { computeStudentStats } from "@/lib/students";
 import type {
   StudentListItemVM,
   StudentDetailVM,
   ParentListItemVM,
   ClassOptionVM,
+  StudentStatsVM,
 } from "@/lib/validators/people";
 
 type StudentRecord = (typeof store)["students"][number];
@@ -29,6 +31,22 @@ function toDetailVM(s: StudentRecord): StudentDetailVM {
     ...toListItemVM(s),
     date_of_birth: s.date_of_birth,
     guardians: s.guardians.map((g) => ({ ...g })),
+    other_names: s.other_names,
+    blood_group: s.blood_group,
+    enrollment_date: s.enrollment_date,
+    medical_conditions: s.medical_conditions,
+    allergies: s.allergies,
+    prev_school_name: s.prev_school_name,
+    prev_class_ended: s.prev_class_ended,
+    prev_average_score: s.prev_average_score,
+    prev_year_attended: s.prev_year_attended,
+    email: s.email,
+    phone: s.phone,
+    address: s.address,
+    city: s.city,
+    town: s.town,
+    initial_academic_year_id: s.initial_academic_year_id,
+    initial_term_id: s.initial_term_id,
   };
 }
 
@@ -39,10 +57,22 @@ function matchesSearch(s: StudentRecord, search: string): boolean {
   return fullName.includes(q) || s.admission_no.toLowerCase().includes(q);
 }
 
-export function listStudents(params: { search?: string } = {}): Promise<StudentListItemVM[]> {
-  const search = params.search ?? "";
-  const result = store.students.filter((s) => matchesSearch(s, search)).map(toListItemVM);
+export function listStudents(
+  params: { search?: string; status?: string; gender?: string; class_id?: string } = {},
+): Promise<StudentListItemVM[]> {
+  const { search = "", status, gender, class_id } = params;
+  const result = store.students
+    .filter((s) => matchesSearch(s, search))
+    .filter((s) => (status ? s.enrollment_status === status : true))
+    .filter((s) => (gender ? s.gender === gender : true))
+    .filter((s) => (class_id ? s.class_id === class_id : true))
+    .map(toListItemVM);
   return simulate(result, []);
+}
+
+// Derives the Students page stat cards from the full roster (unfiltered), via the pure helper.
+export function getStudentStats(): Promise<StudentStatsVM> {
+  return simulate(computeStudentStats(store.students.map(toListItemVM)), computeStudentStats([]));
 }
 
 export function getStudent(id: string): Promise<StudentDetailVM | null> {

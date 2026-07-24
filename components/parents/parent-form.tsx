@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,11 @@ import { useCreateParent } from "@/lib/queries/people";
 import { parentCreateSchema, type ParentCreateInput } from "@/lib/validators/people";
 import { cardShellClass } from "@/lib/ui";
 import { cn } from "@/lib/utils";
+
+// `parentCreateSchema` has `.default(null)` on `occupation`, so its input type (what the form
+// collects) differs from its output type (what create requires) — same pattern as
+// `student-form.tsx` / `staff-form.tsx`.
+type ParentFormInput = z.input<typeof parentCreateSchema>;
 
 /** Create-parent form (06-UI §6 "Forms"). */
 export function ParentForm() {
@@ -25,7 +31,7 @@ export function ParentForm() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ParentCreateInput>({
+  } = useForm<ParentFormInput, unknown, ParentCreateInput>({
     resolver: zodResolver(parentCreateSchema),
     defaultValues: { first_name: "", last_name: "", email: "", phone: "" },
   });
