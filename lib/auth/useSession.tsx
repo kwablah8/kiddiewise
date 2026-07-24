@@ -3,13 +3,13 @@
 import { createContext, useContext, useSyncExternalStore, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { Profile } from "@/lib/types";
-import { activeMockRole, clearMockSessionActive, profileForMockRole } from "./session";
+import { activeMockRole, clearMockSessionActive, profileForMockRole, type MockRole } from "./session";
 
 // SEAM: replace with Supabase auth. This whole module becomes a thin wrapper around
 // `supabase.auth.getUser()` / `onAuthStateChange` + a `profiles` fetch; the context shape
 // (`{ profile, isLoading, signOut }`) is the final, stable interface consumers rely on.
 
-type SyncState = "loading" | "signed-out" | "school_admin" | "teacher";
+type SyncState = "loading" | "signed-out" | MockRole;
 
 function subscribe(onStoreChange: () => void): () => void {
   window.addEventListener("storage", onStoreChange);
@@ -45,7 +45,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }
 
   const value: SessionContextValue = {
-    profile: state === "school_admin" || state === "teacher" ? profileForMockRole(state) : null,
+    profile: state === "loading" || state === "signed-out" ? null : profileForMockRole(state),
     isLoading: state === "loading",
     signOut,
   };

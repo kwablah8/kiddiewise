@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { SessionProvider, useSession } from "@/lib/auth/useSession";
 import { AppShell } from "@/components/app/app-shell";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { Toaster } from "@/components/ui/sonner";
-
-const ADMIN_ROLES = new Set(["school_admin", "super_admin"]);
+import { homePathForRole, isPathAllowedForRole } from "@/lib/auth/access";
 
 function FullPageSkeleton() {
   return (
@@ -32,8 +31,9 @@ function FullPageSkeleton() {
 
 function AppGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { profile, isLoading } = useSession();
-  const isAdmin = !!profile && ADMIN_ROLES.has(profile.role);
+  const allowed = !!profile && isPathAllowedForRole(profile.role, pathname);
 
   useEffect(() => {
     if (isLoading) return;
@@ -41,12 +41,12 @@ function AppGuard({ children }: { children: ReactNode }) {
       router.replace("/login");
       return;
     }
-    if (!isAdmin) {
-      router.replace("/portal");
+    if (!isPathAllowedForRole(profile.role, pathname)) {
+      router.replace(homePathForRole(profile.role));
     }
-  }, [isLoading, profile, isAdmin, router]);
+  }, [isLoading, profile, pathname, router]);
 
-  if (isLoading || !profile || !isAdmin) {
+  if (isLoading || !profile || !allowed) {
     return <FullPageSkeleton />;
   }
 

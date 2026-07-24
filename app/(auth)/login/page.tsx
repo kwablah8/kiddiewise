@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
-import { setMockSessionActive } from "@/lib/auth/session";
+import { setMockSessionActive, mockRoleForEmail } from "@/lib/auth/session";
+import { homePathForRole } from "@/lib/auth/access";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,13 +22,14 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
 
-  async function onSubmit() {
+  async function onSubmit(data: LoginInput) {
     setSubmitError(null);
     try {
-      // SEAM: replace with `supabase.auth.signInWithPassword({ email, password })`.
+      // SEAM: replace with `supabase.auth.signInWithPassword`; the role then comes from the profiles row.
       await new Promise((resolve) => setTimeout(resolve, 500));
-      setMockSessionActive();
-      router.push("/dashboard");
+      const role = mockRoleForEmail(data.email);
+      setMockSessionActive(role);
+      router.push(homePathForRole(role));
     } catch {
       setSubmitError("We couldn't sign you in. Please try again.");
     }
@@ -36,7 +38,7 @@ export default function LoginPage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold text-[var(--text)]">Welcome back</h1>
-      <p className="mt-1 text-sm text-[var(--muted-foreground)]">Sign in to your admin account.</p>
+      <p className="mt-1 text-sm text-[var(--muted-foreground)]">Sign in to your account.</p>
 
       <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="space-y-1.5">
@@ -82,6 +84,12 @@ export default function LoginPage() {
           Sign in
         </Button>
       </form>
+
+      <div className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3 text-xs text-[var(--muted-foreground)]">
+        <p className="font-medium text-[var(--text)]">Demo accounts (any password)</p>
+        <p className="mt-1">Admin — ama.mensah@greenfield.edu.gh</p>
+        <p>Teacher — efua.owusu@school.edu.gh</p>
+      </div>
     </div>
   );
 }

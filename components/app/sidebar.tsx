@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarCheck,
   CalendarDays,
   ChevronLeft,
   ClipboardList,
@@ -11,6 +12,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   BookOpen,
+  PencilLine,
   School,
   SlidersHorizontal,
   TrendingUp,
@@ -34,7 +36,7 @@ interface NavItem {
   countKey?: "students" | "staff" | "new_inquiries";
 }
 
-const NAV_ITEMS: NavItem[] = [
+const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Academic", href: "/academic", icon: CalendarDays },
   { label: "Students", href: "/students", icon: GraduationCap, countKey: "students" },
@@ -44,13 +46,28 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Classes", href: "/classes", icon: School },
   // Label "Admissions" (per spec) but href "/enquiries" ON PURPOSE: the public marketing site owns
   // /admissions, so the admin inquiry module lives at /enquiries. Don't "fix" one to match the other.
-  { label: "Admissions", href: "/enquiries", icon: ClipboardList, countKey: "new_inquiries" },
+  { label: "Enquiries", href: "/enquiries", icon: ClipboardList, countKey: "new_inquiries" },
   { label: "Assessments", href: "/assessments", icon: FileCheck2 },
   { label: "Fees", href: "/fees", icon: Wallet },
   { label: "Grading", href: "/grading", icon: SlidersHorizontal },
   { label: "Terminal Reports", href: "/terminal-reports", icon: FileBarChart2 },
   { label: "Promotion", href: "/promotion", icon: TrendingUp },
 ];
+
+const TEACHER_NAV_ITEMS: NavItem[] = [
+  { label: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
+  { label: "Grade", href: "/teacher/grade", icon: PencilLine },
+  { label: "Assessment", href: "/teacher/assessment", icon: ClipboardList },
+  { label: "Attendance", href: "/teacher/attendance", icon: CalendarCheck },
+];
+
+// Nav list by role. Admin/teacher live here; the M6 parent slice adds its `parent` entry. An unmapped
+// role falls back to the admin list (parents can't reach the shell until /parent/* exists).
+const NAV_BY_ROLE: Partial<Record<Profile["role"], NavItem[]>> = {
+  school_admin: ADMIN_NAV_ITEMS,
+  super_admin: ADMIN_NAV_ITEMS,
+  teacher: TEACHER_NAV_ITEMS,
+};
 
 interface SidebarProps {
   profile: Profile;
@@ -71,6 +88,7 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { data: counts } = useSidebarCounts();
+  const navItems = NAV_BY_ROLE[profile.role] ?? ADMIN_NAV_ITEMS;
 
   return (
     <aside
@@ -104,9 +122,7 @@ export function Sidebar({
             <GraduationCap className="size-4.5" aria-hidden="true" />
           </span>
           {!collapsed && (
-            <span className="truncate text-[15px] font-semibold text-white">
-              School Management
-            </span>
+            <span className="truncate text-[15px] font-semibold text-white">School Management</span>
           )}
         </button>
         <button
@@ -142,7 +158,7 @@ export function Sidebar({
 
       {/* Nav */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const count = item.countKey ? counts?.[item.countKey] : undefined;
 
