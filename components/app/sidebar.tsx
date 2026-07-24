@@ -42,7 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Parents", href: "/parents", icon: UserRound },
   { label: "Subjects", href: "/subjects", icon: BookOpen },
   { label: "Classes", href: "/classes", icon: School },
-  { label: "Admissions", href: "/admissions", icon: ClipboardList, countKey: "new_inquiries" },
+  { label: "Admissions", href: "/enquiries", icon: ClipboardList, countKey: "new_inquiries" },
   { label: "Assessments", href: "/assessments", icon: FileCheck2 },
   { label: "Fees", href: "/fees", icon: Wallet },
   { label: "Grading", href: "/grading", icon: SlidersHorizontal },

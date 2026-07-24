@@ -67,7 +67,7 @@ export function InquiryDetail({ id }: { id: string }) {
         <PageHeader
           title="Inquiry not found"
           action={
-            <Link href="/admissions" className={cn(buttonVariants({ variant: "outline" }))}>
+            <Link href="/enquiries" className={cn(buttonVariants({ variant: "outline" }))}>
               Back to Admissions
             </Link>
           }

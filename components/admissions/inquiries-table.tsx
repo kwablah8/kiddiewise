@@ -181,7 +181,7 @@ export function InquiriesTable() {
             data={filtered}
             getRowId={(row) => row.id}
             isLoading={isLoading}
-            onRowClick={(row) => router.push(`/admissions/${row.id}`)}
+            onRowClick={(row) => router.push(`/enquiries/${row.id}`)}
             emptyTitle="No matching inquiries"
             emptyDescription="Try a different search or status filter."
           />
