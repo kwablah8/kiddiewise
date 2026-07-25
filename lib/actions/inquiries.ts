@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { tenant, assertWrite, publicSchoolId } from "./_server";
+import { tenant, assertWrite, assertOk, publicSchoolId } from "./_server";
 import {
   inquiryCreateSchema,
   inquiryStatusUpdateSchema,
@@ -16,22 +16,28 @@ import { canTransitionInquiry } from "@/lib/inquiries";
  *
  * `status` and `school_id` are set here, not accepted from the form: a visitor must not be able to
  * file an inquiry as already-accepted, nor aim one at another school's inbox.
+ *
+ * Deliberately does NOT ask for the inserted row back. `anon` holds INSERT but not SELECT on this
+ * table, so adding `.select()` appends a RETURNING clause and the whole statement fails with 42501.
+ * Postgres helpfully suggests `GRANT SELECT ... TO anon` — following that would let any visitor read
+ * every inquiry ever submitted, exposing the name, email and phone number of every family who has
+ * ever enquired. Write-only is the correct shape for a public form: the visitor needs confirmation it
+ * was received, not the row.
  */
-export async function submitInquiry(input: InquiryCreateInput): Promise<{ id: string }> {
+export async function submitInquiry(input: InquiryCreateInput): Promise<{ ok: true }> {
   const data = inquiryCreateSchema.parse(input);
   const schoolId = await publicSchoolId();
   const db = await createClient();
 
-  const row = assertWrite(
+  assertOk(
     await db
       .from("admissions_inquiries")
-      .insert({ ...data, school_id: schoolId, status: "new" })
-      .select("id")
-      .single(),
+      .insert({ ...data, school_id: schoolId, status: "new" }),
     "inquiry",
+    "We couldn't submit your enquiry just now. Please try again, or call the school office.",
   );
 
-  return { id: row.id };
+  return { ok: true };
 }
 
 /**
