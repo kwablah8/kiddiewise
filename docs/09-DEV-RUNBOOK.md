@@ -181,6 +181,31 @@ tokens explicitly via `setSession` and refuses to fall back. The one exception i
 admin-issued temporary password, who is *required* to change it and proved knowledge of that
 credential to get there.
 
+**An `!inner` embed needs read access to the embedded table.** PostgREST returns **zero rows**, not an
+error, when a joined table is unreadable — so the failure looks like an empty screen, not a permission
+problem. This shipped once: parents could read `results` but not `assessments`, and the portal joins
+them, so the results page said "No results published yet" no matter what teachers submitted. The RLS
+suite asserted both tables separately and passed on both. **Test the join.**
+
+**Upserts replace the whole row.** Anything a human typed or decided has to be read and merged back in,
+or arithmetic destroys it — regenerating terminal reports would otherwise wipe the teacher's remarks and
+silently retract published reports.
+
+**`useSearchParams()` opts a page out of prerendering** unless it sits inside a Suspense boundary. The
+build fails with "missing-suspense-with-csr-bailout". If the value is only needed inside an event
+handler, read `window.location.search` instead.
+
+**This project's `SelectValue` needs a render child.** Without one, base-ui renders the raw `value` —
+which for an id-keyed select means a UUID in the trigger. Copy the pattern in
+`components/teacher/attendance-marker.tsx`.
+
+**A Select `value` of `undefined` makes it uncontrolled.** Base UI decides on first render and warns
+loudly when it later flips. Use `null` for "nothing selected".
+
+**The auth gateway can 502 right after a config change.** Editing `supabase/config.toml` (email
+templates, redirect URLs) makes the auth container reload; requests in that window fail with an
+unhelpful empty error. `npx supabase stop && npx supabase start` clears it.
+
 **`pnpm test:integration` depends on the seed.** If sign-in fails with "Has `pnpm seed:demo` been
 run?", that's why.
 
@@ -259,19 +284,16 @@ invitation** also exists and needs SMTP; locally those emails land in Mailpit (�
 
 | Area | Status |
 |---|---|
-| Schema + RLS (26 tables, 2 views, 8 RPCs) | ✅ Migrated and tested |
+| Schema + RLS (21 migrations · 26 tables · 2 views · 8 app-facing functions (+7 RLS helpers)) | ✅ Migrated and tested |
 | Auth (login, reset, role routing, server-side guards) | ✅ Real Supabase Auth |
+| Portal access — temporary passwords + invite links, forced first change | ✅ No provider needed |
 | Demo seed | ✅ `pnpm db:seed` |
-| `lib/data/*` reads (47 functions) | ✅ Real Supabase |
-| `lib/actions/*` writes (32 functions) | ✅ Server Actions |
-| Parent/staff portal access (temp password + link) | ✅ No provider needed |
-| Forced password change on first sign-in | ✅ Enforced in middleware |
+| `lib/data/*` reads · `lib/actions/*` writes | ✅ PostgREST + Server Actions |
 | `lib/mock/` seam | ✅ Deleted |
-| Test suites (unit, RLS, integration) | ✅ Green |
+| Teacher: attendance · score entry | ✅ Writes and propagates to the parent portal |
+| Admin: terminal reports (generate → remark → publish) | ✅ |
+| Test suites (88 unit · 13 RLS · 16 integration) | ✅ Green |
+| Promotion, announcements/events authoring, school settings, Storage | ⏳ See `docs/08-ROADMAP.md` §Remaining work |
 
-There is **no `provision-user` Edge Function**, despite older comments referring to one. It would have
-been a second deployable doing what a Server Action already does securely — the service key never
-leaves the server either way — so provisioning lives in `lib/actions/_server.ts#provisionUser`.
-
-Not yet built (these screens exist but have no backing feature): terminal report generation and
-publishing, promotion, school-settings editing, and result entry from the teacher's Grade screen.
+`/promotion` is linked in the sidebar but **has no page**. The full breakdown of what is left, grouped
+by whether it blocks a usable MVP, is in `docs/08-ROADMAP.md` §"Remaining work".

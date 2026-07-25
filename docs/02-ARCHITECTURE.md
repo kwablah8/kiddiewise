@@ -1,6 +1,6 @@
 # 02 — Architecture
 
-Version 1.0 · Status: Planning / MVP
+Version 1.1 · Status: reflects the wired backend
 
 How the system is put together, how requests flow, and how multi-tenancy is enforced.
 
@@ -87,33 +87,38 @@ components** only where interactivity requires it (forms, tables with client sta
   (`docs/07-ENGINEERING-STANDARDS.md`).
 
 **Privileged writes (service role)**
-- A few operations need elevated rights the logged-in user doesn't have — e.g. an admin
-  **creating login accounts** for teachers/parents, generating terminal reports across many
-  rows, or computing platform-wide stats. These run **server-side only** via a Supabase
-  **Edge Function** or a server action holding the service-role key. The service key never
+- A few operations need elevated rights the logged-in user doesn't have — chiefly an admin
+  **creating login accounts** for teachers/parents, since `profiles.id` is a foreign key to
+  `auth.users(id)` and nobody can exist here without an auth record. These run **server-side only**,
+  in Server Actions holding the service-role key (`lib/actions/_server.ts`). No Edge Function proved
+  necessary: the actions already run on the server, so a second deployable would add no security. The service key never
   reaches the browser, and these paths still enforce tenancy in code (verify the caller is a
   school_admin for the target `school_id`).
 
-### The data seam (current implementation)
+### The data layer (wired)
 
-Until Supabase is wired, every feature runs against a **typed in-memory seam** that mirrors the
-architecture above one-to-one, so the swap is mechanical. The layers (full contract in
+The backend is live. The former in-memory seam is gone — `lib/mock/` has been deleted — and the
+layers it stood in for are now the real thing (full contract in
 `docs/07-ENGINEERING-STANDARDS.md` §3):
 
-`fixtures → store → lib/data (read + derive) → lib/queries (hooks + keys) → components`,
-and for writes `component → lib/queries mutation → lib/actions (validate + persist)`.
+`lib/data (read + derive) → lib/queries (hooks + keys) → components`,
+and for writes `component → lib/queries mutation → lib/actions (Server Action: validate + persist)`.
 
-- `lib/mock/` holds seed **fixtures** and a single in-memory **store** (the stand-in database),
-  tagged `// SEAM:`; it resets on reload.
-- `lib/data/*` returns **copies** of store rows (copy-on-read) and performs all **derivation**
-  (joins, computed fields) — never the component. `lib/data/_devState.ts#simulate` fakes the four
-  UI states via `?mockState=loading|empty|error`.
-- `lib/actions/*` validate with Zod, then mutate the store.
-- Pure business rules live in unit-tested `lib/<domain>.ts` helpers (e.g. `lib/attendance.ts`,
-  `lib/grading.ts`).
+- **Reads run in the browser** through PostgREST, carrying the session cookie. That is safe because
+  RLS is the boundary (A3), and it buys caching, background refetch and optimistic updates for free.
+  No read passes `school_id` — `current_school_id()` derives it from `auth.uid()`.
+- **Writes are Server Actions**, because three things cannot be trusted to the client: `school_id`
+  stamped from the session, `auth.uid()` recorded as author, and business rules the client must not be
+  able to skip (the admissions state machine, the single-primary-guardian demotion, an assessment's
+  `max_score` ceiling).
+- `lib/data/*` performs all **derivation** (joins, computed fields) — never the component. Errors
+  throw, so React Query renders the error state rather than an empty one painted over a failure.
+- **Pure business rules** live in unit-tested `lib/<domain>.ts` helpers (`lib/attendance.ts`,
+  `lib/grading.ts`, `lib/results.ts`, `lib/terminal-reports.ts`, `lib/fees/summary.ts`).
 
-Swapping to Supabase changes only the **bodies** of `lib/data/*` and `lib/actions/*` (plus the
-`useSession` source). View-model shapes, Zod schemas, query keys, and every component stay put.
+The seam did its job: swapping in Supabase changed only the **bodies** of `lib/data/*` and
+`lib/actions/*` plus the `useSession` source. View-model shapes, Zod schemas, query keys and every
+component were untouched.
 
 ### Cross-portal data flow & consistency
 
@@ -214,14 +219,22 @@ path — most screens use standard React Query fetch + revalidate. Subscriptions
 
 ---
 
-## 9. Edge Functions (where used)
+## 9. Privileged server work (no Edge Functions)
 
-- **provision-user** — admin-triggered creation of teacher/parent auth accounts + profile
-  rows, then an invite/reset email.
-- **generate-terminal-report** — assemble a student's per-term report and write a PDF to the
-  `reports` bucket.
-- Aggregations for dashboard trends may run as SQL views / RPC rather than functions where
-  possible; prefer database views for read aggregates.
+**None are used.** Both jobs originally scoped as Edge Functions ended up elsewhere, and better placed:
+
+- **Account provisioning** — creating a teacher/parent `auth.users` record plus their `profiles` row —
+  lives in `lib/actions/_server.ts#provisionUser`, called from Server Actions. Those already run
+  server-side, so the service key never reaches the browser either way; a separate deployable would
+  have added no security and one more thing to deploy.
+- **Terminal report generation** is a Server Action (`lib/actions/reports.ts`) doing set-based SQL
+  reads plus pure `lib/terminal-reports.ts` arithmetic. No PDF is written yet — `terminal_reports.pdf_url`
+  is unused, and the `reports` bucket is still unwired (`docs/08-ROADMAP.md` §Remaining work).
+
+Read aggregates are database views / RPC rather than functions (§12 of `docs/03-DATABASE.md`).
+
+Should a genuinely out-of-band job appear later — a nightly digest, a webhook receiver, an SMS
+callback — an Edge Function is the right home for it. Nothing so far qualifies.
 
 ---
 
@@ -255,9 +268,9 @@ path — most screens use standard React Query fetch + revalidate. Subscriptions
 | A3 | RLS is the security boundary | Client is untrusted; UI gating is cosmetic |
 | A4 | `school_id` derived server-side, never trusted from client | Prevents cross-tenant leakage |
 | A5 | Server Components for reads, Server Actions for writes, React Query for interactive data | Fast first paint, simple mutations, good client UX |
-| A6 | Service-role work isolated to server/Edge Functions | Keeps privileged key off the client |
+| A6 | Service-role work isolated to Server Actions (`lib/actions/_server.ts`) | Keeps the privileged key off the client. No Edge Function was needed — the actions already run server-side |
 | A7 | Responsive web only for MVP; Expo app later on same Supabase project | Focus; reuse backend |
-| A8 | Typed in-memory mock seam (`lib/mock` + `lib/data`/`lib/actions`) with `// SEAM:` markers | Build UI now; swap to Supabase by replacing read/write bodies only, no component churn |
+| A8 | Built UI against a typed in-memory seam first, then swapped the read/write bodies for Supabase | Worked as intended: components, hooks, validators and query keys were untouched by the swap. `lib/mock/` is now deleted |
 | A9 | One source of truth per fact; portals are derived, RLS-scoped views — never copies | Cross-portal consistency for free; a single write reflects everywhere |
 | A10 | Cross-cutting numbers derived on read (DB view/RPC or pure `lib/` helper), never stored twice | Aggregates can't drift from their rows |
 | A11 | Writes propagate to other portals via React Query key invalidation (+ selective Realtime) | Decoupled portals; no cross-wiring between surfaces |

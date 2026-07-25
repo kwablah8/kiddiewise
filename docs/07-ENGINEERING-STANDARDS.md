@@ -1,6 +1,6 @@
 # 07 — Engineering Standards
 
-Version 1.0 · Status: Planning / MVP
+Version 1.1 · Status: reflects the wired backend
 
 How we write and organise code. The goal is production-quality software a senior engineer
 would sign off on — clean, modular, maintainable, and boring in the best way.
@@ -26,18 +26,22 @@ would sign off on — clean, modular, maintainable, and boring in the best way.
 - **Where things live** (see `CLAUDE.md` §5) — one responsibility per layer:
   - `lib/validators/` — Zod schemas: source of truth for shapes (view-models **and** write
     inputs). Types are `z.infer`red, never hand-written.
-  - `lib/data/` — **reads**: return view-models, doing all joins/derivation here (copy-on-read).
-  - `lib/actions/` — **writes**: validate input, then persist. No read/derive logic.
+  - `lib/data/` — **reads**: PostgREST queries returning view-models, doing all joins/derivation
+    here. Runs in the browser; RLS scopes it. Shared helpers in `lib/data/_client.ts`.
+  - `lib/actions/` — **writes**: Server Actions (`"use server"`) that validate then persist. No
+    read/derive logic. Shared plumbing (tenant context, error translation, provisioning) in
+    `lib/actions/_server.ts`, which is `server-only`.
   - `lib/queries/` — React Query hooks + **centralized query keys** (`lib/queries/keys.ts`);
     the only data layer a component imports.
   - `lib/<domain>.ts` — **pure business logic** (grading, attendance, routing), unit-tested.
-  - `lib/mock/` — the SEAM: fixtures + in-memory store standing in for Supabase.
+  - `lib/toast.tsx` — the ONLY toast entry point. Components never import a toast library directly,
+    so the implementation can be swapped in one file.
   - `lib/supabase/` — clients + generated types · `lib/auth/` — session + access helpers ·
     `lib/permissions/` — role/scope helpers mirroring RLS.
   - `supabase/migrations/` — schema + RLS (the DB source of truth).
 - **No business logic in components.** Components render and dispatch; logic lives in `lib/`,
   server actions, or the database. A component reaches data **only** through a `lib/queries` hook —
-  never `lib/data`, `lib/actions`, or `lib/mock` directly.
+  never `lib/data` or `lib/actions` directly.
 
 ---
 
@@ -71,9 +75,17 @@ validators (Zod contracts)
 - **Privileged operations** (account provisioning, batch report generation) run server-side with
   the service-role key only; verify the caller's authority in code before acting.
 - Prefer **DB views / RPC** for aggregates (dashboard stats, trends) over client-side math.
-- **The seam is a swap boundary.** Today `lib/data`/`lib/actions` read/write the `lib/mock` store
-  (`// SEAM:`-tagged); wiring Supabase replaces only those bodies. Keep signatures, view-model
-  shapes, Zod schemas, and query keys identical so components and hooks never change.
+- **Derive, don't store — except for snapshots.** A result's grade is derived from the current bands
+  on every read, so correcting the scale re-grades everything at once; `results.grade`/`remark` are
+  therefore written as NULL. A terminal report is the opposite: it is the official record of a term,
+  so its average, position and attendance ARE stored, frozen at generation, and must not drift when a
+  teacher later edits a mark. Ask which kind of fact you have before choosing.
+- **Regeneration must preserve human input.** PostgREST upserts replace the whole row, so anything a
+  person typed (report remarks) or decided (`is_published`) has to be read and merged back in, or
+  arithmetic silently destroys it.
+- **An `!inner` embed requires read access to the embedded table.** A missing policy there returns
+  zero rows rather than an error — the failure mode is a silently empty screen. Test the JOIN, not
+  just the two tables (see `tests/rls/parent-scope.test.ts`).
 
 ---
 

@@ -1,6 +1,6 @@
 # 06 — UI / UX Standards
 
-Version 1.0 · Status: Planning / MVP
+Version 1.1 · Status: reflects the wired backend
 
 The design system, derived from the reference build (Kiddiewise Admin + Teacher portals).
 The bar is premium SaaS — Apple / Linear / Notion / Stripe / Vercel restraint. Values below

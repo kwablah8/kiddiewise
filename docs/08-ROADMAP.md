@@ -1,6 +1,6 @@
 # 08 — Roadmap
 
-Version 1.0 · Status: Planning / MVP
+Version 1.1 · Status: MVP in build — see per-phase status below
 
 Delivery sequence. The order follows a simple logic: **admins create the data every other
 portal depends on**, so the platform foundation and Admin portal come first, then the
@@ -11,7 +11,7 @@ audiences that consume that data.
 ## Phase 1 — Documentation (this set)
 
 Requirements, architecture, database design, user flows, permissions, standards. Establishes
-the source of truth before any code. **Status: in progress (this folder).**
+the source of truth before any code. **Status: ✅ done** (kept current as the build changes it).
 
 Deliverables: `CLAUDE.md` + `docs/00`–`docs/08`.
 
@@ -30,6 +30,9 @@ Stand up the backend the whole app depends on.
 - **RLS test suite** proving cross-school isolation and role scoping.
 
 Exit criteria: a seeded school with an admin, all tables protected, tenancy tests green.
+
+**Status: ✅ done.** 21 migrations, 26 tables, 2 views, 8 app-facing functions (plus 7 SECURITY DEFINER RLS helpers). `pnpm db:seed` builds a populated
+demo school; 13 RLS + 16 integration tests green.
 
 ---
 
@@ -53,6 +56,9 @@ The operational core; unblocks every other portal.
 
 Exit criteria: an admin can set up and run a school end-to-end (per `docs/05-USER-FLOWS.md §1`).
 
+**Status: 🔄 mostly done.** Outstanding: promotion (no page), announcements/events authoring, school
+settings, report PDF export. See "Remaining work" below.
+
 ---
 
 ## Phase 4 — Marketing website
@@ -64,6 +70,9 @@ Public presence + inbound funnel into the platform.
 - Shared brand + typography; separate from the app shell.
 
 Exit criteria: a visitor can learn about the school and submit an inquiry that lands in Admin.
+
+**Status: ✅ done** for the funnel — enquiries land in the admin inbox. News is still a placeholder page
+and the gallery serves static files rather than Storage.
 
 ---
 
@@ -79,6 +88,9 @@ Consumes the academic structure admins created.
 
 Exit criteria: a teacher can mark attendance and submit results for their classes.
 
+**Status: ✅ done.** Attendance and score entry both write and propagate. "Performance review views" is
+the assessment detail screen; a richer analytics view is post-MVP.
+
 ---
 
 ## Phase 6 — Parent portal
@@ -90,6 +102,47 @@ Read-only monitoring for guardians; depends on submitted teacher data + publishe
 - Scoped to linked children (RLS-enforced).
 
 Exit criteria: a parent sees accurate, up-to-date data for each linked child and nothing else.
+
+**Status: 🔄 mostly done.** Dashboard, profile, attendance, results and published reports all work.
+Missing: a fee-balance view — RLS already permits it (`pay_parent_read`), there is simply no screen.
+
+---
+
+## Remaining work
+
+Grouped by what blocks a usable MVP. Verified against the code, not from memory.
+
+### Blocking
+
+| Item | State |
+|---|---|
+| **Promotion** (`/promotion`) | Sidebar links to it; **there is no page**. End-of-year rollover writing new `enrollments` for the next year. Has real published reports and head-teacher decisions to work from |
+
+### Read-only screens missing their write side
+
+| Item | Reads work | Missing |
+|---|---|---|
+| Announcements | Parent portal + admin dashboard render them | No admin UI to create/publish. Table + audience RLS ready |
+| Events | Dashboard "Upcoming Events" works | No admin UI to create |
+| School settings | `getSchool()` + `schools_admin_update` policy exist | No page to edit name, logo, address, contact |
+| Parent fee balance | `pay_parent_read` permits it | No screen |
+
+### Storage — four buckets provisioned, none wired
+
+`avatars` (student/staff photos — the form makes a local preview only), `school-logos`, `gallery`
+(page serves `/public` files), `reports` (`terminal_reports.pdf_url` written nowhere). Best done as
+one batch: it is one upload helper reused four times.
+
+### Nice-to-have
+
+Students PDF/CSV export (buttons toast "coming soon") · terminal report PDF (needs `reports`) ·
+marketing News page · contact map embed · social handles.
+
+### Not code
+
+Email/SMS delivery is **built and working** — "Email the invitation" and the branded recovery template
+both function. It needs an SMTP/Hubtel/Twilio account, not development. Until then the temporary-password
+and copy-link routes cover portal access with no provider at all (`docs/04-AUTH-AND-PERMISSIONS.md` §2.3).
 
 ---
 

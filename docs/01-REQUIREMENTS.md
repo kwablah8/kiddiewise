@@ -1,6 +1,6 @@
 # 01 — MVP Requirements & Scope
 
-Version 1.0 · Status: Planning / MVP
+Version 1.1 · Status: reflects the wired backend
 
 This document defines exactly what the MVP includes, per portal, and reconciles the written
 specification with the supplied reference screenshots.

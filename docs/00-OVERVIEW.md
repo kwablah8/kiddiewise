@@ -1,6 +1,6 @@
 # 00 — Product Overview
 
-Version 1.0 · Status: Planning / MVP
+Version 1.1 · Status: reflects the wired backend
 
 ---
 

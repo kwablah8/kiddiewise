@@ -1,6 +1,6 @@
 # 03 — Database Design
 
-Version 1.0 · Status: Planning / MVP · Engine: PostgreSQL (Supabase)
+Version 1.1 · Status: reflects the wired backend · Engine: PostgreSQL (Supabase)
 
 This is the data-model **design**, not migration code. It defines tables, relationships,
 enums, and the RLS strategy. Migrations in `supabase/migrations/` will implement it.
@@ -80,8 +80,14 @@ erDiagram
 | `announcement_audience` | `everyone`, `parents`, `teachers` |
 | `guardian_relationship` | `mother`, `father`, `guardian`, `other` |
 | `inquiry_status` | `new`, `reviewing`, `accepted`, `rejected`, `converted` |
-| `invoice_status` | `unpaid`, `partial`, `paid` |
 | `payment_method` | `cash`, `bank_transfer`, `mobile_money`, `cheque`, `other` |
+| `blood_group` | `A+`, `A-`, `B+`, `B-`, `AB+`, `AB-`, `O+`, `O-` (0016) |
+| `fee_term` | `full_year`, `first`, `second`, `third` (0017) |
+| `scholarship_type` | `none`, `partial`, `full`, `bursary` (0017) |
+| `extra_fee_frequency` | `one_time`, `termly`, `monthly`, `annual` (0017) |
+
+> `invoice_status` was **dropped** in 0017 along with `invoices.status`. Payment state is derived
+> from `payments`, never stored — see §9.
 
 ---
 
@@ -117,6 +123,19 @@ Application identity for every user. 1:1 with `auth.users` (`id` = `auth.users.i
 | department | text null | teacher only ("No Department" allowed) |
 | is_active | boolean default true | |
 | created_at | timestamptz | |
+| occupation | text null | guardians (0016) |
+| position | text null | free-text job title, e.g. "Head Teacher" — distinct from `role` (0019) |
+| gender | gender null | staff (0019) |
+| date_of_birth | date null | staff (0019) |
+| hire_date | date null | staff (0019) |
+| qualification | text null | staff (0019) |
+| must_change_password | boolean default false | an admin-issued temporary password is in force (0020) |
+| temp_password_expires_at | timestamptz null | when that temporary password stops working (0020) |
+| password_changed_at | timestamptz null | set when the holder replaces it — i.e. the account is theirs (0020) |
+
+> The last three are **not grantable to `authenticated`**. `profiles_self_update` lets a user edit
+> their own row, so a writable `must_change_password` would let the holder clear the flag and skip
+> the forced change. Only the service role and `complete_password_change()` (§12) may write them.
 
 > Role-specific columns (`staff_no`, `department`) are nullable on `profiles` for MVP
 > simplicity. If teacher/parent metadata grows, split into `teachers` / `parents`
@@ -136,8 +155,20 @@ Student records (no login).
 | photo_url | text null | |
 | enrollment_status | enrollment_status default `active` | |
 | created_at | timestamptz | |
+| other_names | text null | 0016 |
+| blood_group | blood_group null | 0016 |
+| enrollment_date | date null | 0016 |
+| medical_conditions, allergies | text null | 0016 |
+| prev_school_name, prev_class_ended, prev_year_attended | text null | 0016 |
+| prev_average_score | text null | free-form on purpose — prior-school reporting isn't standardised ("72%", "B+", "N/A") (0016) |
+| email, phone, address, city, town | text null | the student's own or the household's (0016) |
+| initial_academic_year_id | uuid null FK → academic_years | year first admitted; distinct from the current enrollment (0016) |
+| initial_term_id | uuid null FK → terms | as above (0016) |
 
 Constraint: `unique (school_id, admission_no)`.
+
+> A student's **class is not a column here** — it comes from their active `enrollments` row, so a
+> promotion is one enrollment write rather than an edit that destroys history.
 
 ### `student_guardians`
 Parent ↔ student link (many-to-many). Grants a parent read access to a child.
@@ -270,13 +301,26 @@ Per-student score for an assessment.
 | assessment_id | uuid FK | |
 | student_id | uuid FK | |
 | score | numeric | |
-| grade | text null | derived from `grade_bands` |
-| remark | text null | teacher comment |
-| entered_by | uuid FK → profiles | |
+| grade | text null | **always written NULL** — see the note below |
+| remark | text null | **always written NULL** — this was the grading-band remark, not the teacher's |
+| teacher_comment | text null | the subject teacher's own note (0019) |
+| entered_by | uuid FK → profiles | the caller, never client input |
 | is_submitted | boolean default false | draft vs submitted |
 | created_at, updated_at | timestamptz | |
 
-Constraint: `unique (assessment_id, student_id)`.
+Constraint: `unique (assessment_id, student_id)` — which is what makes a mark sheet **editable**:
+re-saving corrects a mark instead of duplicating it.
+
+> **`grade`/`remark` are deliberately never populated.** Every screen derives the grade from the
+> school's *current* bands at read time (`lib/results.ts`), so correcting the scale re-grades every
+> existing mark at once instead of needing a backfill. Storing it too produced rows that
+> contradicted themselves — a score corrected from 53 to 91 kept its old grade of `D`. The action
+> now nulls both explicitly, because an upsert leaves untouched columns as they were.
+>
+> Both columns are candidates for a future `drop column`; nothing reads them.
+>
+> A blank score writes **no row at all** — "not marked yet" (a student absent for the test) is not
+> a zero, and conflating them would turn absences into fails on report cards.
 
 ### `grade_bands`
 The school's grading scale (score range → grade → remark). Ghana schools often use WAEC-style
@@ -331,32 +375,87 @@ From the marketing Admissions/Contact forms.
 
 No payment gateway in MVP — invoices and manually recorded payments only.
 
+> **`payments` is the single source of truth for money received.** 0017 **dropped**
+> `invoices.amount_paid` and `invoices.status` (and the `invoice_status` enum): they restated what
+> `payments` already knows, which is exactly what principle 9 forbids. Paid, balance and status are
+> derived by the two views in §9.5 and by the pure `lib/fees/summary.ts` helper.
+
 ### `fee_items`
-Reusable fee definitions.
-| id | school_id FK | name ("Term 1 Tuition") | amount numeric | class_id null FK (null = all/level) | academic_year_id FK | term_id null FK |
+Reusable fee definition for a class + year + term scope.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| school_id | uuid FK | |
+| name | text | |
+| amount | numeric | `check (amount > 0)` |
+| class_id | uuid FK | **NOT NULL** since 0017 — school-wide charges are `extra_fee_items` instead |
+| academic_year_id | uuid FK | |
+| fee_term | fee_term default `full_year` | replaced `term_id`: a full-year fee spans every term, so a single term FK couldn't express it |
+| due_date | date null | |
+| late_fee | numeric null | `check (late_fee is null or late_fee >= 0)` |
+| description | text null | |
+| is_mandatory | boolean default true | |
 
 ### `invoices`
+One student's fee position for a (year, fee_term) scope.
+
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
 | school_id | uuid FK | |
 | student_id | uuid FK | |
 | academic_year_id | uuid FK | |
-| term_id | uuid FK | |
-| total_amount | numeric | |
-| amount_paid | numeric default 0 | maintained on payment |
-| status | invoice_status default `unpaid` | derived: unpaid/partial/paid |
+| term_id | uuid **null** FK | null for a full-year invoice, which belongs to no single term |
+| fee_term | fee_term default `full_year` | 0017 |
+| total_amount | numeric | the net expected amount, after `discount` |
+| discount | numeric default 0 | a **cedi amount**, not a percentage. The assign dialog collects a percent; the action resolves it, so the figure stays correct if the gross fee is later edited |
+| arrears | numeric default 0 | carried forward; tracked separately so the UI can show it as its own column |
+| scholarship_type | scholarship_type default `none` | 0017 |
 | due_date | date null | |
 | created_at | timestamptz | |
+
+Constraint: `unique (student_id, academic_year_id, fee_term)` — so bulk-assign upserts idempotently.
 
 ### `invoice_items`
 | id | school_id FK | invoice_id FK | fee_item_id null FK | description | amount numeric |
 
-### `payments`
-| id | school_id FK | invoice_id FK | student_id FK | amount numeric | method (payment_method) | reference text null | paid_at timestamptz | recorded_by FK → profiles |
+### `extra_fee_items` (0017)
+Optional charges outside the core class fee — bus, feeding, uniform, excursion.
 
-Dashboard **Total Revenue** = `sum(payments.amount)` for the active year; **Fee Collection
-Trend** = payments grouped by month. Expose via SQL views/RPC, not client-side aggregation.
+| id | school_id FK | name | description null | amount numeric `> 0` | frequency (extra_fee_frequency) | class_id **null** FK (null = all classes) | created_at |
+
+Constraint: `unique (school_id, name)`.
+
+### `extra_fee_assignments` (0017)
+| id | school_id FK | student_id FK | extra_fee_item_id FK | amount numeric `> 0` | created_at |
+
+`amount` is copied off the item at assign time and then editable per student: a sibling discount or a
+part-term joiner pays something different from the list price. Constraint:
+`unique (extra_fee_item_id, student_id)`.
+
+### `payments`
+| id | school_id FK | invoice_id **null** FK | extra_fee_assignment_id **null** FK | student_id FK | amount numeric `> 0` | method (payment_method) | reference text null | paid_at timestamptz | recorded_by FK → profiles |
+
+Constraint `payments_one_target`: `(invoice_id is not null) <> (extra_fee_assignment_id is not null)`.
+Exactly one target — a payment settles an invoice or an extra fee, never both, never neither.
+Recording money against nothing is untraceable, which is the failure mode paper receipts have.
+
+### 9.5 Derived fee views (0018)
+
+Both are `security_invoker = true`. **This is load-bearing**: without it a view runs with its
+owner's rights (`postgres`), bypassing RLS on every underlying table and handing any authenticated
+caller the whole platform's fee ledger.
+
+- **`student_fee_positions`** — one row per invoice with `paid` (summed from `payments`), `balance`
+  (`greatest(0, total_amount + arrears - paid)`) and `status` (`paid` / `partial` / `pending`), plus
+  the student's name and the class from the enrollment **for that invoice's own year**, so a promoted
+  student's historical invoices still show the class they were in when the fee was raised.
+- **`extra_fee_positions`** — the same derivation for assigned extra fees.
+
+Dashboard **Total Revenue** = `sum(payments.amount)`; **Fee Collection Trend** = payments grouped by
+month (§12). The Overview cards are summed by the pure, unit-tested `summarizeFees` helper rather than
+a second SQL aggregate — one implementation of the arithmetic, not two that can drift.
 
 ---
 
@@ -429,12 +528,52 @@ upsert updates all three because none of them holds an independent copy (see
 Provide read-only views or RPC functions for aggregates so the client never aggregates sensitive
 data itself:
 
-- `dashboard_stats(school_id)` — totals: students, staff, revenue, attendance rate.
-- `enrollment_trend(school_id)` — enrollments per month.
-- `fee_collection_trend(school_id)` — payments per month.
-- `class_performance(school_id)` — per class: student count + average score.
-- `student_attendance_summary(student_id, term_id)` — present/total → percentage.
+| Function | Returns | Added |
+|---|---|---|
+| `dashboard_stats()` | totals: students, staff, revenue, attendance rate | 0013 |
+| `enrollment_trend()` | enrollments per month | 0013 |
+| `fee_collection_trend()` | payments per month | 0013 |
+| `class_performance()` | per class: student count + average score | 0013 |
+| `student_attendance_summary(student_id, term_id)` | present/total → percentage | 0013 |
+| `dashboard_trends()` | month-over-month deltas behind the stat-card trend pills | 0018 |
+| `sidebar_counts()` | students / staff / new inquiries, in one round trip | 0018 |
+| `complete_password_change()` | clears `must_change_password` for `auth.uid()` | 0020 |
 
-All respect RLS (defined as SECURITY INVOKER where possible), so each derivation returns only the
-caller's scope. In the current mock seam these same computations live in `lib/data/*` (and pure
-`lib/<domain>.ts` helpers); at integration they move into these views/RPC with identical shapes.
+Plus the two derived fee **views** in §9.5.
+
+`dashboard_trends()` is worth a note: `students`, `staff` and `revenue` are **relative** percent
+changes, but `attendance` is a **percentage-point difference**, because it is already a rate —
+reporting "attendance up 4%" when it moved 92% → 96% would be wrong twice over. Every branch guards
+division by zero and returns 0, so the UI never special-cases a school's first month.
+
+`complete_password_change()` is the one `SECURITY DEFINER` function here, because `authenticated`
+deliberately has no UPDATE grant on the columns it touches. It takes **no arguments** and is
+hard-scoped to `auth.uid()`, so it cannot be pointed at another account.
+
+Everything else is SECURITY INVOKER, so each derivation returns only the caller's scope.
+
+Some derivations deliberately live in **pure `lib/` helpers** rather than SQL, which principle 9
+explicitly permits: `summarizeFees` (fee overview cards), `computeStudentStats`,
+`aggregateSubjectResults`, `assignPositions`. They are unit-tested without a database, and being in
+one place means the arithmetic cannot drift between the screens that show it.
+
+---
+
+## 13. Migration log
+
+`supabase/migrations/` is the source of truth. 0001–0015 established the schema, RLS and grants.
+0016–0021 closed drift between the schema and the UI that had been built against the seam:
+
+| Migration | What it did |
+|---|---|
+| `0016_students_profiles_catchup` | 16 student columns (bio, contact, medical, previous school, intake year/term), `profiles.occupation`, single-primary-guardian index |
+| `0017_fees_catchup` | `fee_term`/`scholarship_type`/`extra_fee_frequency` enums, discounts + arrears, `extra_fee_items` + `extra_fee_assignments`, payments settle either target. **Dropped** `invoices.amount_paid`, `invoices.status`, `invoice_status` |
+| `0018_fees_views_dashboard_rpc` | `student_fee_positions` + `extra_fee_positions` views, `dashboard_trends()`, `sidebar_counts()` |
+| `0019_staff_profile_results_comment` | staff employment record on `profiles`, `results.teacher_comment` |
+| `0020_temp_password_activation` | `must_change_password`, `temp_password_expires_at`, `password_changed_at`, `complete_password_change()` |
+| `0021_parent_read_assessments` | `asm_parent_read` — the missing policy that left the parent results page permanently empty |
+
+> **Grants are not a standing rule.** 0015's `grant … on all tables in schema public` applied only to
+> the tables that existed when it ran. Every migration that creates a table, or adds a user-editable
+> column to `profiles`, must issue its own grants — otherwise requests fail at the privilege layer
+> *before* RLS is consulted, which surfaces as a confusing empty result rather than a permission error.

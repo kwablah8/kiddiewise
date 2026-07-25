@@ -1,6 +1,6 @@
 # 04 — Authentication & Permissions
 
-Version 1.0 · Status: Planning / MVP
+Version 1.1 · Status: reflects the wired backend
 
 Auth uses **Supabase Auth**. Authorization is enforced primarily by **RLS**
 (`docs/03-DATABASE.md`); the UI mirrors those rules for UX but is never the security boundary.
@@ -29,21 +29,67 @@ Role is assigned at account creation and is not self-editable.
 3. Middleware confirms the session and the `(app)` layout loads the `profiles` row.
 4. User is redirected to their portal home by role (see §4).
 
-### 2.2 Password reset
-1. User requests reset on `/reset-password` (enter email).
-2. Supabase sends a reset email with a secure link.
-3. Link opens `/update-password`; user sets a new password; session established.
+### 2.2 Password reset / first-time setup
+1. User requests a link on `/reset-password` (enter email).
+2. Supabase emails a one-time link (branded template, `supabase/templates/recovery.html`). The same
+   template covers *setting* a first password and *resetting* a forgotten one, so its wording avoids
+   the word "reset" — an invitee never had one.
+3. The link opens `/update-password`, which **adopts the session the link carries** via `setSession`,
+   strips the tokens from the address bar, and lets them choose a password.
+
+> **`/update-password` must never fall back to the session already in the browser.** It shipped that
+> way once and was a real hijack: an admin who invited a parent from the office computer, then let that
+> parent open the link there, had their **own** password set by the parent (confirmed in the auth audit
+> log). The page now refuses any session that did not come from the link — with exactly one exception,
+> §2.3.1 — and otherwise shows "this link has expired".
 
 ### 2.3 Admin-provisioned accounts (teachers & parents)
-Teachers and parents **do not self-register**. A `school_admin` creates them:
-1. Admin fills a create form (name, email, role, school-specific fields).
-2. A **server-side** path (Edge Function `provision-user` or trusted server action using the
-   service-role key) creates the `auth.users` record + the `profiles` row with the correct
-   `school_id` and `role`.
-3. The new user receives an invite / set-password email and chooses their password.
+Teachers and parents **do not self-register**. Nobody can exist here without an auth record either,
+because `profiles.id` is a foreign key to `auth.users(id)`.
 
-The service-role key is **server-only** and never shipped to the client. The provisioning
-path verifies the caller is a `school_admin` for the target `school_id` before acting.
+A `school_admin` creates them, and **creating an account is separate from granting access**:
+
+1. Admin fills a create form (name, email, role, school-specific fields).
+2. A **Server Action** (`lib/actions/_server.ts#provisionUser`, service-role) creates the
+   `auth.users` record, then the `profiles` row with the correct `school_id` and `role`. If the profile
+   insert fails, the auth account is deleted — otherwise a half-created person holds the email address
+   hostage and the admin can never retry.
+3. Access is granted **separately, on demand** — most parent records exist only so the school can reach
+   them, emails are often wrong at admission, and an invite that expires unused becomes a support call.
+
+There is **no `provision-user` Edge Function**, despite older notes referring to one. The Server
+Actions already run server-side, so the service key never reaches the browser either way; a second
+deployable would add no security.
+
+#### 2.3.1 Temporary password at admission (the default route)
+Email and SMS both need a provider that takes weeks to approve in Ghana, and the parent is standing at
+the desk anyway. So the primary route needs no provider at all:
+
+1. `createParent` / `createStaff` generate a readable temporary password — `Harmattan-46589-Heron`,
+   shaped to survive handwriting and a phone call: words not character soup, and no `0`/`O`/`1`/`l`.
+   ~74 million combinations (`lib/temp-password.ts`).
+2. It is shown **once**. Passwords are bcrypt hashes, so it cannot be shown again; "Send credentials"
+   **reissues** a new one rather than revealing the old. Keeping plaintext to allow a true re-copy
+   would expose every parent's password to any admin and to any breach.
+3. `must_change_password` is set. **Middleware** holds the holder on `/update-password` until they
+   replace it — enforced there, not in the app shell, so it survives JavaScript being disabled and
+   cannot be skipped with a deep link. This is the one case where `/update-password` may use the
+   existing session: they proved knowledge of that credential to get there.
+4. On success, `complete_password_change()` clears the flag and stamps `password_changed_at`. The
+   temporary password dies with it, so the admin loses access.
+5. **Unused temporary passwords expire after 30 days**, rejected at login. This is the real security
+   boundary: until the holder takes ownership, the admin who issued the credential can read that
+   child's records, and an unbounded window would leave that open forever.
+
+The Parents screen shows this state per row (`Active` / `Awaiting first sign-in` / `Password expired`)
+plus a running count, so the office can see whose password they still know.
+
+#### 2.3.2 Invite link (the route where the admin never learns the password)
+`invitePortalUser` either hands the admin a copyable one-time link (`generateLink` — sends nothing, so
+no provider needed; the school pastes it into WhatsApp) or emails it. A **recovery** link is used
+rather than an invite one because the account already exists and `inviteUserByEmail` rejects a
+registered address. The target's email is looked up through the **caller's** client, so RLS stops an
+admin inviting into another school.
 
 ### 2.4 School & super_admin creation
 - `super_admin` accounts are created out-of-band (seeded / manual) — there is no public path

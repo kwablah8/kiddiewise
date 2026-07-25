@@ -1,6 +1,6 @@
 # 05 — User Flows
 
-Version 1.0 · Status: Planning / MVP
+Version 1.1 · Status: reflects the wired backend
 
 The key journeys each role takes. Flows assume the tenancy and permission rules in
 `docs/04-AUTH-AND-PERMISSIONS.md`.
