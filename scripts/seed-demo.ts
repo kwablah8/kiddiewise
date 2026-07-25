@@ -16,6 +16,7 @@ config({ path: ".env.local" });
 
 import { createClient } from "@supabase/supabase-js";
 import type { Database, TablesInsert } from "../lib/supabase/types";
+import { assignPositions } from "../lib/terminal-reports";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -548,28 +549,46 @@ async function main(): Promise<void> {
   await insert("attendance", attendance);
 
   // --- terminal reports ---------------------------------------------------
-  // Published for Basic 1 only, so the parent portal shows a real report for parent@'s children
-  // while other classes legitimately show "not published yet".
+  // Published for Basic 1 only, so the parent portal shows a real report for parent@'s children while
+  // other classes legitimately show "not published yet".
+  //
+  // Figures are made internally CONSISTENT with the rest of the seed rather than invented: attendance
+  // is counted from the rows inserted above, and positions come from `assignPositions` — the same
+  // tested helper the app uses. Random averages with no position left the Terminal Reports screen
+  // showing a column of dashes on a fresh install, which reads as a bug rather than as seed data.
   const b1 = activeStudents.filter((s) => s.classKey === "b1");
-  await insert("terminal_reports", b1.map((s): TablesInsert<"terminal_reports"> => {
-    const avg = Math.round(60 + rand() * 30);
-    return {
-      school_id: SCHOOL_ID,
-      student_id: s.id,
-      class_id: classId["b1"]!,
-      term_id: TERM_ID,
-      academic_year_id: YEAR_ID,
-      average_score: avg,
-      total_score: avg * 4,
-      attendance_present: 28,
-      attendance_total: 30,
-      class_teacher_comment: avg >= 75
-        ? "A consistently strong term. Keep up the excellent work."
-        : "Steady progress this term. More attention to homework will help.",
-      head_teacher_comment: "Promoted to the next class.",
-      is_published: true,
-    };
+  const b1Averages = b1.map((s) => ({
+    student_id: s.id,
+    average_score: Math.round(60 + rand() * 30),
   }));
+  const b1Ranked = assignPositions(b1Averages);
+
+  await insert(
+    "terminal_reports",
+    b1Ranked.map((r): TablesInsert<"terminal_reports"> => {
+      const mine = attendance.filter((a) => a.student_id === r.student_id);
+      const avg = r.average_score!;
+      return {
+        school_id: SCHOOL_ID,
+        student_id: r.student_id,
+        class_id: classId["b1"]!,
+        term_id: TERM_ID,
+        academic_year_id: YEAR_ID,
+        average_score: avg,
+        // Four subjects on the report card, so the total is the sum of four subject percentages.
+        total_score: avg * 4,
+        position: r.position,
+        // Late counts as attended, matching attendanceTotals().
+        attendance_present: mine.filter((a) => a.status === "present" || a.status === "late").length,
+        attendance_total: mine.length,
+        class_teacher_comment: avg >= 75
+          ? "A consistently strong term. Keep up the excellent work."
+          : "Steady progress this term. More attention to homework will help.",
+        head_teacher_comment: "Promoted to the next class.",
+        is_published: true,
+      };
+    }),
+  );
 
   // --- fees ---------------------------------------------------------------
   console.log("Creating fees…");
