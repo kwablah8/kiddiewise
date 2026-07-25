@@ -5,8 +5,8 @@
 -- admin API in tests/rls/helpers.ts. This seed only lays down non-auth tenant data so the
 -- app has a school + active year/term to develop against.
 insert into public.schools (id, name, slug, email)
-values ('00000000-0000-0000-0000-00000000501a', 'Kiddiewise School Complex', 'kiddiewise',
-        'info@kiddiewise.test')
+values ('00000000-0000-0000-0000-00000000501a', 'SNAB Learners International School', 'slis',
+        'snab.learner@gmail.com')
 on conflict (id) do nothing;
 
 insert into public.academic_years (id, school_id, name, start_date, end_date, is_active)

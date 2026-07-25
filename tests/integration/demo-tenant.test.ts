@@ -116,6 +116,24 @@ describe("admin sees the whole school", () => {
   });
 });
 
+describe("the school identifies itself from the database", () => {
+  it("admin can read their own school's name", async () => {
+    // The credentials message and the invite emails name the school. Nothing may hardcode it — a
+    // literal school name is wrong for every tenant but one, and stays wrong after a rebrand.
+    const { data, error } = await admin.from("schools").select("name, slug").single();
+    expect(error).toBeNull();
+    expect(data!.name).toBe("SNAB Learners International School");
+    expect(data!.slug).toBe("slis");
+  });
+
+  it("the slug matches the SCHOOL_SLUG public enquiries resolve against", async () => {
+    // publicSchoolId() falls back to "slis"; a mismatch would route every public enquiry submitted
+    // from the marketing site into the wrong tenant's inbox, or fail outright.
+    const { data } = await admin.from("schools").select("slug").single();
+    expect(data!.slug).toBe(process.env.SCHOOL_SLUG ?? "slis");
+  });
+});
+
 describe("teacher is scoped to their own classes", () => {
   it("sees fewer students than the admin, but not zero", async () => {
     const mine = await count(teacher, "students");

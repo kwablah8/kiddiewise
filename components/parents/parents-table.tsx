@@ -152,7 +152,6 @@ export function ParentsTable() {
       )}
       <CredentialsDialog
         credentials={issued}
-        schoolName="Kiddiewise School Complex"
         onClose={() => setIssued(null)}
       />
       {isError ? (

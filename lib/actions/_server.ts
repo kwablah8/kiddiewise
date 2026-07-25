@@ -336,7 +336,7 @@ export async function rollbackProvisionedUser(userId: string): Promise<void> {
  * anon path governed by `inq_anon_insert`. Configure `SCHOOL_SLUG` per deployment.
  */
 export async function publicSchoolId(): Promise<string> {
-  const slug = process.env.SCHOOL_SLUG ?? "kiddiewise";
+  const slug = process.env.SCHOOL_SLUG ?? "slis";
   const { data, error } = await createServiceClient()
     .from("schools")
     .select("id")

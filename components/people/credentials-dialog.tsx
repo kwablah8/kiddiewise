@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useSchool } from "@/lib/queries/school";
 import {
   credentialsMessage,
   TEMP_PASSWORD_DAYS,
@@ -31,14 +32,17 @@ import {
  */
 export function CredentialsDialog({
   credentials,
-  schoolName,
   onClose,
 }: {
   credentials: IssuedCredentials | null;
-  schoolName: string;
   onClose: () => void;
 }) {
   const [copied, setCopied] = useState<"message" | "password" | null>(null);
+  // Read from the tenant rather than taken as a prop: a hardcoded name would be wrong for every
+  // school but one, and would stay wrong after a rebrand. "SLIS" only covers the moment before the
+  // query resolves.
+  const { data: school } = useSchool();
+  const schoolName = school?.name ?? "SLIS";
 
   if (!credentials) return null;
 
@@ -86,18 +90,32 @@ export function CredentialsDialog({
           </div>
 
           <dl className="space-y-2 rounded-lg border border-[var(--border)] p-3">
-            <div className="flex items-baseline justify-between gap-3">
+            <div className="space-y-1 pb-1">
               <dt className="text-xs text-[var(--muted-foreground)]">Email</dt>
-              <dd className="font-mono text-sm text-[var(--text)]">{credentials.email}</dd>
+              <dd className="select-all break-all font-mono text-sm text-[var(--text)]">
+                {credentials.email}
+              </dd>
             </div>
-            <div className="flex items-baseline justify-between gap-3">
+            <div className="space-y-1.5 border-t border-[var(--border)] pt-2">
               <dt className="text-xs text-[var(--muted-foreground)]">Temporary password</dt>
               <dd className="flex items-center gap-2">
-                {/* Selectable text, so it works even where the clipboard API is blocked. */}
-                <span className="select-all font-mono text-sm font-semibold text-[var(--text)]">
+                {/*
+                  Its own full-width row, and `whitespace-nowrap`: sharing a row with the label wrapped
+                  the value mid-password ("Heron-59462-" / "Meadow"), which is exactly how a credential
+                  gets mistranscribed onto an admission slip. `overflow-x-auto` keeps it on one line on
+                  a narrow screen instead of breaking it. Selectable so it works even where the
+                  clipboard API is blocked.
+                */}
+                <code className="flex-1 select-all overflow-x-auto whitespace-nowrap rounded-md bg-[var(--bg)] px-2.5 py-2 font-mono text-base font-semibold tracking-tight text-[var(--text)]">
                   {credentials.tempPassword}
-                </span>
-                <Button type="button" variant="outline" size="sm" onClick={() => copy("password")}>
+                </code>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => copy("password")}
+                >
                   {copied === "password" ? (
                     <Check className="size-3.5" aria-hidden="true" />
                   ) : (

@@ -257,7 +257,7 @@ otp_expiry = 3600
 # when the person was added), so a recovery link is the correct primitive — see
 # lib/actions/_server.ts#invitePortalUser.
 [auth.email.template.recovery]
-subject = "Set your password — Kiddiewise School Complex"
+subject = "Set your password — SNAB Learners International School"
 content_path = "./supabase/templates/recovery.html"
 
 # Uncomment to customize notification email template

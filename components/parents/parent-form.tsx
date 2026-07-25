@@ -57,7 +57,6 @@ export function ParentForm() {
           only copy of the temporary password. */}
       <CredentialsDialog
         credentials={issued}
-        schoolName="Kiddiewise School Complex"
         onClose={() => {
           setIssued(null);
           router.push("/parents");

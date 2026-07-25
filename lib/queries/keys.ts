@@ -1,4 +1,7 @@
 export const queryKeys = {
+  school: {
+    current: ["school", "current"] as const,
+  },
   sidebar: {
     counts: ["sidebar", "counts"] as const,
   },

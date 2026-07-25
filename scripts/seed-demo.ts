@@ -216,11 +216,11 @@ async function main(): Promise<void> {
   // --- school -------------------------------------------------------------
   const { error: schoolErr } = await db.from("schools").upsert({
     id: SCHOOL_ID,
-    name: "Kiddiewise School Complex",
-    slug: "kiddiewise",
-    email: "info@kiddiewise.test",
+    name: "SNAB Learners International School",
+    slug: "slis",
+    email: "snab.learner@gmail.com",
     phone: "+233 30 250 1234",
-    address: "Oyarifa, Accra, Ghana",
+    address: "Oyarifa, near the Ghana Flag, Behind Rehoboth Estate, Accra, Ghana",
   });
   if (schoolErr) throw new Error(`schools: ${schoolErr.message}`);
 
@@ -710,7 +710,7 @@ async function main(): Promise<void> {
   ]);
 
   console.log(`
-Demo tenant seeded: Kiddiewise School Complex
+Demo tenant seeded: SNAB Learners International School
 
   Admin    admin@kiddiewise.test
   Teacher  teacher@kiddiewise.test    (Efua Owusu — class teacher, Basic 1)

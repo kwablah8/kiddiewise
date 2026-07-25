@@ -126,7 +126,8 @@ pnpm typecheck && pnpm lint && pnpm test:unit && pnpm test:rls && pnpm test:inte
 
 ## 7. What the demo tenant contains
 
-School: **Kiddiewise School Complex** (slug `kiddiewise`).
+School: **SNAB Learners International School** (slug `slis`) — matches the marketing site's
+branding, so credential messages and public enquiries read correctly out of the box.
 
 | Data | Amount | Deliberate detail |
 |---|---|---|
