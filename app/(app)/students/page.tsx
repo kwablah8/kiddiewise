@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Download, FileText, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { StudentStats } from "@/components/students/student-stats";

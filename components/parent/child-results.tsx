@@ -1,7 +1,7 @@
 "use client";
 
 import { Download } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { ChildTabs } from "@/components/parent/child-tabs";
 import { Button } from "@/components/ui/button";

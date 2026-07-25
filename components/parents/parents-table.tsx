@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { KeyRound, Loader2, UserRoundPlus } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { EmptyState } from "@/components/states/empty-state";

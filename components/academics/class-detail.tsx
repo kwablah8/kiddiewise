@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, Loader2, Pencil, School, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { PageHeader } from "@/components/app/page-header";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {

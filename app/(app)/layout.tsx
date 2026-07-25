@@ -6,7 +6,7 @@ import { SessionProvider, useSession } from "@/lib/auth/useSession";
 import { AppShell } from "@/components/app/app-shell";
 import { ParentShell } from "@/components/parent/parent-shell";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { homePathForRole, isPathAllowedForRole } from "@/lib/auth/access";
 
 function FullPageSkeleton() {

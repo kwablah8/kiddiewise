@@ -11,7 +11,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { ListPanel } from "@/components/data/list-panel";
