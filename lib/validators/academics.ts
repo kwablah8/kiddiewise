@@ -1,4 +1,7 @@
 import { z } from "zod";
+// Portal access is one concept across the platform: a staff member and a parent hold the same kind
+// of admin-issued credential, so they share the enum and its labels rather than each defining one.
+import { portalAccessStatus } from "@/lib/validators/people";
 
 export const academicYearVM = z.object({
   id: z.string(), name: z.string(),           // "2026/2027"
@@ -48,6 +51,9 @@ export const staffVM = z.object({
   qualification: z.string().nullable(),
   is_active: z.boolean(),
   class_count: z.number(), subject_count: z.number(),   // derived from class_subjects + class_teacher
+  // Same credential lifecycle as a parent — staff are handed a generated temporary password at
+  // creation and must replace it on first sign-in. Derived from the profile's password columns.
+  portal_status: portalAccessStatus,
 });
 export type StaffVM = z.infer<typeof staffVM>;
 

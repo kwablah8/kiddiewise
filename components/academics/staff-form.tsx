@@ -27,6 +27,7 @@ import {
 import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { ErrorState } from "@/components/states/error-state";
 import { useCreateStaff, useStaffMember, useUpdateStaff } from "@/lib/queries/academics";
+import type { IssuedCredentials } from "@/lib/temp-password";
 import { staffCreateSchema, type StaffCreateInput, type StaffVM } from "@/lib/validators/academics";
 
 // `staffCreateSchema` has `.default(...)`s on the optional fields, so its input type (what the
@@ -59,6 +60,14 @@ interface StaffFormDialogProps {
   staffId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * Receives the temporary credentials a create just issued, so the CALLER can show them.
+   *
+   * They cannot be shown from inside this dialog: the page remounts it with a fresh `key` on every
+   * open and closes it on success, which would destroy the only copy of the password. The caller
+   * outlives it.
+   */
+  onCreated?: (credentials: IssuedCredentials) => void;
 }
 
 /**
@@ -68,12 +77,20 @@ interface StaffFormDialogProps {
  * classes/subjects are assigned separately on a class's page (a hint points there). Form state
  * isn't reset on close; the caller remounts with a fresh `key` on every open.
  */
-export function StaffFormDialog({ mode, staffId, open, onOpenChange }: StaffFormDialogProps) {
+export function StaffFormDialog({
+  mode,
+  staffId,
+  open,
+  onOpenChange,
+  onCreated,
+}: StaffFormDialogProps) {
   if (mode === "edit") {
     if (!staffId) return null;
     return <EditStaffFormLoader staffId={staffId} open={open} onOpenChange={onOpenChange} />;
   }
-  return <StaffFormFields mode="create" open={open} onOpenChange={onOpenChange} />;
+  return (
+    <StaffFormFields mode="create" open={open} onOpenChange={onOpenChange} onCreated={onCreated} />
+  );
 }
 
 /** Loads the record being edited so the dialog itself can show its own loading/error state. */
@@ -113,7 +130,9 @@ function EditStaffFormLoader({
             <DialogTitle>Edit staff</DialogTitle>
           </DialogHeader>
           <ErrorState
-            message={isError ? "Couldn't load this staff member." : "This staff member could not be found."}
+            message={
+              isError ? "Couldn't load this staff member." : "This staff member could not be found."
+            }
             onRetry={isError ? () => refetch() : undefined}
           />
         </DialogContent>
@@ -138,9 +157,17 @@ interface StaffFormFieldsProps {
   initialData?: StaffVM;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreated?: (credentials: IssuedCredentials) => void;
 }
 
-function StaffFormFields({ mode, staffId, initialData, open, onOpenChange }: StaffFormFieldsProps) {
+function StaffFormFields({
+  mode,
+  staffId,
+  initialData,
+  open,
+  onOpenChange,
+  onCreated,
+}: StaffFormFieldsProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const createStaff = useCreateStaff();
   const updateStaff = useUpdateStaff();
@@ -187,12 +214,11 @@ function StaffFormFields({ mode, staffId, initialData, open, onOpenChange }: Sta
     setSubmitError(null);
     try {
       if (mode === "create") {
-        // The action invites an auth account, then inserts the profile. staff_no is auto-assigned
-        // server-side, never client input.
-        await createStaff.mutateAsync(values);
-        toast.success("Staff created", {
-          description: `${values.first_name} ${values.last_name} has been added.`,
-        });
+        // The action creates the auth account with a generated temporary password and returns it.
+        // staff_no is auto-assigned server-side, never client input. No success toast here: the
+        // credentials dialog the caller opens IS the confirmation, and a toast on top of it would
+        // compete with the one thing the admin must not miss.
+        onCreated?.(await createStaff.mutateAsync(values));
       } else if (staffId) {
         await updateStaff.mutateAsync({ id: staffId, ...values });
         toast.success("Staff updated", {
@@ -201,7 +227,9 @@ function StaffFormFields({ mode, staffId, initialData, open, onOpenChange }: Sta
       }
       onOpenChange(false);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setSubmitError(
+        err instanceof Error ? err.message : "Something went wrong. Please try again.",
+      );
     }
   }
 
@@ -236,7 +264,10 @@ function StaffFormFields({ mode, staffId, initialData, open, onOpenChange }: Sta
                     control={control}
                     name="role"
                     render={({ field }) => (
-                      <Select value={field.value ?? "teacher"} onValueChange={(v) => field.onChange(v)}>
+                      <Select
+                        value={field.value ?? "teacher"}
+                        onValueChange={(v) => field.onChange(v)}
+                      >
                         <SelectTrigger id="staff_role" className="w-full">
                           <SelectValue>{(v: string) => roleLabel(v)}</SelectValue>
                         </SelectTrigger>
@@ -375,7 +406,9 @@ function StaffFormFields({ mode, staffId, initialData, open, onOpenChange }: Sta
                   aria-invalid={!!errors.email}
                   {...register("email")}
                 />
-                {errors.email && <p className="text-xs text-[var(--danger)]">{errors.email.message}</p>}
+                {errors.email && (
+                  <p className="text-xs text-[var(--danger)]">{errors.email.message}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="staff_phone">Phone</Label>
@@ -408,7 +441,9 @@ function StaffFormFields({ mode, staffId, initialData, open, onOpenChange }: Sta
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-4">
-      <h3 className="text-[11px] font-medium tracking-wide text-[var(--label)] uppercase">{title}</h3>
+      <h3 className="text-[11px] font-medium tracking-wide text-[var(--label)] uppercase">
+        {title}
+      </h3>
       {children}
     </div>
   );

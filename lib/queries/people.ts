@@ -89,13 +89,19 @@ export const useInvitePortal = () => useMutation({ mutationFn: actions.invitePor
 /**
  * Issue a fresh temporary password so the admin can send credentials again.
  *
- * Invalidates the parents list because the reissue resets `must_change_password` — the status column
- * must flip back to "Awaiting first sign-in".
+ * Invalidates both people lists because the reissue resets `must_change_password`, and the portal
+ * status column must flip back to "Awaiting first sign-in" — for staff and parents alike. The action
+ * takes a bare `profile_id` and cannot tell which list the person is on, so both are refreshed rather
+ * than guessed at.
  */
 export const useReissueCredentials = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: actions.reissueCredentials,
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.parents.all }),
+    onSuccess: (_result, variables) => {
+      qc.invalidateQueries({ queryKey: queryKeys.parents.all });
+      qc.invalidateQueries({ queryKey: queryKeys.academics.staff });
+      qc.invalidateQueries({ queryKey: queryKeys.academics.staffMember(variables.profile_id) });
+    },
   });
 };

@@ -47,15 +47,16 @@ Role is assigned at account creation and is not self-editable.
 Teachers and parents **do not self-register**. Nobody can exist here without an auth record either,
 because `profiles.id` is a foreign key to `auth.users(id)`.
 
-A `school_admin` creates them, and **creating an account is separate from granting access**:
+A `school_admin` creates them, and the same shape applies to both:
 
 1. Admin fills a create form (name, email, role, school-specific fields).
 2. A **Server Action** (`lib/actions/_server.ts#provisionUser`, service-role) creates the
    `auth.users` record, then the `profiles` row with the correct `school_id` and `role`. If the profile
    insert fails, the auth account is deleted — otherwise a half-created person holds the email address
    hostage and the admin can never retry.
-3. Access is granted **separately, on demand** — most parent records exist only so the school can reach
-   them, emails are often wrong at admission, and an invite that expires unused becomes a support call.
+3. Creating the account **issues a temporary password** (§2.3.1), shown to the admin once. Nothing is
+   emailed: the admin hands it over. An admin who would rather never learn the password can instead
+   send a one-time link (§2.3.2) — that route is available for both staff and parents, at any time.
 
 There is **no `provision-user` Edge Function**, despite older notes referring to one. The Server
 Actions already run server-side, so the service key never reaches the browser either way; a second
@@ -81,8 +82,9 @@ the desk anyway. So the primary route needs no provider at all:
    boundary: until the holder takes ownership, the admin who issued the credential can read that
    child's records, and an unbounded window would leave that open forever.
 
-The Parents screen shows this state per row (`Active` / `Awaiting first sign-in` / `Password expired`)
-plus a running count, so the office can see whose password they still know.
+The Parents and Staff screens both show this state per row (`Active` / `Awaiting first sign-in` /
+`Password expired`), so the office can see whose password they still know. Parents additionally carry
+a running count across the list.
 
 #### 2.3.2 Invite link (the route where the admin never learns the password)
 `invitePortalUser` either hands the admin a copyable one-time link (`generateLink` — sends nothing, so

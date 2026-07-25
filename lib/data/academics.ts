@@ -1,4 +1,5 @@
 import { db, unwrapList, unwrapMaybe } from "./_client";
+import { derivePortalStatus } from "@/lib/temp-password";
 import type {
   AcademicYearVM,
   TermVM,
@@ -109,10 +110,7 @@ const toClassVM = (c: ClassRow): ClassVM => ({
 });
 
 export async function listClasses(): Promise<ClassVM[]> {
-  const rows = unwrapList(
-    await db().from("classes").select(CLASS_SELECT).order("name"),
-    "classes",
-  );
+  const rows = unwrapList(await db().from("classes").select(CLASS_SELECT).order("name"), "classes");
   return rows.map(toClassVM);
 }
 
@@ -149,6 +147,7 @@ export async function listSubjects(): Promise<SubjectVM[]> {
 const STAFF_SELECT = `
   id, first_name, last_name, email, phone, staff_no, role, position, department,
   gender, date_of_birth, hire_date, qualification, is_active,
+  must_change_password, temp_password_expires_at, password_changed_at,
   class_subjects(class_id, subject_id),
   homeroom:classes!classes_class_teacher_id_fkey(id)
 `;
@@ -168,11 +167,14 @@ interface StaffRow {
   hire_date: string | null;
   qualification: string | null;
   is_active: boolean;
+  must_change_password: boolean;
+  temp_password_expires_at: string | null;
+  password_changed_at: string | null;
   class_subjects: { class_id: string; subject_id: string }[];
   homeroom: { id: string }[];
 }
 
-function toStaffVM(s: StaffRow): StaffVM {
+function toStaffVM(s: StaffRow, now: number): StaffVM {
   const classIds = new Set<string>(s.homeroom.map((c) => c.id));
   const subjectIds = new Set<string>();
   for (const cs of s.class_subjects) {
@@ -200,6 +202,7 @@ function toStaffVM(s: StaffRow): StaffVM {
     is_active: s.is_active,
     class_count: classIds.size,
     subject_count: subjectIds.size,
+    portal_status: derivePortalStatus(s, now),
   };
 }
 
@@ -213,7 +216,10 @@ export async function listStaff(): Promise<StaffVM[]> {
       .order("staff_no"),
     "staff",
   );
-  return rows.map(toStaffVM);
+  // One clock reading for the whole list, so two rows whose temp passwords expire in the same
+  // millisecond can never disagree.
+  const now = Date.now();
+  return rows.map((s) => toStaffVM(s, now));
 }
 
 export async function getStaff(id: string): Promise<StaffVM | null> {
@@ -221,7 +227,7 @@ export async function getStaff(id: string): Promise<StaffVM | null> {
     await db().from("profiles").select(STAFF_SELECT).eq("id", id).single(),
     "staff member",
   );
-  return row ? toStaffVM(row) : null;
+  return row ? toStaffVM(row, Date.now()) : null;
 }
 
 // ---------------------------------------------------------------------------

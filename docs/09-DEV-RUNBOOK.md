@@ -253,23 +253,25 @@ via `.rpc()`.
   `createStaff` / `createParent` create an auth account first (service role, server-side only), then
   insert the profile — rolling back the account if the profile insert fails.
 
-### How parents get portal access
+### How parents and staff get portal access
 
 Two routes, both needing **no email or SMS provider**. Email/SMS delivery is deliberately optional
-because Hubtel/Twilio/SMTP approval takes weeks in Ghana.
+because Hubtel/Twilio/SMTP approval takes weeks in Ghana. Staff and parents work identically here —
+same action helpers, same dialog, same status column — so what follows applies to both.
 
-**1. Temporary password at admission (the default).** While the parent is at the desk, `createParent`
-generates a readable temporary password — `Harmattan-46589-Heron`, shaped to survive handwriting and
-a phone call — and shows it **once**. The admin writes it on the admission slip or taps **Copy
-WhatsApp message** for a ready-to-send message with the login URL, email and password.
+**1. Temporary password at creation (the default).** While the person is at the desk, `createParent` /
+`createStaff` generate a readable temporary password — `Harmattan-46589-Heron`, shaped to survive
+handwriting and a phone call — and show it **once**. The admin writes it on the admission slip or taps
+**Copy WhatsApp message** for a ready-to-send message with the login URL, email and password.
 
-On first sign-in the parent is held on `/update-password` by the middleware until they choose their
-own password. When they do, the temporary one dies — so the admin no longer has access to that
-child's records. The Parents screen shows `Active` once that happens, and `Awaiting first sign-in`
-until then, with a running "*n* of *m* parents have signed in and set their own password" count.
+On first sign-in they are held on `/update-password` by the middleware until they choose their own
+password. When they do, the temporary one dies — so the admin no longer has access to that child's
+records, or to that teacher's class. Both the Parents and Staff screens show `Active` once that
+happens and `Awaiting first sign-in` until then; Parents additionally carries a running "*n* of *m*
+parents have signed in and set their own password" count.
 
 Unused temporary passwords **expire after 30 days** (`TEMP_PASSWORD_DAYS`). That bound is the point:
-until the parent takes ownership, the admin who issued the credential can read their child's data.
+until the holder takes ownership, the admin who issued the credential can sign in as them.
 
 **"Send credentials" reissues — it cannot re-reveal.** Passwords are stored as bcrypt hashes, so the
 original is gone the moment the dialog closes. Pressing it generates a *new* temporary password and
@@ -292,7 +294,7 @@ invitation** also exists and needs SMTP; locally those emails land in Mailpit (�
 | `lib/mock/` seam | ✅ Deleted |
 | Teacher: attendance · score entry | ✅ Writes and propagates to the parent portal |
 | Admin: terminal reports (generate → remark → publish) | ✅ |
-| Test suites (88 unit · 13 RLS · 16 integration) | ✅ Green |
+| Test suites (93 unit · 13 RLS · 16 integration) | ✅ Green |
 | Promotion, announcements/events authoring, school settings, Storage | ⏳ See `docs/08-ROADMAP.md` §Remaining work |
 
 `/promotion` is linked in the sidebar but **has no page**. The full breakdown of what is left, grouped

@@ -84,8 +84,8 @@ export function CredentialsDialog({
             />
             <p className="text-xs leading-relaxed text-[var(--text)]">
               This password is shown <strong>once</strong>. We store it encrypted, so it can&apos;t be
-              looked up later — if you lose it, issue a new one from the Parents list. It expires in{" "}
-              {TEMP_PASSWORD_DAYS} days if unused.
+              looked up later — if you lose it, use <em>Send credentials</em> on the list to issue a
+              new one. It expires in {TEMP_PASSWORD_DAYS} days if unused.
             </p>
           </div>
 

@@ -3,7 +3,7 @@ import { computeStudentStats } from "@/lib/students";
 import { scoreToGrade } from "@/lib/grading";
 import { aggregateSubjectResults } from "@/lib/results";
 import { studentListItemVM } from "@/lib/validators/people";
-import type { PortalAccessStatus } from "@/lib/validators/people";
+import { derivePortalStatus } from "@/lib/temp-password";
 import type {
   StudentListItemVM,
   StudentDetailVM,
@@ -261,31 +261,6 @@ export async function getStudentAcademics(studentId: string): Promise<StudentAca
   };
 }
 
-/**
- * Derive whether someone has taken ownership of their portal account.
- *
- * Derived, never stored (golden rule 9): the three underlying columns already say everything, and a
- * fourth "status" column would be one more thing to keep in sync on every password change.
- */
-function portalStatus(
-  p: {
-    must_change_password: boolean;
-    temp_password_expires_at: string | null;
-    password_changed_at: string | null;
-  },
-  now: number,
-): PortalAccessStatus {
-  // They replaced the temporary password — the account is genuinely theirs.
-  if (!p.must_change_password && p.password_changed_at) return "active";
-  if (p.must_change_password) {
-    const expiry = p.temp_password_expires_at;
-    return expiry && Date.parse(expiry) < now ? "expired" : "pending";
-  }
-  // No temp password outstanding and never changed one: an account that exists but has never been
-  // handed over (invited by link and not completed, say).
-  return "no_access";
-}
-
 export async function listParents(): Promise<ParentListItemVM[]> {
   const rows = unwrapList(
     await db()
@@ -308,7 +283,7 @@ export async function listParents(): Promise<ParentListItemVM[]> {
     email: p.email,
     phone: p.phone,
     occupation: p.occupation,
-    portal_status: portalStatus(p, now),
+    portal_status: derivePortalStatus(p, now),
     children_names: p.student_guardians
       .map((g) => (g.students ? `${g.students.first_name} ${g.students.last_name}` : null))
       .filter((n): n is string => n !== null),

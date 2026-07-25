@@ -4,6 +4,7 @@ import {
   isTempPasswordExpired,
   tempPasswordExpiry,
   credentialsMessage,
+  derivePortalStatus,
   TEMP_PASSWORD_DAYS,
   TEMP_PASSWORD_COMBINATIONS,
 } from "@/lib/temp-password";
@@ -77,6 +78,73 @@ describe("tempPasswordExpiry", () => {
 
   it("produces a value the expiry check agrees is still valid", () => {
     expect(isTempPasswordExpired(tempPasswordExpiry(new Date()))).toBe(false);
+  });
+});
+
+describe("derivePortalStatus", () => {
+  const now = Date.parse("2026-07-25T12:00:00Z");
+  const future = "2026-08-24T12:00:00Z";
+  const past = "2026-07-01T12:00:00Z";
+
+  it("is active once they've replaced the temporary password", () => {
+    expect(
+      derivePortalStatus(
+        {
+          must_change_password: false,
+          temp_password_expires_at: null,
+          password_changed_at: "2026-07-20T09:00:00Z",
+        },
+        now,
+      ),
+    ).toBe("active");
+  });
+
+  it("is pending while an issued password is still unused and in date", () => {
+    expect(
+      derivePortalStatus(
+        {
+          must_change_password: true,
+          temp_password_expires_at: future,
+          password_changed_at: null,
+        },
+        now,
+      ),
+    ).toBe("pending");
+  });
+
+  it("is expired once the deadline passes with the password still unused", () => {
+    expect(
+      derivePortalStatus(
+        { must_change_password: true, temp_password_expires_at: past, password_changed_at: null },
+        now,
+      ),
+    ).toBe("expired");
+  });
+
+  it("is no_access for an account that was never handed over", () => {
+    // Created silently (or invited by link and never completed): nothing outstanding, never changed.
+    expect(
+      derivePortalStatus(
+        { must_change_password: false, temp_password_expires_at: null, password_changed_at: null },
+        now,
+      ),
+    ).toBe("no_access");
+  });
+
+  it("lets an outstanding temporary password override a stale password_changed_at", () => {
+    // `markTempCredential` clears password_changed_at, so this combination shouldn't arise — but if
+    // it ever did, "the admin currently knows a working password" is the fact that must win. Reading
+    // it as Active would tell the office the account was already the holder's own.
+    expect(
+      derivePortalStatus(
+        {
+          must_change_password: true,
+          temp_password_expires_at: future,
+          password_changed_at: "2026-05-01T09:00:00Z",
+        },
+        now,
+      ),
+    ).toBe("pending");
   });
 });
 

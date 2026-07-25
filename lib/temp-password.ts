@@ -14,15 +14,59 @@
  *     which are awkward on phone keyboards and easy to mishear.
  */
 
+import type { PortalAccessStatus } from "@/lib/validators/people";
+
 // Ghanaian and school-familiar nouns — recognisable to the people typing them, which is the point.
 // The list length matters: see TEMP_PASSWORD_COMBINATIONS below.
 export const TEMP_PASSWORD_WORDS = [
-  "Cocoa", "Kente", "Baobab", "Harmattan", "Adinkra", "Volta", "Ashanti", "Tamale",
-  "Sankofa", "Akwaaba", "Palm", "Mango", "Cassava", "Plantain", "Zebra", "Falcon",
-  "River", "Sunrise", "Thunder", "Marble", "Copper", "Cedar", "Anchor", "Compass",
-  "Lagoon", "Savanna", "Kumasi", "Elmina", "Shea", "Millet", "Papaya", "Guava",
-  "Antelope", "Leopard", "Heron", "Kingfisher", "Granite", "Amber", "Indigo", "Saffron",
-  "Lantern", "Harbour", "Meadow", "Summit", "Beacon", "Cobalt", "Juniper", "Quartz",
+  "Cocoa",
+  "Kente",
+  "Baobab",
+  "Harmattan",
+  "Adinkra",
+  "Volta",
+  "Ashanti",
+  "Tamale",
+  "Sankofa",
+  "Akwaaba",
+  "Palm",
+  "Mango",
+  "Cassava",
+  "Plantain",
+  "Zebra",
+  "Falcon",
+  "River",
+  "Sunrise",
+  "Thunder",
+  "Marble",
+  "Copper",
+  "Cedar",
+  "Anchor",
+  "Compass",
+  "Lagoon",
+  "Savanna",
+  "Kumasi",
+  "Elmina",
+  "Shea",
+  "Millet",
+  "Papaya",
+  "Guava",
+  "Antelope",
+  "Leopard",
+  "Heron",
+  "Kingfisher",
+  "Granite",
+  "Amber",
+  "Indigo",
+  "Saffron",
+  "Lantern",
+  "Harbour",
+  "Meadow",
+  "Summit",
+  "Beacon",
+  "Cobalt",
+  "Juniper",
+  "Quartz",
 ] as const;
 
 const DIGITS = "23456789";
@@ -65,7 +109,9 @@ export function generateTempPassword(): string {
   // Two identical words reads like a bug and halves the apparent entropy.
   while (second === first) second = pickWord();
 
-  const digits = Array.from({ length: DIGIT_COUNT }, () => DIGITS[randomInt(DIGITS.length)]).join("");
+  const digits = Array.from({ length: DIGIT_COUNT }, () => DIGITS[randomInt(DIGITS.length)]).join(
+    "",
+  );
   return `${first}-${digits}-${second}`;
 }
 
@@ -107,6 +153,34 @@ export function tempPasswordExpiry(from: Date): string {
 export function isTempPasswordExpired(expiresAt: string | null, now: number = Date.now()): boolean {
   if (!expiresAt) return false;
   return Date.parse(expiresAt) < now;
+}
+
+/**
+ * Derive whether someone has taken ownership of their portal account.
+ *
+ * Derived, never stored (golden rule 9): the three underlying columns already say everything, and a
+ * fourth "status" column would be one more thing to keep in sync on every password change.
+ *
+ * Lives here rather than beside either read: staff and parents are the same `profiles` rows with the
+ * same credential lifecycle, so the two lists must answer "has this person taken over their account?"
+ * identically — a second copy of this rule is a second chance to get it wrong.
+ */
+export function derivePortalStatus(
+  p: {
+    must_change_password: boolean;
+    temp_password_expires_at: string | null;
+    password_changed_at: string | null;
+  },
+  now: number = Date.now(),
+): PortalAccessStatus {
+  // They replaced the temporary password — the account is genuinely theirs.
+  if (!p.must_change_password && p.password_changed_at) return "active";
+  if (p.must_change_password) {
+    return isTempPasswordExpired(p.temp_password_expires_at, now) ? "expired" : "pending";
+  }
+  // No temp password outstanding and never changed one: an account that exists but has never been
+  // handed over (invited by link and not completed, say).
+  return "no_access";
 }
 
 /**

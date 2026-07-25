@@ -133,27 +133,25 @@ export function passwordSetupUrl(): string {
  * role, which is why every caller must hold a `tenant()` context: that proves the caller is signed in,
  * and `assertAdmin` proves they may do this.
  *
- * Deliberately SILENT — it notifies nobody. Adding a parent to the roster is a record-keeping act, not
- * a decision to grant them portal access today: most parent records exist so the school can reach
- * them, emails are often wrong or missing at admission, and an invite link that expires before anyone
- * uses it becomes a support call. Access is granted separately, by `invitePortalUser`, when someone
- * actually asks for it.
+ * Deliberately SILENT — it notifies nobody. The admin-issued temporary password is handed over in
+ * person (or over WhatsApp) by whoever created the record; sending mail here would need an SMTP
+ * provider the school may not have, and would fire at addresses that are often wrong at admission.
+ * `invitePortalUser` is the separate route for people who would rather set their own password.
  *
- * The account is left with no usable password. It cannot be signed into until invited.
+ * `tempPassword` is required: an account with no usable password is one the holder can only reach via
+ * an invite link, which is a state neither create flow wants.
  */
 export async function provisionUser(
   ctx: TenantContext,
   email: string,
-  tempPassword?: string,
+  tempPassword: string,
 ): Promise<string> {
   assertAdmin(ctx);
 
   const admin = createServiceClient();
   const { data, error } = await admin.auth.admin.createUser({
     email,
-    // Set only when the admin is issuing credentials in person. Omitted for the invite flow, which
-    // leaves the account with no usable password until the recipient sets their own.
-    ...(tempPassword ? { password: tempPassword } : {}),
+    password: tempPassword,
     // Pre-confirmed so the recipient goes straight to signing in rather than confirming an address
     // the school already vouched for face to face.
     email_confirm: true,

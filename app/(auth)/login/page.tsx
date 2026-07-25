@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ import { homePathForRole, isPathAllowedForRole } from "@/lib/auth/access";
 export default function LoginPage() {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -47,7 +48,9 @@ export default function LoginPage() {
 
     if (!profile) {
       await supabase.auth.signOut();
-      setSubmitError("This account isn't set up for a school yet. Please contact your administrator.");
+      setSubmitError(
+        "This account isn't set up for a school yet. Please contact your administrator.",
+      );
       return;
     }
 
@@ -60,10 +63,7 @@ export default function LoginPage() {
     // A temporary password the school issued but nobody used has a deadline. Enforcing it here is
     // what makes the expiry real: until the holder takes ownership, the admin who issued it can reach
     // that child's records, and an unbounded window would leave that open indefinitely.
-    if (
-      profile.must_change_password &&
-      isTempPasswordExpired(profile.temp_password_expires_at)
-    ) {
+    if (profile.must_change_password && isTempPasswordExpired(profile.temp_password_expires_at)) {
       await supabase.auth.signOut();
       setSubmitError(
         "This temporary password has expired. Please ask the school office for a new one.",
@@ -124,14 +124,29 @@ export default function LoginPage() {
               Forgot password?
             </Link>
           </div>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            aria-invalid={!!errors.password}
-            {...register("password")}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="••••••••"
+              aria-invalid={!!errors.password}
+              className="pr-10"
+              {...register("password")}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors outline-none hover:text-[var(--text)] focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" aria-hidden="true" />
+              ) : (
+                <Eye className="size-4" aria-hidden="true" />
+              )}
+            </button>
+          </div>
           {errors.password && (
             <p className="text-xs text-[var(--danger)]">{errors.password.message}</p>
           )}
@@ -147,7 +162,7 @@ export default function LoginPage() {
 
       {process.env.NODE_ENV === "development" && (
         <div className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3 text-xs text-[var(--muted-foreground)]">
-          <p className="font-medium text-[var(--text)]">Demo accounts — password Password123!</p>
+          {/* <p className="font-medium text-[var(--text)]">Demo accounts — password Password123!</p> */}
           <p className="mt-1">Admin — admin@slis.test</p>
           <p>Teacher — teacher@slis.test</p>
           <p>Parent — parent@slis.test</p>

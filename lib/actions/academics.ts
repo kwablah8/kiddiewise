@@ -1,6 +1,18 @@
 "use server";
 
-import { tenant, assertWrite, assertOk, provisionUser, rollbackProvisionedUser } from "./_server";
+import {
+  tenant,
+  assertWrite,
+  assertOk,
+  provisionUser,
+  rollbackProvisionedUser,
+  markTempCredential,
+} from "./_server";
+import {
+  generateTempPassword,
+  tempPasswordExpiry,
+  type IssuedCredentials,
+} from "@/lib/temp-password";
 import {
   academicYearCreateSchema,
   termCreateSchema,
@@ -82,7 +94,12 @@ export async function setActiveYear(input: { id: string }): Promise<{ id: string
     "academic year",
   );
   const row = assertWrite(
-    await ctx.db.from("academic_years").update({ is_active: true }).eq("id", id).select("id").single(),
+    await ctx.db
+      .from("academic_years")
+      .update({ is_active: true })
+      .eq("id", id)
+      .select("id")
+      .single(),
     "academic year",
   );
   return { id: row.id };
@@ -195,10 +212,7 @@ async function nextStaffNo(
   role: "teacher" | "school_admin",
 ): Promise<string> {
   const prefix = role === "teacher" ? "TCH" : "ADM";
-  const { data } = await ctx.db
-    .from("profiles")
-    .select("staff_no")
-    .like("staff_no", `${prefix}-%`);
+  const { data } = await ctx.db.from("profiles").select("staff_no").like("staff_no", `${prefix}-%`);
 
   const max = (data ?? []).reduce((acc, r) => {
     const m = new RegExp(`^${prefix}-(\\d+)$`).exec(r.staff_no ?? "");
@@ -209,20 +223,27 @@ async function nextStaffNo(
 }
 
 /**
- * Add a staff member: provision their auth account, then their profile.
+ * Add a staff member: provision their auth account with a temporary password, then their profile.
  *
  * `staff_no` is assigned here, never accepted from the client — it is an identifier the school owns.
+ *
+ * Credentials are issued up front, the same way `createParent` does it and for the same reason: the
+ * admin is usually sitting with (or on the phone to) the person being added, and handing over a
+ * password there and then needs no SMTP account, no working email address, and no second visit. The
+ * holder must replace it on first sign-in, so the window in which the admin knows it is short.
  *
  * The two writes span `auth.users` and `profiles` with no shared transaction, so a failed profile
  * insert is compensated by deleting the auth account. Without that, a half-created person would hold
  * the email address hostage and the admin could never retry.
  */
-export async function createStaff(input: StaffCreateInput): Promise<{ id: string }> {
+export async function createStaff(input: StaffCreateInput): Promise<IssuedCredentials> {
   const data = staffCreateSchema.parse(input);
   const ctx = await tenant();
 
   const staff_no = await nextStaffNo(ctx, data.role);
-  const userId = await provisionUser(ctx, data.email);
+  const tempPassword = generateTempPassword();
+  const expiresAt = tempPasswordExpiry(new Date());
+  const userId = await provisionUser(ctx, data.email, tempPassword);
 
   try {
     assertOk(
@@ -245,12 +266,19 @@ export async function createStaff(input: StaffCreateInput): Promise<{ id: string
       }),
       "staff member",
     );
+    await markTempCredential(userId, expiresAt);
   } catch (err) {
     await rollbackProvisionedUser(userId);
     throw err;
   }
 
-  return { id: userId };
+  return {
+    profileId: userId,
+    personName: `${data.first_name} ${data.last_name}`,
+    email: data.email,
+    tempPassword,
+    expiresAt,
+  };
 }
 
 /** `staff_no`, `role` and `school_id` are all immutable here — 0015 withholds the grants for the
