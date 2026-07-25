@@ -76,3 +76,12 @@ export const useLinkGuardian = () => {
     },
   });
 };
+
+/**
+ * Grant portal access to a parent or staff member. Returns either a copyable link (delivery: "link")
+ * or confirmation that an email went out (delivery: "email").
+ *
+ * No cache invalidation: inviting doesn't change any row the UI renders — the account already existed,
+ * silently, from the moment the person was added.
+ */
+export const useInvitePortal = () => useMutation({ mutationFn: actions.invitePortal });

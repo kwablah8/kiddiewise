@@ -7,6 +7,7 @@ import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { buttonVariants } from "@/components/ui/button";
+import { InvitePortalButton } from "@/components/people/invite-portal-button";
 import { useParents } from "@/lib/queries/people";
 import type { ParentListItemVM } from "@/lib/validators/people";
 import { formatInitials } from "@/lib/format";
@@ -55,6 +56,18 @@ const columns: DataTableColumn<ParentListItemVM>[] = [
       ) : (
         formatChildren(row.children_names)
       ),
+  },
+  {
+    key: "portal",
+    header: "Portal",
+    // Adding a parent does NOT grant portal access — their account exists but cannot be signed into
+    // until invited (see lib/actions/_server.ts#provisionUser). This is that separate, deliberate step.
+    render: (row) => (
+      <InvitePortalButton
+        profileId={row.id}
+        personName={`${row.first_name} ${row.last_name}`}
+      />
+    ),
   },
 ];
 

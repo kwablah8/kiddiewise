@@ -7,9 +7,12 @@ import {
   assertOk,
   provisionUser,
   rollbackProvisionedUser,
+  invitePortalUser,
   type TenantContext,
+  type PortalInvite,
 } from "./_server";
 import type { TablesUpdate } from "@/lib/supabase/types";
+import { z } from "zod";
 import {
   studentCreateSchema,
   studentUpdateSchema,
@@ -195,8 +198,28 @@ export async function updateStudent(input: StudentUpdateInput): Promise<{ id: st
 }
 
 /**
- * Add a parent/guardian. Like staff, this provisions an auth account first, because a profile cannot
- * exist without one — and it is what lets the parent sign in to the portal at all.
+ * Grant someone portal access — a parent or a staff member.
+ *
+ * Separate from creating them on purpose (see `provisionUser`): adding a person to the roster is
+ * record-keeping, deciding they should be able to log in is a distinct act that happens later, when
+ * they ask. `delivery: "link"` returns a URL for the admin to send over WhatsApp; `"email"` posts it
+ * to them directly.
+ */
+export async function invitePortal(input: {
+  profile_id: string;
+  delivery: "email" | "link";
+}): Promise<PortalInvite> {
+  const { profile_id, delivery } = z
+    .object({ profile_id: z.string().min(1), delivery: z.enum(["email", "link"]) })
+    .parse(input);
+
+  const ctx = await tenant();
+  return invitePortalUser(ctx, profile_id, delivery);
+}
+
+/**
+ * Add a parent/guardian. Provisions an auth account because a profile cannot exist without one
+ * (`profiles.id` → `auth.users.id`), but notifies nobody — use `invitePortal` for that.
  */
 export async function createParent(input: ParentCreateInput): Promise<{ id: string }> {
   const data = parentCreateSchema.parse(input);

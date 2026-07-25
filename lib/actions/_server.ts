@@ -104,28 +104,46 @@ export function assertOk(
   assertWrite({ data: res.error ? null : ({} as unknown), error: res.error }, context, friendly);
 }
 
+function assertAdmin(ctx: TenantContext): void {
+  if (ctx.profile.role !== "school_admin" && ctx.profile.role !== "super_admin") {
+    throw new Error("Only an administrator can add staff or parents or send portal invitations.");
+  }
+}
+
+/** Where an invited user is sent to choose their password. */
+export function passwordSetupUrl(): string {
+  // Must be on Supabase's redirect allowlist (site_url + additional_redirect_urls in config.toml),
+  // or the auth server silently falls back to site_url and the user lands on the marketing page.
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3000";
+  return `${base.replace(/\/$/, "")}/update-password`;
+}
+
 /**
  * Create the auth account behind a new staff member or parent, and return its id.
  *
  * `profiles.id` is a foreign key to `auth.users(id)`, so a person cannot exist in this system without
  * an auth account — there is no such thing as a profile-only record. Creating one needs the service
- * role, which is why every caller must already hold a `tenant()` context: that proves the caller is
- * signed in, and the role check below proves they are an admin.
+ * role, which is why every caller must hold a `tenant()` context: that proves the caller is signed in,
+ * and `assertAdmin` proves they may do this.
  *
- * Invited rather than created with a password. `inviteUserByEmail` both creates the account and emails
- * the recipient a link to set their own credential — so no password is ever chosen, transmitted or
- * known by whoever added them. `createUser` would leave the account with an unusable password hash and
- * send nothing, stranding the new user with no way to discover they should reset it.
+ * Deliberately SILENT — it notifies nobody. Adding a parent to the roster is a record-keeping act, not
+ * a decision to grant them portal access today: most parent records exist so the school can reach
+ * them, emails are often wrong or missing at admission, and an invite link that expires before anyone
+ * uses it becomes a support call. Access is granted separately, by `invitePortalUser`, when someone
+ * actually asks for it.
  *
- * Locally the invite email lands in Mailpit (http://127.0.0.1:54324), not a real inbox.
+ * The account is left with no usable password. It cannot be signed into until invited.
  */
 export async function provisionUser(ctx: TenantContext, email: string): Promise<string> {
-  if (ctx.profile.role !== "school_admin" && ctx.profile.role !== "super_admin") {
-    throw new Error("Only an administrator can add staff or parents.");
-  }
+  assertAdmin(ctx);
 
   const admin = createServiceClient();
-  const { data, error } = await admin.auth.admin.inviteUserByEmail(email);
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    // Pre-confirmed so the later invite goes straight to "set your password" rather than making the
+    // recipient confirm an address the school already vouched for.
+    email_confirm: true,
+  });
 
   if (error || !data.user) {
     // auth.users sits outside RLS, so a clashing email surfaces here rather than as a constraint
@@ -140,6 +158,75 @@ export async function provisionUser(ctx: TenantContext, email: string): Promise<
   }
 
   return data.user.id;
+}
+
+export interface PortalInvite {
+  /** Present when delivery was "link" — the admin copies this and sends it themselves. */
+  link: string | null;
+  /** True when an email was dispatched to the recipient. */
+  emailSent: boolean;
+  email: string;
+}
+
+/**
+ * Grant portal access to an existing profile, either by emailing them or by handing the admin a link
+ * to send themselves.
+ *
+ * The "link" mode is not a fallback — for Ghanaian day schools it is the primary channel. Staff
+ * already coordinate with parents over WhatsApp, many parents don't check email, and pasting a link
+ * into a chat gives the admin immediate confirmation it arrived. Email is offered alongside for the
+ * parents who do use it.
+ *
+ * A `recovery` link is used rather than an `invite` one because the account already exists (created
+ * silently by `provisionUser`) and `inviteUserByEmail` refuses an address that is already registered.
+ * Functionally identical from the recipient's side: a one-time link that lets them set a password.
+ */
+export async function invitePortalUser(
+  ctx: TenantContext,
+  profileId: string,
+  delivery: "email" | "link",
+): Promise<PortalInvite> {
+  assertAdmin(ctx);
+
+  // Read through the CALLER's client, not the service role: RLS then guarantees an admin can only
+  // invite someone in their own school. Looking the email up with elevated rights would make this
+  // action a cross-tenant invitation machine.
+  const { data: target, error } = await ctx.db
+    .from("profiles")
+    .select("email, is_active")
+    .eq("id", profileId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Could not load that person: ${error.message}`);
+  if (!target) throw new Error("That person is not in your school.");
+  if (!target.is_active) {
+    throw new Error("This account is deactivated. Reactivate it before inviting them.");
+  }
+
+  const redirectTo = passwordSetupUrl();
+
+  if (delivery === "link") {
+    // generateLink returns the URL WITHOUT sending anything — exactly what "copy and WhatsApp it"
+    // needs.
+    const { data, error: linkError } = await createServiceClient().auth.admin.generateLink({
+      type: "recovery",
+      email: target.email,
+      options: { redirectTo },
+    });
+    if (linkError || !data.properties?.action_link) {
+      throw new Error(`Could not generate an invite link: ${linkError?.message ?? "unknown error"}`);
+    }
+    return { link: data.properties.action_link, emailSent: false, email: target.email };
+  }
+
+  // Sent through the request-scoped anon client, which is the path that actually dispatches mail.
+  const { error: mailError } = await ctx.db.auth.resetPasswordForEmail(target.email, {
+    redirectTo,
+  });
+  if (mailError) {
+    throw new Error(`Could not email that invitation: ${mailError.message}`);
+  }
+  return { link: null, emailSent: true, email: target.email };
 }
 
 /**

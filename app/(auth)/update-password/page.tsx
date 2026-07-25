@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -13,37 +13,113 @@ import { updatePasswordSchema, type UpdatePasswordInput } from "@/lib/validators
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
+/**
+ * Recovery links arrive as `#access_token=…&refresh_token=…&type=recovery`.
+ *
+ * These tokens MUST be adopted explicitly. The cookie-based SSR client does not consume an implicit
+ * -flow fragment on its own, so without this the page would update whichever account is already
+ * signed in on the browser — which is a real hijack, not a nuisance: an admin invites a parent from
+ * the office computer, the parent opens the link there, and the parent ends up setting the ADMIN's
+ * password. Adopting the link's session first makes the page always act on the link's owner.
+ */
+type LinkState = "checking" | "ready" | "no-token";
+
 export default function UpdatePasswordPage() {
   const [isDone, setIsDone] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [linkState, setLinkState] = useState<LinkState>("checking");
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<UpdatePasswordInput>({ resolver: zodResolver(updatePasswordSchema) });
 
+  useEffect(() => {
+    let active = true;
+
+    // One async resolution for every path, so the state is never set synchronously in the effect
+    // body (which would cause a cascading re-render).
+    async function adoptLinkSession(): Promise<LinkState> {
+      const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const access_token = fragment.get("access_token");
+      const refresh_token = fragment.get("refresh_token");
+
+      // No tokens: the link expired, or someone navigated here directly. Either way we must NOT fall
+      // back to whatever session already exists — see the note above this component.
+      if (!access_token || !refresh_token) return "no-token";
+
+      const { error } = await createClient().auth.setSession({ access_token, refresh_token });
+      if (error) return "no-token";
+
+      // Strip the tokens from the address bar so they don't linger in history or get shared if the
+      // user copies the URL.
+      window.history.replaceState(null, "", window.location.pathname);
+      return "ready";
+    }
+
+    adoptLinkSession().then((state) => {
+      if (active) setLinkState(state);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function onSubmit(values: UpdatePasswordInput) {
     setHasError(false);
     const supabase = createClient();
 
-    // The recovery link in the email establishes a session before landing here, so updateUser
-    // knows which account to change — there is no token to pass explicitly.
+    // Safe now: the effect above bound this client to the session the LINK carried, so updateUser
+    // can only ever change that account.
     const { error } = await supabase.auth.updateUser({ password: values.password });
     if (error) {
       setErrorMessage(
         error.message.toLowerCase().includes("session")
-          ? "This reset link has expired. Please request a new one."
+          ? "This link has expired. Please request a new one."
           : "We couldn't update your password. Please try again.",
       );
       setHasError(true);
       return;
     }
 
-    // Sign out so the new password is actually used to get back in, rather than leaving the
+    // Sign out so the new password is what gets them back in, rather than leaving the one-time
     // recovery session live.
     await supabase.auth.signOut();
     setIsDone(true);
+  }
+
+  if (linkState === "checking") {
+    return (
+      <div className="flex min-h-40 items-center justify-center" role="status" aria-busy="true">
+        <Loader2 className="size-5 animate-spin text-[var(--muted-foreground)]" aria-hidden="true" />
+        <span className="sr-only">Checking your link…</span>
+      </div>
+    );
+  }
+
+  // The form is deliberately unreachable without a valid link — never fall back to the current
+  // session, or this page becomes a way to change someone else's password.
+  if (linkState === "no-token") {
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold text-[var(--text)]">This link has expired</h1>
+        <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+          Password links can only be used once, and expire after 24 hours. Request a new one and
+          we&apos;ll send another.
+        </p>
+        <Link href="/reset-password" className={cn(buttonVariants(), "mt-6 w-full")}>
+          Request a new link
+        </Link>
+        <Link
+          href="/login"
+          className={cn(buttonVariants({ variant: "outline" }), "mt-2 w-full")}
+        >
+          Back to sign in
+        </Link>
+      </div>
+    );
   }
 
   if (isDone) {

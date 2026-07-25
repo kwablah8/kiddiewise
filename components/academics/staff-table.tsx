@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Users } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { InvitePortalButton } from "@/components/people/invite-portal-button";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -78,6 +79,21 @@ const columns: DataTableColumn<StaffVM>[] = [
     render: (row) => (
       <StatusPill label={row.is_active ? "Active" : "Inactive"} tone={row.is_active ? "success" : "neutral"} />
     ),
+  },
+  {
+    key: "portal",
+    header: "Portal",
+    // Same deliberate split as parents: adding staff creates a dormant account, inviting them is a
+    // separate act. Deactivated staff can't be invited — the action rejects it server-side.
+    render: (row) =>
+      row.is_active ? (
+        <InvitePortalButton
+          profileId={row.id}
+          personName={`${row.first_name} ${row.last_name}`}
+        />
+      ) : (
+        <span className="text-[var(--muted-foreground)]">—</span>
+      ),
   },
 ];
 
