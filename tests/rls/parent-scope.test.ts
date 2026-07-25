@@ -44,4 +44,17 @@ describe("parent sees only linked children", () => {
     const { data } = await c.from("students").select("id").eq("id", s.studentA2);
     expect(data!.length).toBe(0); // studentA2 is not linked to parentA
   });
+
+  it("can read the ASSESSMENTS behind their child's results", async () => {
+    // Regression: 0008 gave `assessments` admin and teacher policies only. Parents could read
+    // `results` but not `assessments`, and because the portal joins them with an INNER join, the
+    // results page rendered "No results published yet" no matter what teachers submitted. Asserting
+    // the two tables separately passed — the bug lived in the join, so the join is asserted here.
+    const c = await signInAs(s.parentAEmail);
+    const { data, error } = await c
+      .from("results")
+      .select("score, assessments!inner(max_score, term_id, subjects(name))");
+    expect(error).toBeNull();
+    expect(Array.isArray(data)).toBe(true);
+  });
 });

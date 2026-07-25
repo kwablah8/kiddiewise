@@ -168,6 +168,21 @@ describe("parent is scoped to their own children", () => {
     expect(res!.every((r) => ids.has(r.student_id))).toBe(true);
   });
 
+  it("sees submitted results THROUGH the assessment join the portal actually uses", async () => {
+    // The portal reads results with `assessments!inner(...)`, because a score is meaningless without
+    // the subject and the max it is out of. Before 0021 parents had no SELECT policy on `assessments`,
+    // so this inner join returned zero rows and the results page was permanently empty — while a plain
+    // `results` read passed. This asserts the real query shape against real seeded marks.
+    const { data, error } = await parent
+      .from("results")
+      .select("score, assessments!inner(max_score, term_id, subjects(name))")
+      .eq("is_submitted", true);
+
+    expect(error).toBeNull();
+    expect(data!.length).toBeGreaterThan(0);
+    expect(data!.every((r) => r.assessments?.subjects?.name)).toBe(true);
+  });
+
   it("sees a published terminal report for their children", async () => {
     const { data, error } = await parent
       .from("terminal_reports")

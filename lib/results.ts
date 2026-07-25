@@ -1,6 +1,7 @@
 import { scoreToGrade } from "@/lib/grading";
 import type { GradeBandVM } from "@/lib/validators/grading";
 import type { SubjectResultVM } from "@/lib/validators/parent";
+import type { ScoreSheetEntryVM } from "@/lib/validators/assessments";
 
 /** One submitted result row, flattened out of the results→assessments join. */
 export interface ResultRowForAggregation {
@@ -71,4 +72,50 @@ export function aggregateSubjectResults(
 export function overallAverage(subjects: readonly SubjectResultVM[]): number | null {
   if (subjects.length === 0) return null;
   return Math.round(subjects.reduce((sum, s) => sum + s.score, 0) / subjects.length);
+}
+
+/** A student on the mark sheet, before their existing mark (if any) is merged in. */
+export interface ScoreSheetStudent {
+  id: string;
+  first_name: string;
+  last_name: string;
+  admission_no: string;
+}
+
+/** A mark already recorded against this assessment. */
+export interface ExistingResult {
+  student_id: string;
+  score: number;
+  teacher_comment: string | null;
+  is_submitted: boolean;
+}
+
+/**
+ * Merge a class's enrolled students with whatever marks already exist for one assessment.
+ *
+ * Mirrors `buildRoster` for attendance, and for the same reason: the sheet must be driven by the
+ * ENROLMENT, not by the rows that happen to exist. A student who joined after the first marks were
+ * entered has to appear (unmarked) rather than be invisible, and a student who has left must not
+ * reappear just because an old result row survives.
+ *
+ * Pure, so the merge is unit-testable without a database.
+ */
+export function buildScoreSheet(
+  students: readonly ScoreSheetStudent[],
+  existing: readonly ExistingResult[],
+): ScoreSheetEntryVM[] {
+  const byStudent = new Map(existing.map((r) => [r.student_id, r]));
+  return students
+    .map((s): ScoreSheetEntryVM => {
+      const mark = byStudent.get(s.id);
+      return {
+        student_id: s.id,
+        student_name: `${s.first_name} ${s.last_name}`,
+        admission_no: s.admission_no,
+        score: mark?.score ?? null,
+        teacher_comment: mark?.teacher_comment ?? null,
+        is_submitted: mark?.is_submitted ?? false,
+      };
+    })
+    .sort((a, b) => a.student_name.localeCompare(b.student_name));
 }

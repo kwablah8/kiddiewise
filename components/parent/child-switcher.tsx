@@ -12,9 +12,16 @@ import { useParentChildren } from "@/lib/queries/parent";
 import { cn } from "@/lib/utils";
 
 // Reads the active child id from /parent/children/[id] paths (undefined on the dashboard).
-function activeChildId(pathname: string): string | undefined {
+/**
+ * Returns `null`, not `undefined`, when no child is in the path (e.g. on /parent/dashboard).
+ *
+ * Base UI decides on first render whether a Select is controlled, and treats any value that is not
+ * `undefined` as controlled. Returning `undefined` here made the switcher start uncontrolled and then
+ * flip to controlled on navigating to a child — which logged a React warning on every parent page.
+ */
+function activeChildId(pathname: string): string | null {
   const m = /^\/parent\/children\/([^/]+)/.exec(pathname);
-  return m ? m[1] : undefined;
+  return m ? m[1]! : null;
 }
 
 /** Top-bar child switcher. Selecting a child drills into their pages. Hidden until there are

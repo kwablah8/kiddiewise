@@ -1,6 +1,8 @@
 import { db, unwrapList, unwrapMaybe } from "./_client";
 import { scoreToGrade } from "@/lib/grading";
+import { buildScoreSheet } from "@/lib/results";
 import type {
+  ScoreSheetVM,
   AssessmentListItemVM,
   AssessmentDetailVM,
   AssessmentResultVM,
@@ -133,4 +135,50 @@ export async function listTeacherAssessments(
   );
 
   return rows.filter((a) => mine.has(`${a.class_id}:${a.subject_id}`)).map(toListItemVM);
+}
+
+/**
+ * The mark sheet for one assessment: every actively-enrolled student in its class, carrying their
+ * existing mark or null.
+ *
+ * Driven by the ENROLMENT rather than by existing result rows, so a student who joined mid-term shows
+ * up unmarked instead of being silently missing from the sheet. RLS confines both reads to the
+ * teacher's own classes.
+ */
+export async function getScoreSheet(assessmentId: string): Promise<ScoreSheetVM | null> {
+  // Explicit type argument: the multi-line SELECT defeats Supabase's type-level select parser, which
+  // then infers `never`. AssessmentRow states the shape instead.
+  const assessment = unwrapMaybe<AssessmentRow>(
+    await db().from("assessments").select(SELECT).eq("id", assessmentId).single(),
+    "assessment",
+  );
+  if (!assessment) return null;
+
+  const [rosterRes, existingRes] = await Promise.all([
+    db()
+      .from("enrollments")
+      .select("students!inner(id, first_name, last_name, admission_no)")
+      .eq("class_id", assessment.class_id)
+      .eq("status", "active"),
+    db()
+      .from("results")
+      .select("student_id, score, teacher_comment, is_submitted")
+      .eq("assessment_id", assessmentId),
+  ]);
+
+  const students = unwrapList(rosterRes, "class roster")
+    .map((e) => e.students)
+    .filter((s): s is NonNullable<typeof s> => s !== null);
+
+  const existing = unwrapList(existingRes, "existing results").map((r) => ({
+    student_id: r.student_id,
+    score: Number(r.score),
+    teacher_comment: r.teacher_comment,
+    is_submitted: r.is_submitted,
+  }));
+
+  return {
+    assessment: toListItemVM(assessment),
+    entries: buildScoreSheet(students, existing),
+  };
 }

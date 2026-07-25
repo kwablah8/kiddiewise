@@ -1,11 +1,17 @@
-import { PortalPlaceholder } from "@/components/app/portal-placeholder";
+"use client";
+
+import { useSession } from "@/lib/auth/useSession";
+import { PageHeader } from "@/components/app/page-header";
+import { ScoreEntry } from "@/components/teacher/score-entry";
 
 export default function TeacherGradePage() {
+  const { profile } = useSession();
+  if (!profile) return null; // the (app) guard guarantees a profile
+
   return (
-    <PortalPlaceholder
-      title="Grade"
-      subtitle="Enter and submit results for your class subjects."
-      description="Pick a class and subject, enter each score, and submit — grades derive from the school's scale. Arriving in the next update."
-    />
+    <div className="space-y-6">
+      <PageHeader title="Grade" subtitle="Enter and submit results for your class subjects." />
+      <ScoreEntry teacherId={profile.id} />
+    </div>
   );
 }

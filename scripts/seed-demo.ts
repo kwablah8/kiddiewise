@@ -498,27 +498,21 @@ async function main(): Promise<void> {
     }
   }
 
-  const BANDS = [
-    { min: 80, grade: "A", remark: "Excellent" }, { min: 70, grade: "B", remark: "Very Good" },
-    { min: 60, grade: "C", remark: "Good" }, { min: 50, grade: "D", remark: "Credit" },
-    { min: 40, grade: "E", remark: "Pass" }, { min: 0, grade: "F", remark: "Fail" },
-  ];
-  const gradeFor = (score: number) => BANDS.find((b) => score >= b.min)!;
 
   const results: TablesInsert<"results">[] = [];
   for (const a of assessmentRows) {
     for (const s of activeStudents.filter((s) => s.classKey === a.classKey)) {
       const score = Math.round(45 + rand() * 50);
-      const band = gradeFor(score);
       results.push({
         school_id: SCHOOL_ID,
         assessment_id: a.id,
         student_id: s.id,
         score,
-        grade: band.grade,
-        // `remark` is the grading scale's band remark; `teacher_comment` is the subject teacher's
-        // own note. Two different authors, two columns (see 0019).
-        remark: band.remark,
+        // grade/remark stay null on purpose: they are derived from the school's bands at read time
+        // (lib/results.ts), so storing them would be a second copy that goes stale the moment a band
+        // is edited. `teacher_comment` is different — that is the teacher's own words, not derived.
+        grade: null,
+        remark: null,
         teacher_comment:
           score >= 75 ? "Excellent grasp of the material." :
           score >= 55 ? "Good effort — revise the topics we covered in class." :
