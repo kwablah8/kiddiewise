@@ -18,9 +18,9 @@ import type { Database } from "@/lib/supabase/types";
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const ADMIN_EMAIL = "admin@kiddiewise.test";
-const TEACHER_EMAIL = "teacher@kiddiewise.test";
-const PARENT_EMAIL = "parent@kiddiewise.test";
+const ADMIN_EMAIL = "admin@slis.test";
+const TEACHER_EMAIL = "teacher@slis.test";
+const PARENT_EMAIL = "parent@slis.test";
 const PASSWORD = "Password123!";
 
 type Client = SupabaseClient<Database>;

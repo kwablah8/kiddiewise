@@ -43,17 +43,17 @@ All demo accounts share one password.
 
 | Portal | Email | Password | Who they are |
 |---|---|---|---|
-| **Admin** | `admin@kiddiewise.test` | `Password123!` | Ama Mensah — School Admin |
-| **Staff / Teacher** | `teacher@kiddiewise.test` | `Password123!` | Efua Owusu — class teacher of Basic 1, teaches Maths across all classes |
-| **Parent** | `parent@kiddiewise.test` | `Password123!` | Yaw Mensah — guardian of exactly 2 children |
+| **Admin** | `admin@slis.test` | `Password123!` | Ama Mensah — School Admin |
+| **Staff / Teacher** | `teacher@slis.test` | `Password123!` | Efua Owusu — class teacher of Basic 1, teaches Maths across all classes |
+| **Parent** | `parent@slis.test` | `Password123!` | Yaw Mensah — guardian of exactly 2 children |
 
 Each role lands on its own portal after login (`/dashboard`, `/teacher/dashboard`,
 `/parent/dashboard`) and is bounced back if it tries to open another role's subtree.
 
 **Other seeded accounts** (same password) if you need a second user of a role:
 
-- Teachers: `kwabena.adjei@`, `abena.sarpong@`, `kojo.boateng@`, `akosua.danso@` `…@kiddiewise.test`
-- `yaw.nkrumah@kiddiewise.test` — deliberately **inactive**, teaches nothing (tests the empty case)
+- Teachers: `kwabena.adjei@`, `abena.sarpong@`, `kojo.boateng@`, `akosua.danso@` `…@slis.test`
+- `yaw.nkrumah@slis.test` — deliberately **inactive**, teaches nothing (tests the empty case)
 - Parents: `adwoa.asante@`, `kofi.boateng@`, `esi.owusu@`, `kwesi.darko@`, `afia.frimpong@`,
   `nana.antwi@`, `akua.kusi@` `…@example.com`
 

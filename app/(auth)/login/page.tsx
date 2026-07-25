@@ -148,9 +148,9 @@ export default function LoginPage() {
       {process.env.NODE_ENV === "development" && (
         <div className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3 text-xs text-[var(--muted-foreground)]">
           <p className="font-medium text-[var(--text)]">Demo accounts — password Password123!</p>
-          <p className="mt-1">Admin — admin@kiddiewise.test</p>
-          <p>Teacher — teacher@kiddiewise.test</p>
-          <p>Parent — parent@kiddiewise.test</p>
+          <p className="mt-1">Admin — admin@slis.test</p>
+          <p>Teacher — teacher@slis.test</p>
+          <p>Parent — parent@slis.test</p>
           <p className="mt-1.5 text-[var(--muted-foreground)]">Seed with `pnpm db:seed`.</p>
         </div>
       )}
