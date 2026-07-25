@@ -12,7 +12,13 @@
  * skips RLS but still honours every constraint, so a seed that succeeds proves the shape is sound.
  */
 import { config } from "dotenv";
-config({ path: ".env.local" });
+
+// Which env file to read. Defaults to local, so `pnpm seed:demo` keeps meaning "seed my laptop".
+// Point it at another file to seed a hosted project: `ENV_FILE=.env.staging pnpm seed:demo`.
+// Swapping `.env.local` itself would work too, but forgetting to swap it back aims a destructive
+// seed at the wrong database — the guard below exists for the same reason.
+const ENV_FILE = process.env.ENV_FILE ?? ".env.local";
+config({ path: ENV_FILE });
 
 import { createClient } from "@supabase/supabase-js";
 import type { Database, TablesInsert } from "../lib/supabase/types";
@@ -21,7 +27,24 @@ import { assignPositions } from "../lib/terminal-reports";
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!URL || !SERVICE) {
-  throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local");
+  throw new Error(
+    `NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in ${ENV_FILE}`,
+  );
+}
+
+// This script DELETES the tenant it manages (rows and auth users) before re-inserting, and the
+// accounts it creates share one published password. Against a laptop that is a convenience; against
+// a hosted project it is data loss, so hitting a non-local host has to be deliberate and typed out.
+const isLocalHost = /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/.test(URL);
+if (!isLocalHost && process.env.ALLOW_REMOTE_SEED !== "1") {
+  throw new Error(
+    `Refusing to seed a remote project.\n\n` +
+      `  target: ${URL}\n` +
+      `  env file: ${ENV_FILE}\n\n` +
+      `This deletes the demo tenant's rows and auth users, then creates accounts with a published\n` +
+      `password. If that is genuinely what you want, re-run with ALLOW_REMOTE_SEED=1.\n` +
+      `Never run it against a project holding real school data.`,
+  );
 }
 
 const db = createClient<Database>(URL, SERVICE, {

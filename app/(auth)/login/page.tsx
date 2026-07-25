@@ -9,6 +9,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BRAND } from "@/lib/brand";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
 import { createClient } from "@/lib/supabase/client";
 import { isTempPasswordExpired } from "@/lib/temp-password";
@@ -98,7 +99,9 @@ export default function LoginPage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold text-[var(--text)]">Welcome back</h1>
-      <p className="mt-1 text-sm text-[var(--muted-foreground)]">Sign in to your account.</p>
+      <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+        Sign in to the {BRAND.shortName} portal.
+      </p>
 
       <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="space-y-1.5">
@@ -138,7 +141,11 @@ export default function LoginPage() {
               type="button"
               onClick={() => setShowPassword((visible) => !visible)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors outline-none hover:text-[var(--text)] focus-visible:ring-3 focus-visible:ring-ring/50"
+              // The `before:` block is an invisible 44px touch target centred on the 32px button —
+              // most people signing in here are on a phone, and 32px is well under the comfortable
+              // minimum. Done with a pseudo-element rather than a bigger button so the icon's
+              // optical position inside the input does not shift.
+              className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors outline-none before:absolute before:top-1/2 before:left-1/2 before:size-11 before:-translate-x-1/2 before:-translate-y-1/2 before:content-[''] hover:text-[var(--text)] focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               {showPassword ? (
                 <EyeOff className="size-4" aria-hidden="true" />
@@ -152,7 +159,18 @@ export default function LoginPage() {
           )}
         </div>
 
-        {submitError && <p className="text-xs text-[var(--danger)]">{submitError}</p>}
+        {/* `role="alert"` so assistive tech actually announces the failure. This was a bare <p>:
+            visually obvious, but silent to a screen reader, which left a blind user pressing "Sign
+            in" with no idea why nothing happened. The tinted box is for everyone else — small red
+            text under a form is easy to miss on a phone. */}
+        {submitError && (
+          <p
+            role="alert"
+            className="rounded-lg bg-[color-mix(in_srgb,var(--danger),transparent_92%)] px-3 py-2.5 text-xs text-[var(--danger)]"
+          >
+            {submitError}
+          </p>
+        )}
 
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
