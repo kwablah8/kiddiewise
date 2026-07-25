@@ -9,10 +9,12 @@ export const dashboardStatsVM = z.object({
   attendance_rate: z.number(),
 });
 
-// SEAM: no RPC supplies month-over-month deltas yet — this is a separate, honestly-named node
-// (not folded into dashboardStatsVM) so it's obvious at a glance which fields the real RPC
-// backs today and which are still a follow-up. See docs/superpowers/plans/FOLLOWUPS.md. Each
-// field is a signed percent delta vs last month, feeding the stat-card trend pills
+// Backed by the `dashboard_trends()` RPC (migration 0018). Kept as its own node rather than folded
+// into dashboardStatsVM because it answers a different question and comes from a different RPC.
+//
+// `students`, `staff` and `revenue` are signed RELATIVE percent changes vs last month. `attendance`
+// is a PERCENTAGE-POINT difference, because it is already a rate — reporting "attendance up 4%" when
+// it moved 92% → 96% would be wrong twice over. Feeds the stat-card trend pills
 // (`06-UI §5/§6`, `01-REQ Admin §Dashboard`).
 export const dashboardTrendsVM = z.object({
   students: z.number(),

@@ -61,7 +61,8 @@ export const attendanceSummaryVM = z.object({
 export type AttendanceSummaryVM = z.infer<typeof attendanceSummaryVM>;
 
 // Results (Slice 3): a per-subject term score with its derived grade/remark and the teacher's note.
-// Only submitted results reach the parent (SEAM: real path filters on is_submitted).
+// Only submitted results reach the parent — the read filters on `results.is_submitted`, so a
+// teacher's work-in-progress marks are never visible.
 export const subjectResultVM = z.object({
   subject: z.string(),
   score: z.number(),
@@ -77,8 +78,9 @@ export const childResultsVM = z.object({
 });
 export type ChildResultsVM = z.infer<typeof childResultsVM>;
 
-// The published terminal report for a term. Only published reports are ever returned (SEAM: RLS
-// checks is_published) — an unpublished/absent report resolves to null.
+// The published terminal report for a term. Only published reports are ever returned (the
+// `tr_parent_read` policy checks is_published, and the read filters on it too) — an unpublished or
+// absent report resolves to null.
 export const terminalReportVM = z.object({
   id: z.string(),
   term_name: z.string(),

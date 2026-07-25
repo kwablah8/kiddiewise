@@ -1,18 +1,50 @@
-import { store } from "@/lib/mock/store";
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { tenant, activeContext, assertOk } from "./_server";
 import { saveAttendanceSchema, type SaveAttendanceInput } from "@/lib/validators/attendance";
 
-// SEAM: becomes a Server Action. The real version sets marked_by = auth.uid() and relies on RLS
-// (teacher_teaches_class); signature + validation stay identical, only the body swaps.
+/**
+ * Mark or amend a class register for one date.
+ *
+ * `marked_by` is the caller, never a value from the request. RLS (`att_teacher_write` via
+ * `teacher_teaches_class`) rejects the whole statement if the teacher isn't assigned to the class, so
+ * no ownership check is repeated here — doing so would imply the client was what enforced it.
+ *
+ * Upserted on (student_id, date) — the unique constraint from 0007 — so re-marking a register
+ * corrects the existing rows rather than creating duplicates. That is what makes the register
+ * editable, which teachers do routinely when a late arrival turns up.
+ */
 export async function saveAttendance(
   input: SaveAttendanceInput,
 ): Promise<{ ok: true; count: number }> {
   const { class_id, date, entries } = saveAttendanceSchema.parse(input);
-  const term = store.terms.find((t) => t.is_active) ?? null;
-  const count = store.upsertAttendance(entries, {
+  const ctx = await tenant();
+  const { termId } = await activeContext(ctx);
+
+  if (!termId) {
+    throw new Error("Set an active term before taking attendance.");
+  }
+
+  const rows = entries.map((e) => ({
+    school_id: ctx.schoolId,
+    student_id: e.student_id,
     class_id,
+    term_id: termId,
     date,
-    term_id: term?.id ?? "",
-    marked_by: null,
-  });
-  return { ok: true, count };
+    status: e.status,
+    marked_by: ctx.profile.id,
+    updated_at: new Date().toISOString(),
+  }));
+
+  assertOk(
+    await ctx.db.from("attendance").upsert(rows, { onConflict: "student_id,date" }),
+    "attendance",
+  );
+
+  // The same rows back the parent portal and the admin dashboard; revalidate so a server-rendered
+  // view doesn't keep serving yesterday's numbers.
+  revalidatePath("/teacher/attendance");
+
+  return { ok: true, count: rows.length };
 }

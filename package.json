@@ -11,8 +11,11 @@
     "db:reset": "supabase db reset",
     "db:new": "supabase migration new",
     "gen:types": "supabase gen types typescript --local > lib/supabase/types.ts",
+    "seed:demo": "NODE_OPTIONS=--experimental-websocket tsx scripts/seed-demo.ts",
+    "db:seed": "pnpm db:reset && pnpm seed:demo",
     "test:rls": "NODE_OPTIONS=--experimental-websocket vitest run tests/rls",
-    "test:unit": "vitest run tests/unit"
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "NODE_OPTIONS=--experimental-websocket vitest run tests/integration"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -47,7 +50,9 @@
     "server-only": "^0.0.1",
     "supabase": "^2.109.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.1",
     "typescript": "^5",
     "vitest": "^4.1.10"
-  }
+  },
+  "packageManager": "pnpm@10.18.0+sha512.e804f889f1cecc40d572db084eec3e4881739f8dec69c0ff10d2d1beff9a4e309383ba27b5b750059d7f4c149535b6cd0d2cb1ed3aeb739239a4284a68f40cfa"
 }

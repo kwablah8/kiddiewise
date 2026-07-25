@@ -10,26 +10,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorState } from "@/components/states/error-state";
 import { updatePasswordSchema, type UpdatePasswordInput } from "@/lib/validators/auth";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 export default function UpdatePasswordPage() {
   const [isDone, setIsDone] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<UpdatePasswordInput>({ resolver: zodResolver(updatePasswordSchema) });
 
-  async function onSubmit() {
+  async function onSubmit(values: UpdatePasswordInput) {
     setHasError(false);
-    try {
-      // SEAM: replace with `supabase.auth.updateUser({ password })`.
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setIsDone(true);
-    } catch {
+    const supabase = createClient();
+
+    // The recovery link in the email establishes a session before landing here, so updateUser
+    // knows which account to change — there is no token to pass explicitly.
+    const { error } = await supabase.auth.updateUser({ password: values.password });
+    if (error) {
+      setErrorMessage(
+        error.message.toLowerCase().includes("session")
+          ? "This reset link has expired. Please request a new one."
+          : "We couldn't update your password. Please try again.",
+      );
       setHasError(true);
+      return;
     }
+
+    // Sign out so the new password is actually used to get back in, rather than leaving the
+    // recovery session live.
+    await supabase.auth.signOut();
+    setIsDone(true);
   }
 
   if (isDone) {
@@ -58,10 +72,9 @@ export default function UpdatePasswordPage() {
 
       {hasError ? (
         <div className="mt-8">
-          <ErrorState
-            message="We couldn't update your password. Please try again."
-            onRetry={onSubmit}
-          />
+          {/* Retry restores the form rather than resubmitting: the password fields are cleared on
+              error, so there is nothing to resend. An expired link needs a fresh email anyway. */}
+          <ErrorState message={errorMessage} onRetry={() => setHasError(false)} />
         </div>
       ) : (
         <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>

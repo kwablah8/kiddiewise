@@ -1,4 +1,15 @@
-import { store } from "@/lib/mock/store";
+"use server";
+
+import {
+  tenant,
+  activeContext,
+  assertWrite,
+  assertOk,
+  provisionUser,
+  rollbackProvisionedUser,
+  type TenantContext,
+} from "./_server";
+import type { TablesUpdate } from "@/lib/supabase/types";
 import {
   studentCreateSchema,
   studentUpdateSchema,
@@ -10,20 +21,31 @@ import {
   type LinkGuardianInput,
 } from "@/lib/validators/people";
 
-type StudentRecord = (typeof store)["students"][number];
+/** Next admission number: KID-#### from the highest existing numeric suffix. */
+async function nextAdmissionNo(ctx: TenantContext): Promise<string> {
+  const { data } = await ctx.db.from("students").select("admission_no").like("admission_no", "KID-%");
+  const max = (data ?? []).reduce((acc, s) => {
+    const m = /^KID-(\d+)$/.exec(s.admission_no);
+    return Math.max(acc, m ? Number(m[1]) : 0);
+  }, 0);
+  return `KID-${String(max + 1).padStart(4, "0")}`;
+}
 
-// SEAM: becomes a Server Action calling Supabase; signature + validation stay identical.
+/**
+ * Admit a student.
+ *
+ * A student's class is an `enrollments` row, not a column — so assigning a class here creates the
+ * enrollment for the active academic year (05-FLOWS §2). That is what lets a promotion later be a new
+ * enrollment rather than an edit that destroys the history.
+ *
+ * The inline "add new guardian" is validated BEFORE the student is inserted, using the same strict
+ * schema `createParent` uses. A looser pre-check would let an address through that `createParent` then
+ * rejects — after the student row already exists, leaving a half-finished admission.
+ */
 export async function createStudent(input: StudentCreateInput): Promise<{ id: string }> {
   const data = studentCreateSchema.parse(input);
-  const admission_no = data.admission_no.trim() || store.nextAdmissionNo();
-  if (store.admissionExists(admission_no)) {
-    throw new Error("A student with this admission number already exists.");
-  }
+  const ctx = await tenant();
 
-  // Resolve the inline new guardian (if any) BEFORE creating the student, so a provided-but-invalid
-  // guardian throws up front rather than orphaning a guardian-less student. Uses the SAME strict
-  // email rule as createParent (parentCreateSchema) — a loose gate could pass an address that
-  // createParent then rejects mid-flow, after the student was already stored.
   const g = data.new_guardian;
   const newGuardian =
     g && g.first_name && g.last_name && g.email
@@ -36,64 +58,83 @@ export async function createStudent(input: StudentCreateInput): Promise<{ id: st
         })
       : null;
 
-  const id = crypto.randomUUID();
-  const cls = data.class_id ? store.classes.find((c) => c.id === data.class_id) : null;
-  // SEAM: guardian_ids is validated above but not auto-linked here — the real
-  // student_guardians join needs relationship/is_primary per guardian, which a bare id list
-  // doesn't carry. The UI links each selected parent via linkGuardian after creation succeeds.
-  store.addStudent({
-    id,
-    admission_no,
-    first_name: data.first_name,
-    last_name: data.last_name,
-    other_names: data.other_names,
-    date_of_birth: data.date_of_birth,
-    gender: data.gender,
-    blood_group: data.blood_group,
-    enrollment_date: data.enrollment_date,
-    photo_url: data.photo_url,
-    enrollment_status: data.enrollment_status,
-    class_id: data.class_id,
-    class_name: cls?.name ?? null,
-    medical_conditions: data.medical_conditions,
-    allergies: data.allergies,
-    prev_school_name: data.prev_school_name,
-    prev_class_ended: data.prev_class_ended,
-    prev_average_score: data.prev_average_score,
-    prev_year_attended: data.prev_year_attended,
-    email: data.email,
-    phone: data.phone,
-    address: data.address,
-    city: data.city,
-    town: data.town,
-    initial_academic_year_id: data.initial_academic_year_id,
-    initial_term_id: data.initial_term_id,
-    guardians: [],
-  });
-  // Inline new guardian (pre-validated above): create the parent + link as primary guardian.
+  const admission_no = data.admission_no.trim() || (await nextAdmissionNo(ctx));
+
+  const student = assertWrite(
+    await ctx.db
+      .from("students")
+      .insert({
+        school_id: ctx.schoolId,
+        admission_no,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        other_names: data.other_names,
+        date_of_birth: data.date_of_birth,
+        gender: data.gender,
+        blood_group: data.blood_group,
+        enrollment_date: data.enrollment_date,
+        photo_url: data.photo_url,
+        enrollment_status: data.enrollment_status,
+        medical_conditions: data.medical_conditions,
+        allergies: data.allergies,
+        prev_school_name: data.prev_school_name,
+        prev_class_ended: data.prev_class_ended,
+        prev_average_score: data.prev_average_score,
+        prev_year_attended: data.prev_year_attended,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        city: data.city,
+        town: data.town,
+        initial_academic_year_id: data.initial_academic_year_id,
+        initial_term_id: data.initial_term_id,
+      })
+      .select("id")
+      .single(),
+    "student",
+    // unique(school_id, admission_no).
+    "A student with this admission number already exists.",
+  );
+
+  if (data.class_id) {
+    const { academicYearId } = await activeContext(ctx);
+    if (!academicYearId) {
+      throw new Error("Set an active academic year before assigning a student to a class.");
+    }
+    assertOk(
+      await ctx.db.from("enrollments").insert({
+        school_id: ctx.schoolId,
+        student_id: student.id,
+        class_id: data.class_id,
+        academic_year_id: academicYearId,
+        status: "active",
+      }),
+      "enrollment",
+    );
+  }
+
   if (newGuardian) {
     const { id: parentId } = await createParent(newGuardian);
     await linkGuardian({
-      student_id: id,
+      student_id: student.id,
       parent_profile_id: parentId,
       relationship: g?.relationship ?? "guardian",
       is_primary: true,
     });
   }
-  return { id };
+
+  // `guardian_ids` is validated but not linked here: student_guardians needs a relationship and a
+  // primary flag per guardian, which a bare id list can't carry. The UI calls linkGuardian per parent.
+  return { id: student.id };
 }
 
-// SEAM: becomes a Server Action calling Supabase; signature + validation stay identical.
 export async function updateStudent(input: StudentUpdateInput): Promise<{ id: string }> {
   const data = studentUpdateSchema.parse(input);
-  if (data.admission_no !== undefined && store.admissionExists(data.admission_no, data.id)) {
-    throw new Error("A student with this admission number already exists.");
-  }
+  const ctx = await tenant();
 
-  // Build the patch from only the fields actually present in `data` — spreading a raw partial
-  // (with explicit `undefined`s for untouched fields) into the store record would clobber
-  // existing values, since `{...record, ...patch}` overwrites on any own key, undefined or not.
-  const patch: Partial<StudentRecord> = {};
+  // Only keys actually present are written. Spreading the raw partial would send explicit nulls for
+  // untouched fields and wipe them.
+  const patch: TablesUpdate<"students"> = {};
   if (data.first_name !== undefined) patch.first_name = data.first_name;
   if (data.last_name !== undefined) patch.last_name = data.last_name;
   if (data.date_of_birth !== undefined) patch.date_of_birth = data.date_of_birth;
@@ -101,14 +142,9 @@ export async function updateStudent(input: StudentUpdateInput): Promise<{ id: st
   if (data.admission_no !== undefined) patch.admission_no = data.admission_no;
   if (data.photo_url !== undefined) patch.photo_url = data.photo_url;
   if (data.enrollment_status !== undefined) patch.enrollment_status = data.enrollment_status;
-  if (data.class_id !== undefined) {
-    // Assigning a class here models "assigning a class creates the enrollment" (05-FLOWS §2).
-    patch.class_id = data.class_id;
-    const cls = data.class_id ? store.classes.find((c) => c.id === data.class_id) : null;
-    patch.class_name = cls?.name ?? null;
-  }
-  // Nullable fields resolve to `null` (never `undefined`) under `.partial()`'s
-  // `.nullable().default(null)`, so assign them directly (mirrors updateClass/updateStaff).
+
+  // These carry `.nullable().default(null)`, so under `.partial()` they never parse to undefined —
+  // an omitted key means null, and the edit form submits every registered field.
   patch.other_names = data.other_names;
   patch.blood_group = data.blood_group;
   patch.enrollment_date = data.enrollment_date;
@@ -125,45 +161,111 @@ export async function updateStudent(input: StudentUpdateInput): Promise<{ id: st
   patch.town = data.town;
   patch.initial_academic_year_id = data.initial_academic_year_id;
   patch.initial_term_id = data.initial_term_id;
-  // SEAM: guardian_ids, same as createStudent — guardian links are mutated via linkGuardian.
 
-  store.updateStudent(data.id, patch);
-  return { id: data.id };
+  const row = assertWrite(
+    await ctx.db.from("students").update(patch).eq("id", data.id).select("id").single(),
+    "student",
+    "A student with this admission number already exists.",
+  );
+
+  // A class change is an enrollment change, not a column update. Upserted on the
+  // unique(student_id, academic_year_id) constraint so re-assigning within the same year moves the
+  // existing enrollment rather than creating a second, competing one.
+  if (data.class_id !== undefined && data.class_id !== null) {
+    const { academicYearId } = await activeContext(ctx);
+    if (!academicYearId) {
+      throw new Error("Set an active academic year before assigning a student to a class.");
+    }
+    assertOk(
+      await ctx.db.from("enrollments").upsert(
+        {
+          school_id: ctx.schoolId,
+          student_id: data.id,
+          class_id: data.class_id,
+          academic_year_id: academicYearId,
+          status: "active",
+        },
+        { onConflict: "student_id,academic_year_id" },
+      ),
+      "enrollment",
+    );
+  }
+
+  return { id: row.id };
 }
 
-// SEAM: becomes a Server Action calling Supabase; signature + validation stay identical.
+/**
+ * Add a parent/guardian. Like staff, this provisions an auth account first, because a profile cannot
+ * exist without one — and it is what lets the parent sign in to the portal at all.
+ */
 export async function createParent(input: ParentCreateInput): Promise<{ id: string }> {
   const data = parentCreateSchema.parse(input);
-  const id = crypto.randomUUID();
-  // SEAM: real path provisions an auth account via Edge Function `provision-user`; here it just
-  // adds a parent record.
-  store.addParent({
-    id,
-    first_name: data.first_name,
-    last_name: data.last_name,
-    email: data.email,
-    phone: data.phone,
-    occupation: data.occupation,
-    children_names: [],
-  });
-  return { id };
+  const ctx = await tenant();
+
+  const userId = await provisionUser(ctx, data.email);
+
+  try {
+    assertOk(
+      await ctx.db.from("profiles").insert({
+        id: userId,
+        school_id: ctx.schoolId,
+        role: "parent",
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        phone: data.phone,
+        occupation: data.occupation,
+        is_active: true,
+      }),
+      "parent",
+    );
+  } catch (err) {
+    // Otherwise the orphaned auth account holds the email hostage and the admin can never retry.
+    await rollbackProvisionedUser(userId);
+    throw err;
+  }
+
+  return { id: userId };
 }
 
-// SEAM: becomes a Server Action calling Supabase; signature + validation stay identical.
+/**
+ * Link a parent to a student as a guardian.
+ *
+ * A student has at most one primary guardian, enforced by the `student_guardians_one_primary` partial
+ * unique index (0016). So promoting a new primary must demote the incumbent first — the index would
+ * otherwise reject the insert. The mock did this in application code; the invariant now lives in the
+ * database, where a concurrent write can't slip past it.
+ */
 export async function linkGuardian(input: LinkGuardianInput): Promise<{ ok: true }> {
   const data = linkGuardianSchema.parse(input);
-  const student = store.students.find((s) => s.id === data.student_id);
-  if (!student) throw new Error("Student not found.");
-  const parent = store.parents.find((p) => p.id === data.parent_profile_id);
-  if (!parent) throw new Error("Parent not found.");
+  const ctx = await tenant();
 
-  store.linkGuardian(data.student_id, {
-    parent_profile_id: parent.id,
-    name: `${parent.first_name} ${parent.last_name}`,
-    email: parent.email,
-    occupation: parent.occupation,
-    relationship: data.relationship,
-    is_primary: data.is_primary,
-  });
+  if (data.is_primary) {
+    assertOk(
+      await ctx.db
+        .from("student_guardians")
+        .update({ is_primary: false })
+        .eq("student_id", data.student_id)
+        .eq("is_primary", true),
+      "guardian link",
+    );
+  }
+
+  assertOk(
+    await ctx.db.from("student_guardians").upsert(
+      {
+        school_id: ctx.schoolId,
+        student_id: data.student_id,
+        parent_profile_id: data.parent_profile_id,
+        relationship: data.relationship,
+        is_primary: data.is_primary,
+      },
+      // Re-linking the same pair updates the relationship instead of failing on
+      // unique(student_id, parent_profile_id).
+      { onConflict: "student_id,parent_profile_id" },
+    ),
+    "guardian link",
+  );
+
   return { ok: true };
 }

@@ -1,5 +1,4 @@
-import { simulate } from "./_devState";
-import { store } from "@/lib/mock/store";
+import { db, unwrapList, unwrapMaybe } from "./_client";
 import { scoreToGrade } from "@/lib/grading";
 import type {
   AssessmentListItemVM,
@@ -7,72 +6,131 @@ import type {
   AssessmentResultVM,
   AssessmentFilters,
 } from "@/lib/validators/assessments";
+import type { GradeBandVM } from "@/lib/validators/grading";
 
-type AssessmentRecord = (typeof store)["assessments"][number];
+const SELECT = `
+  id, title, class_id, subject_id, term_id, max_score, date,
+  classes(name), subjects(name), terms(name), assessment_types(name),
+  results(is_submitted)
+`;
 
-function toListItemVM(a: AssessmentRecord): AssessmentListItemVM {
-  const cls = store.classes.find((c) => c.id === a.class_id);
-  const subject = store.subjects.find((s) => s.id === a.subject_id);
-  const term = store.terms.find((t) => t.id === a.term_id);
-  const type = store.assessmentTypes.find((t) => t.id === a.assessment_type_id);
+interface AssessmentRow {
+  id: string;
+  title: string;
+  class_id: string;
+  subject_id: string;
+  term_id: string;
+  max_score: number;
+  date: string | null;
+  classes: { name: string } | null;
+  subjects: { name: string } | null;
+  terms: { name: string } | null;
+  assessment_types: { name: string } | null;
+  results: { is_submitted: boolean }[];
+}
+
+/**
+ * `is_submitted` is a property of each RESULT, not of the assessment — the DB has no column for it.
+ * An assessment counts as submitted once it has results and every one of them is submitted, which is
+ * what "the teacher has finished entering and released these marks" actually means. Deriving it means
+ * it can never disagree with the underlying rows (golden rule 9).
+ */
+function toListItemVM(a: AssessmentRow): AssessmentListItemVM {
   return {
     id: a.id,
     title: a.title,
     class_id: a.class_id,
-    class_name: cls?.name ?? "",
+    class_name: a.classes?.name ?? "",
     subject_id: a.subject_id,
-    subject_name: subject?.name ?? "",
+    subject_name: a.subjects?.name ?? "",
     term_id: a.term_id,
-    term_name: term?.name ?? "",
-    type_name: type?.name ?? "",
-    max_score: a.max_score,
+    term_name: a.terms?.name ?? "",
+    type_name: a.assessment_types?.name ?? "",
+    max_score: Number(a.max_score),
     date: a.date,
-    result_count: store.results.filter((r) => r.assessment_id === a.id).length,
-    is_submitted: a.is_submitted,
+    result_count: a.results.length,
+    is_submitted: a.results.length > 0 && a.results.every((r) => r.is_submitted),
   };
 }
 
-export function listAssessments(filters: AssessmentFilters = {}): Promise<AssessmentListItemVM[]> {
-  const result = store.assessments
-    .filter((a) => (filters.term_id ? a.term_id === filters.term_id : true))
-    .filter((a) => (filters.class_id ? a.class_id === filters.class_id : true))
-    .filter((a) => (filters.subject_id ? a.subject_id === filters.subject_id : true))
-    .map(toListItemVM);
-  return simulate(result, []);
+export async function listAssessments(
+  filters: AssessmentFilters = {},
+): Promise<AssessmentListItemVM[]> {
+  let q = db().from("assessments").select(SELECT).order("date", { ascending: false });
+  if (filters.term_id) q = q.eq("term_id", filters.term_id);
+  if (filters.class_id) q = q.eq("class_id", filters.class_id);
+  if (filters.subject_id) q = q.eq("subject_id", filters.subject_id);
+
+  return unwrapList(await q, "assessments").map(toListItemVM);
 }
 
-export function getAssessment(id: string): Promise<AssessmentDetailVM | null> {
-  const found = store.assessments.find((a) => a.id === id);
-  if (!found) return simulate(null, null);
-  const base = toListItemVM(found);
-  // Grades derived from the CURRENT grading scale (SEAM: real reads use the stored results.grade).
-  const results: AssessmentResultVM[] = store.results
-    .filter((r) => r.assessment_id === id)
+export async function getAssessment(id: string): Promise<AssessmentDetailVM | null> {
+  const [assessmentRes, resultsRes, bandsRes] = await Promise.all([
+    db().from("assessments").select(SELECT).eq("id", id).single(),
+    db()
+      .from("results")
+      .select("student_id, score, students(first_name, last_name, admission_no)")
+      .eq("assessment_id", id),
+    db().from("grade_bands").select("id, min_score, max_score, grade, remark"),
+  ]);
+
+  const assessment = unwrapMaybe(assessmentRes, "assessment");
+  if (!assessment) return null;
+
+  const bands: GradeBandVM[] = unwrapList(bandsRes, "grade bands").map((b) => ({
+    ...b,
+    min_score: Number(b.min_score),
+    max_score: Number(b.max_score),
+  }));
+
+  const max = Number(assessment.max_score);
+  const results: AssessmentResultVM[] = unwrapList(resultsRes, "assessment results")
     .map((r) => {
-      const student = store.students.find((s) => s.id === r.student_id);
-      const derived = scoreToGrade(r.score, found.max_score, store.gradeBands);
+      const score = Number(r.score);
+      // Graded against the assessment's own max and the CURRENT scale, not the stored grade — so a
+      // corrected grading scale is reflected here immediately.
+      const derived = scoreToGrade(score, max, bands);
       return {
         student_id: r.student_id,
-        student_name: student ? `${student.first_name} ${student.last_name}` : "—",
-        admission_no: student?.admission_no ?? "—",
-        score: r.score,
+        student_name: r.students ? `${r.students.first_name} ${r.students.last_name}` : "—",
+        admission_no: r.students?.admission_no ?? "—",
+        score,
         grade: derived?.grade ?? null,
         remark: derived?.remark ?? null,
       };
     })
+    // Highest first — how a teacher reads a mark sheet.
     .sort((a, b) => b.score - a.score);
-  return simulate({ ...base, results }, null);
+
+  return { ...toListItemVM(assessment), results };
 }
 
-// Teacher-scoped list: assessments whose (class_id, subject_id) is one of the teacher's class_subjects.
-export function listTeacherAssessments(teacherId: string): Promise<AssessmentListItemVM[]> {
-  const mine = new Set(
-    store.classSubjects
-      .filter((cs) => cs.teacher_id === teacherId)
-      .map((cs) => `${cs.class_id}:${cs.subject_id}`),
+/**
+ * The teacher's own assessments: those whose (class, subject) pair they are assigned to teach.
+ *
+ * RLS on `assessments` allows same-school reads (an admin oversees all of them), so the teacher
+ * scope is applied here. It matches on the PAIR, not on class alone — a teacher who takes Maths in
+ * Basic 1 should not see the English assessments for the same class.
+ */
+export async function listTeacherAssessments(
+  teacherId: string,
+): Promise<AssessmentListItemVM[]> {
+  const assignments = unwrapList(
+    await db().from("class_subjects").select("class_id, subject_id").eq("teacher_id", teacherId),
+    "teacher assignments",
   );
-  const result = store.assessments
-    .filter((a) => mine.has(`${a.class_id}:${a.subject_id}`))
-    .map(toListItemVM);
-  return simulate(result, []);
+  if (assignments.length === 0) return [];
+
+  const mine = new Set(assignments.map((a) => `${a.class_id}:${a.subject_id}`));
+
+  const rows = unwrapList(
+    await db()
+      .from("assessments")
+      .select(SELECT)
+      .in("class_id", [...new Set(assignments.map((a) => a.class_id))])
+      .order("date", { ascending: false }),
+    "teacher assessments",
+  );
+
+  return rows.filter((a) => mine.has(`${a.class_id}:${a.subject_id}`)).map(toListItemVM);
 }

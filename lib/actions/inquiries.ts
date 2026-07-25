@@ -1,4 +1,7 @@
-import { store } from "@/lib/mock/store";
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import { tenant, assertWrite, publicSchoolId } from "./_server";
 import {
   inquiryCreateSchema,
   inquiryStatusUpdateSchema,
@@ -7,38 +10,58 @@ import {
 } from "@/lib/validators/inquiries";
 import { canTransitionInquiry } from "@/lib/inquiries";
 
-// SEAM: real path is an anonymous INSERT into admissions_inquiries — the M2 anon-insert RLS
-// already allows this. This mock validates the input and appends it to the in-memory store
-// (status "new") so a later Admin → Admissions slice has something to read; the signature here
-// is the final contract — only this function's body swaps at integration, no caller changes.
+/**
+ * The public admissions/contact form — the ONLY write an unauthenticated visitor can make
+ * (`inq_anon_insert`, migration 0010).
+ *
+ * `status` and `school_id` are set here, not accepted from the form: a visitor must not be able to
+ * file an inquiry as already-accepted, nor aim one at another school's inbox.
+ */
 export async function submitInquiry(input: InquiryCreateInput): Promise<{ id: string }> {
   const data = inquiryCreateSchema.parse(input);
-  const id = crypto.randomUUID();
-  store.addInquiry({
-    id,
-    ...data,
-    status: "new",
-    created_at: new Date().toISOString(),
-  });
-  return { id };
+  const schoolId = await publicSchoolId();
+  const db = await createClient();
+
+  const row = assertWrite(
+    await db
+      .from("admissions_inquiries")
+      .insert({ ...data, school_id: schoolId, status: "new" })
+      .select("id")
+      .single(),
+    "inquiry",
+  );
+
+  return { id: row.id };
 }
 
-// SEAM: real path is `update admissions_inquiries set status = $2 where id = $1` — the admin RLS
-// policy (inq_admin_all, 0010) already scopes this to the caller's school. This mock validates the
-// input, guards the transition against lib/inquiries#INQUIRY_TRANSITIONS, then mutates the store.
-// INTEGRATION CONTRACT: RLS scopes *who* may write, NOT *which* transition is legal — a bare UPDATE
-// would silently drop the state-machine guard (e.g. allow new→converted, or mutating a terminal
-// row). The `canTransitionInquiry` check MUST be preserved server-side (in an RPC / Edge Function,
-// or a trigger-backed CHECK), not just here in the client action.
-export async function setInquiryStatus(
-  input: InquiryStatusUpdateInput,
-): Promise<{ id: string }> {
+/**
+ * Move an inquiry through the admissions pipeline.
+ *
+ * The transition guard is the reason this is a Server Action and not a plain UPDATE from the browser.
+ * RLS decides WHO may write the row; it says nothing about WHICH transitions are legal. A bare
+ * client-side update would silently drop the state machine — letting an inquiry jump from `new`
+ * straight to `converted`, or mutating a row that was already rejected. Read-check-write happens here,
+ * where the client cannot skip it.
+ */
+export async function setInquiryStatus(input: InquiryStatusUpdateInput): Promise<{ id: string }> {
   const { id, status } = inquiryStatusUpdateSchema.parse(input);
-  const current = store.inquiries.find((i) => i.id === id);
+  const ctx = await tenant();
+
+  const { data: current } = await ctx.db
+    .from("admissions_inquiries")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+
   if (!current) throw new Error("This inquiry no longer exists.");
   if (!canTransitionInquiry(current.status, status)) {
     throw new Error(`Can't move an inquiry from "${current.status}" to "${status}".`);
   }
-  store.updateInquiryStatus(id, status);
-  return { id };
+
+  const row = assertWrite(
+    await ctx.db.from("admissions_inquiries").update({ status }).eq("id", id).select("id").single(),
+    "inquiry",
+  );
+
+  return { id: row.id };
 }

@@ -1,4 +1,7 @@
-import { store } from "@/lib/mock/store";
+"use server";
+
+import { tenant, assertWrite, assertOk } from "./_server";
+import { z } from "zod";
 import {
   gradeBandCreateSchema,
   gradeBandUpdateSchema,
@@ -10,52 +13,93 @@ import {
   type AssessmentTypeUpdateInput,
 } from "@/lib/validators/grading";
 
-// SEAM: each becomes a Server Action calling Supabase (grade_bands / assessment_types are admin-write
-// per 0008 RLS); signatures + validation stay identical, only the body swaps.
+// grade_bands and assessment_types are admin-write (0008 RLS). Editing the grading scale re-grades
+// every result view at once, because grades are derived at read time rather than stored — see
+// lib/results.ts. That is the point of the scale being editable at all.
+
+const idSchema = z.object({ id: z.string().min(1) });
 
 export async function createGradeBand(input: GradeBandCreateInput): Promise<{ id: string }> {
   const data = gradeBandCreateSchema.parse(input);
-  const id = crypto.randomUUID();
-  store.addGradeBand({ id, ...data });
-  return { id };
+  const ctx = await tenant();
+
+  const row = assertWrite(
+    await ctx.db
+      .from("grade_bands")
+      .insert({ ...data, school_id: ctx.schoolId })
+      .select("id")
+      .single(),
+    "grade band",
+  );
+  return { id: row.id };
 }
 
 export async function updateGradeBand(input: GradeBandUpdateInput): Promise<{ id: string }> {
   const { id, ...rest } = gradeBandUpdateSchema.parse(input);
-  store.updateGradeBand(id, rest);
-  return { id };
+  const ctx = await tenant();
+
+  const row = assertWrite(
+    await ctx.db.from("grade_bands").update(rest).eq("id", id).select("id").single(),
+    "grade band",
+  );
+  return { id: row.id };
 }
 
 export async function deleteGradeBand(input: { id: string }): Promise<{ ok: true }> {
-  store.deleteGradeBand(input.id);
+  const { id } = idSchema.parse(input);
+  const ctx = await tenant();
+  assertOk(await ctx.db.from("grade_bands").delete().eq("id", id), "grade band");
   return { ok: true };
 }
 
-// Rejects a duplicate type name, case-insensitive (mirrors DB unique(school_id, name)).
-export async function createAssessmentType(input: AssessmentTypeCreateInput): Promise<{ id: string }> {
+export async function createAssessmentType(
+  input: AssessmentTypeCreateInput,
+): Promise<{ id: string }> {
   const data = assessmentTypeCreateSchema.parse(input);
-  if (store.assessmentTypeNameExists(data.name)) {
-    throw new Error("An assessment type with this name already exists.");
-  }
-  const id = crypto.randomUUID();
-  store.addAssessmentType({ id, ...data });
-  return { id };
+  const ctx = await tenant();
+
+  const row = assertWrite(
+    await ctx.db
+      .from("assessment_types")
+      .insert({ ...data, school_id: ctx.schoolId })
+      .select("id")
+      .single(),
+    "assessment type",
+    // unique(school_id, name) does the enforcing; this is the readable version of it.
+    "An assessment type with this name already exists.",
+  );
+  return { id: row.id };
 }
 
-export async function updateAssessmentType(input: AssessmentTypeUpdateInput): Promise<{ id: string }> {
+export async function updateAssessmentType(
+  input: AssessmentTypeUpdateInput,
+): Promise<{ id: string }> {
   const { id, ...rest } = assessmentTypeUpdateSchema.parse(input);
-  if (store.assessmentTypeNameExists(rest.name, id)) {
-    throw new Error("An assessment type with this name already exists.");
-  }
-  store.updateAssessmentType(id, rest);
-  return { id };
+  const ctx = await tenant();
+
+  const row = assertWrite(
+    await ctx.db.from("assessment_types").update(rest).eq("id", id).select("id").single(),
+    "assessment type",
+    "An assessment type with this name already exists.",
+  );
+  return { id: row.id };
 }
 
-// Guarded: blocked when any assessment references the type (mirrors DB `on delete restrict`).
+/**
+ * Delete an assessment type.
+ *
+ * `assessments.assessment_type_id` is ON DELETE RESTRICT, so the database refuses this while any
+ * assessment still references the type. `assertWrite`'s generic 23503 message describes a dangling
+ * reference, which is the wrong way round here — the row being deleted is the one being referenced —
+ * so the message is supplied explicitly.
+ */
 export async function deleteAssessmentType(input: { id: string }): Promise<{ ok: true }> {
-  if (store.assessmentTypeInUse(input.id)) {
-    throw new Error("This type is used by existing assessments and can't be deleted.");
-  }
-  store.deleteAssessmentType(input.id);
+  const { id } = idSchema.parse(input);
+  const ctx = await tenant();
+  assertOk(
+    await ctx.db.from("assessment_types").delete().eq("id", id),
+    "assessment type",
+    "This type is used by existing assessments and can't be deleted.",
+  );
   return { ok: true };
 }

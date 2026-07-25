@@ -1,5 +1,43 @@
 import { describe, expect, it } from "vitest";
-import { homePathForRole, isPathAllowedForRole } from "@/lib/auth/access";
+import { homePathForRole, isPathAllowedForRole, isPublicPath } from "@/lib/auth/access";
+
+describe("isPublicPath", () => {
+  it("treats marketing and auth pages as public", () => {
+    for (const p of ["/", "/about", "/admissions", "/news", "/gallery", "/contact"]) {
+      expect(isPublicPath(p), p).toBe(true);
+    }
+    for (const p of ["/login", "/reset-password", "/update-password"]) {
+      expect(isPublicPath(p), p).toBe(true);
+    }
+  });
+
+  it("treats nested marketing content as public", () => {
+    expect(isPublicPath("/news/first-term-opens")).toBe(true);
+    expect(isPublicPath("/gallery/sports-day")).toBe(true);
+  });
+
+  it("treats every portal path as protected", () => {
+    for (const p of [
+      "/dashboard", "/students", "/students/stu-01", "/staff", "/classes", "/subjects",
+      "/enquiries", "/assessments", "/fees", "/grading", "/academic", "/parents",
+      "/teacher/dashboard", "/teacher/attendance", "/parent/dashboard", "/parent/children/stu-01",
+    ]) {
+      expect(isPublicPath(p), p).toBe(false);
+    }
+  });
+
+  it("does not leak protection via a prefix collision", () => {
+    // /newsletter is not /news/…, and /admissions-inbox is not /admissions.
+    expect(isPublicPath("/newsletter")).toBe(false);
+    expect(isPublicPath("/admissions-inbox")).toBe(false);
+  });
+
+  it("protects an unknown path by default", () => {
+    // A route added later must be protected until it is explicitly listed as public.
+    expect(isPublicPath("/promotion")).toBe(false);
+    expect(isPublicPath("/terminal-reports")).toBe(false);
+  });
+});
 
 describe("homePathForRole", () => {
   it("routes admins to /dashboard", () => {

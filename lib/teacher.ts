@@ -34,8 +34,12 @@ export function teacherClassIds(
 
 /**
  * Derive a teacher's dashboard from academic data. "My classes" = classes I'm the class teacher of ∪
- * classes I teach a subject in (same union as lib/data/academics.ts#toStaffVM). Read-only this slice:
- * attendanceRate is null and recentActivities is empty until M5 Slices 2–3.
+ * classes I teach a subject in (same union as lib/data/academics.ts#toStaffVM).
+ *
+ * `attendanceRate` and `recentActivities` are passed IN rather than computed here: both need data
+ * outside the academic structure (the attendance table, the activity log), and this function stays
+ * pure so it can be unit-tested without a database. Both are optional — omitting them yields the
+ * honest "not measured" reading of null/empty rather than a misleading zero.
  */
 export function deriveTeacherDashboard(params: {
   teacherId: string;
@@ -44,6 +48,8 @@ export function deriveTeacherDashboard(params: {
   subjects: SubjectInput[];
   students: StudentInput[];
   activeTerm: TermVM | null;
+  attendanceRate?: number | null;
+  recentActivities?: TeacherDashboardVM["recentActivities"];
 }): TeacherDashboardVM {
   const { teacherId, classes, assignments, subjects, students, activeTerm } = params;
 
@@ -85,11 +91,11 @@ export function deriveTeacherDashboard(params: {
       classes: myClasses.length,
       subjects: mySubjects.length,
       students: totalStudents,
-      attendanceRate: null,
+      attendanceRate: params.attendanceRate ?? null,
     },
     myClasses,
     mySubjects,
     activeTerm,
-    recentActivities: [],
+    recentActivities: params.recentActivities ?? [],
   };
 }

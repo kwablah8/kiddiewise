@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorState } from "@/components/states/error-state";
 import { resetPasswordSchema, type ResetPasswordInput } from "@/lib/validators/auth";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
@@ -23,13 +24,20 @@ export default function ResetPasswordPage() {
 
   async function onSubmit(values: ResetPasswordInput) {
     setHasError(false);
-    try {
-      // SEAM: replace with `supabase.auth.resetPasswordForEmail(values.email)`.
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setSubmittedEmail(values.email);
-    } catch {
+    const supabase = createClient();
+
+    const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
+      redirectTo: `${window.location.origin}/update-password`,
+    });
+
+    // A failure here usually means the mail transport is down, not that the email is unknown —
+    // Supabase returns success for unregistered addresses on purpose, so we never confirm or deny
+    // that an account exists. The success screen below is worded to match.
+    if (error) {
       setHasError(true);
+      return;
     }
+    setSubmittedEmail(values.email);
   }
 
   if (submittedEmail) {

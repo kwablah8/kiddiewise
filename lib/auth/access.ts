@@ -16,6 +16,29 @@ export function homePathForRole(role: AppRole): string {
   return "/dashboard"; // school_admin | super_admin
 }
 
+// Route groups like (app) and (marketing) don't appear in the URL, so the middleware can't infer
+// "is this page protected" from the path shape. We list what is PUBLIC and treat everything else as
+// requiring a session — so a newly added admin route is protected by default. Getting this
+// backwards (listing protected paths) is how pages ship unguarded.
+const PUBLIC_PATHS = new Set([
+  "/", // marketing home
+  "/about",
+  "/admissions",
+  "/news",
+  "/gallery",
+  "/contact",
+  "/login",
+  "/reset-password",
+  "/update-password",
+]);
+
+/** Whether a path may be viewed without a session. */
+export function isPublicPath(pathname: string): boolean {
+  if (PUBLIC_PATHS.has(pathname)) return true;
+  // Nested marketing content (e.g. /news/first-term-opens) is public with its section.
+  return ["/news/", "/gallery/", "/about/"].some((prefix) => pathname.startsWith(prefix));
+}
+
 /** Whether a role may view an (app) path. Teachers own /teacher/*; parents own /parent/*; admins own
  *  everything else under (app). Note /teachers and /parents (admin management routes) are NOT the
  *  /teacher and /parent subtrees. */

@@ -187,8 +187,8 @@ function StaffFormFields({ mode, staffId, initialData, open, onOpenChange }: Sta
     setSubmitError(null);
     try {
       if (mode === "create") {
-        // SEAM: real path provisions an auth account via Edge Function provision-user; here it
-        // adds a staff record (staff_no auto-assigned by the action, never client input).
+        // The action invites an auth account, then inserts the profile. staff_no is auto-assigned
+        // server-side, never client input.
         await createStaff.mutateAsync(values);
         toast.success("Staff created", {
           description: `${values.first_name} ${values.last_name} has been added.`,

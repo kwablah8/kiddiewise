@@ -39,8 +39,8 @@ export function ParentForm() {
   async function onSubmit(values: ParentCreateInput) {
     setSubmitError(null);
     try {
-      // SEAM: real path provisions an auth account via Edge Function provision-user; here it
-      // adds a parent record.
+      // The action invites an auth account (emailing the parent a link to set their own password),
+      // then inserts the profile.
       const phone = values.phone && values.phone.trim() !== "" ? values.phone.trim() : null;
       await createParent.mutateAsync({ ...values, phone });
       toast.success("Parent added", {

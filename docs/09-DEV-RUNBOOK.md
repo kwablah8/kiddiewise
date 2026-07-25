@@ -1,0 +1,242 @@
+# 09 — Developer Runbook
+
+Everything you need to run, seed, log into and test this project locally. Start here on a fresh
+machine, and come back here for credentials, commands and known gotchas.
+
+> **Scope of the secrets below:** every key in this document is a **local-only** Supabase demo key.
+> They are identical on every `supabase start` installation worldwide and grant nothing beyond your
+> own machine. **Production keys must never be written into this file or any other tracked file** —
+> they belong in Vercel/Supabase environment variables only. See §9.
+
+---
+
+## 1. Prerequisites
+
+| Tool | Version | Notes |
+|---|---|---|
+| Node | **22+ recommended** | The repo currently runs on 20; see the WebSocket gotcha in §8 |
+| pnpm | 10+ | `corepack enable` or `npm i -g pnpm` |
+| Docker Desktop | running | Supabase local stack runs in Docker |
+
+```bash
+pnpm install
+```
+
+---
+
+## 2. First run, from nothing
+
+```bash
+npx supabase start        # boots Postgres, Auth, Storage, Studio in Docker (~1 min first time)
+pnpm db:seed              # applies all migrations, then seeds the demo school
+pnpm dev                  # http://localhost:3000
+```
+
+`pnpm db:seed` is the one command you want 95% of the time — it is `db:reset` (drop, re-migrate,
+run `supabase/seed.sql`) followed by `seed:demo` (the populated demo tenant).
+
+---
+
+## 3. Portal logins
+
+All demo accounts share one password.
+
+| Portal | Email | Password | Who they are |
+|---|---|---|---|
+| **Admin** | `admin@kiddiewise.test` | `Password123!` | Ama Mensah — School Admin |
+| **Staff / Teacher** | `teacher@kiddiewise.test` | `Password123!` | Efua Owusu — class teacher of Basic 1, teaches Maths across all classes |
+| **Parent** | `parent@kiddiewise.test` | `Password123!` | Yaw Mensah — guardian of exactly 2 children |
+
+Each role lands on its own portal after login (`/dashboard`, `/teacher/dashboard`,
+`/parent/dashboard`) and is bounced back if it tries to open another role's subtree.
+
+**Other seeded accounts** (same password) if you need a second user of a role:
+
+- Teachers: `kwabena.adjei@`, `abena.sarpong@`, `kojo.boateng@`, `akosua.danso@` `…@kiddiewise.test`
+- `yaw.nkrumah@kiddiewise.test` — deliberately **inactive**, teaches nothing (tests the empty case)
+- Parents: `adwoa.asante@`, `kofi.boateng@`, `esi.owusu@`, `kwesi.darko@`, `afia.frimpong@`,
+  `nana.antwi@`, `akua.kusi@` `…@example.com`
+
+The login screen shows the three main accounts as a reminder, but **only in development**
+(`NODE_ENV === "development"`), so it can never ship to production.
+
+---
+
+## 4. Local service URLs
+
+| Service | URL | What it's for |
+|---|---|---|
+| App | http://localhost:3000 | Next.js dev server |
+| **Supabase Studio** | http://127.0.0.1:54323 | Table editor, SQL editor, auth user list |
+| **Mailpit** | http://127.0.0.1:54324 | **Catches every outbound email.** Password-reset links land here, not in a real inbox |
+| API (PostgREST) | http://127.0.0.1:54321 | The REST API the app calls |
+| Postgres | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` | Direct SQL access |
+
+Studio has no login locally. To test the forgot-password flow, submit the form then open Mailpit
+and click the link in the captured email.
+
+---
+
+## 5. Supabase keys (local only)
+
+These belong in `.env.local`, which is gitignored:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+```
+
+Re-print them any time with `npx supabase status`.
+
+**What each key is allowed to do:**
+
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — safe in the browser. It identifies the *project*, not a user;
+  RLS decides what the signed-in caller can see.
+- `SUPABASE_SERVICE_ROLE_KEY` — **bypasses RLS entirely.** Server-only: the seed script, the RLS
+  test harness, and the `provision-user` Edge Function. It must never be imported into a client
+  component or prefixed with `NEXT_PUBLIC_`.
+
+---
+
+## 6. Commands
+
+| Command | What it does |
+|---|---|
+| `pnpm dev` | Dev server |
+| `pnpm build` | Production build |
+| **`pnpm db:seed`** | **Reset + migrate + seed demo tenant. Your default.** |
+| `pnpm db:reset` | Reset + migrate + `seed.sql` only (a bare school, no data — good for testing empty states) |
+| `pnpm seed:demo` | Re-seed the demo tenant without a reset. Idempotent |
+| `pnpm db:new <name>` | Create a new timestamped migration file |
+| `pnpm gen:types` | **Regenerate `lib/supabase/types.ts` from the local DB. Run after every migration.** |
+| `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm lint` | ESLint |
+| `pnpm test:unit` | Pure business-logic tests. No DB needed |
+| `pnpm test:rls` | Tenant isolation + role scoping. Needs Supabase running |
+| `pnpm test:integration` | Per-role reads against the seeded demo tenant. **Needs `pnpm db:seed` first** |
+
+### Before you commit
+
+```bash
+pnpm typecheck && pnpm lint && pnpm test:unit && pnpm test:rls && pnpm test:integration
+```
+
+---
+
+## 7. What the demo tenant contains
+
+School: **Kiddiewise School Complex** (slug `kiddiewise`).
+
+| Data | Amount | Deliberate detail |
+|---|---|---|
+| Staff | 7 | 1 admin, 5 active teachers, 1 inactive teacher who teaches nothing |
+| Parents | 8 | `parent@` has exactly 2 children |
+| Students | 26 | 24 active, 1 withdrawn, 1 transferred |
+| Classes | 6 | Basic 1–3, JHS 1–3; JHS 2 has no class teacher |
+| Attendance | ~720 rows | Last 30 school days (weekdays only), ~96% present-or-late |
+| Assessments | 24 | Maths + English per class, results submitted |
+| Invoices | 24 | Every one of paid / partial / pending occurs, plus scholarships and arrears |
+| Extra fees | 5 definitions | Bus, Feeding, Uniform, Excursion, ICT Lab |
+| Terminal reports | Basic 1 only | Published, so `parent@` sees a real report while other classes show "not published" |
+| Inquiries | 6 | 3 still `new`, so the Admissions sidebar badge has a count |
+
+**Dates are always relative to today.** The active term is seeded to bracket the current date, so
+attendance history and the dashboard are never empty just because time has passed.
+
+The seed is **deterministic** — a fixed PRNG seed, not `Math.random()` — so re-seeding produces the
+same school and screenshots stay comparable.
+
+---
+
+## 8. Gotchas that have already bitten
+
+**Node 20 has no global WebSocket.** `@supabase/supabase-js` needs it. Any Node script talking to
+Supabase must run with `NODE_OPTIONS=--experimental-websocket` (already baked into the `seed:demo`,
+`test:rls` and `test:integration` scripts). Upgrading to Node 22 removes the need.
+
+**PostgREST bulk inserts do not apply column defaults.** When rows in one `.insert([...])` call have
+different key sets, PostgREST unifies the columns and sends `NULL` for whatever a row omitted — it
+does *not* fall back to the column's `DEFAULT`. Give every row in a bulk insert the **same keys**.
+
+**`grant … on all tables in schema public` is not a standing rule.** It applies only to tables that
+existed when it ran (migration `0015`). Every migration that creates a table or adds a
+user-editable column to `profiles` must issue its own grants, or requests fail at the privilege
+layer *before* RLS is ever evaluated — which looks like a confusing empty result, not a permission
+error.
+
+**Views bypass RLS unless you say otherwise.** A view runs with its owner's rights by default, which
+for a migration-created view is `postgres` — handing every caller the whole platform's data. Every
+view in this project is created `with (security_invoker = true)`. Do not omit it.
+
+**Never use `supabase.auth.getSession()` for an authorization decision.** It only decodes a cookie
+the client controls. Use `getUser()`, which revalidates against the auth server.
+
+**`pnpm test:integration` depends on the seed.** If sign-in fails with "Has `pnpm seed:demo` been
+run?", that's why.
+
+---
+
+## 9. Going to production (not done yet)
+
+When the hosted project is created, this is the checklist:
+
+1. Create the Supabase project; copy its URL, anon key and service role key.
+2. Set them in Vercel env vars — **never** in a tracked file. `SUPABASE_SERVICE_ROLE_KEY` must be a
+   server-only variable (no `NEXT_PUBLIC_` prefix).
+3. `npx supabase link --project-ref <ref>` then `npx supabase db push` to apply migrations.
+4. **Do not run `seed:demo` against production.** It deletes the tenant it manages before
+   re-seeding, and it creates accounts with a published password.
+5. Create the first real `school_admin` through Supabase Studio's auth panel plus a `profiles` row,
+   or via the `provision-user` Edge Function.
+6. Configure the Auth email templates and the site URL so password-reset links point at the real
+   domain instead of `localhost`.
+7. Re-run `pnpm test:rls` against a staging project before going live — tenant isolation is the one
+   thing that must never regress.
+
+---
+
+## 10. How the layers fit together
+
+```
+components  →  lib/queries/*   (React Query hooks + cache keys)
+                    ├── reads  →  lib/data/*     →  PostgREST  →  Postgres + RLS
+                    └── writes →  lib/actions/*  →  Server Action  →  Postgres + RLS
+                                        ↑
+                              lib/validators/*  (Zod — the shape contract)
+```
+
+**There is no hand-written REST API.** PostgREST exposes every table and view as a typed REST
+endpoint and RLS decides what each caller sees. Derived aggregates live in Postgres functions called
+via `.rpc()`.
+
+- **Reads run in the browser.** Safe because RLS is the boundary, and it buys caching and background
+  refetch for free. No read passes `school_id` — `current_school_id()` derives it from `auth.uid()`.
+- **Writes are Server Actions.** They need three things the browser can't be trusted with:
+  `school_id` stamped from the session, `auth.uid()` recorded as author, and business rules the client
+  cannot skip (the admissions state machine, the single-primary-guardian demotion).
+- **Adding a person is provisioning.** `profiles.id` is a foreign key to `auth.users(id)`, so
+  `createStaff` / `createParent` invite an auth account first (service role, server-side only), then
+  insert the profile — rolling back the account if the profile insert fails. **No password is ever
+  set or transmitted:** the invitee gets an email link and chooses their own. Locally that email lands
+  in Mailpit (§4).
+
+### Current status
+
+| Area | Status |
+|---|---|
+| Schema + RLS (26 tables, 2 views, 7 RPCs) | ✅ Migrated and tested |
+| Auth (login, reset, role routing, server-side guards) | ✅ Real Supabase Auth |
+| Demo seed | ✅ `pnpm db:seed` |
+| `lib/data/*` reads (47 functions) | ✅ Real Supabase |
+| `lib/actions/*` writes (32 functions) | ✅ Server Actions |
+| Staff/parent provisioning + invite email | ✅ Inline in the Server Actions |
+| `lib/mock/` seam | ✅ Deleted |
+| Test suites (unit, RLS, integration) | ✅ Green |
+
+There is **no `provision-user` Edge Function**, despite older comments referring to one. It would have
+been a second deployable doing what a Server Action already does securely — the service key never
+leaves the server either way — so provisioning lives in `lib/actions/_server.ts#provisionUser`.
+
+Not yet built (these screens exist but have no backing feature): terminal report generation and
+publishing, promotion, school-settings editing, and result entry from the teacher's Grade screen.
