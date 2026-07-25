@@ -55,7 +55,12 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #1D4ED8; /* blue — admin accent (headings, primary actions, links, focus) */
+  /* Primary accent (headings, primary actions, links, focus). DERIVED from the SLIS brand block
+     below: a darker tint of the crest royal blue, dark enough that white text clears 7.15:1 and
+     still clears AA after shadcn's `hover:bg-primary/80` lightens it. The crest royal itself
+     (#4169E1) is only 4.85:1 with white and fails once that hover applies — which is why primary
+     is a tint and not the raw brand hex. */
+  --primary: var(--m-brand-strong, #2a4bc8);
   --primary-foreground: #FFFFFF;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -103,9 +108,13 @@
   --indigo-bg: #E0E7FF;  /* teacher indigo chip (06-UI §8) */
   --indigo-fg: #4338CA;
   --danger: #DC2626;
-  /* signature brand surface: maroon → near-black vertical gradient (sidebar) */
-  --brand-top: #5C1B22;
-  --brand-bottom: #2A0C10;
+  /* Signature brand surface: SLIS deep navy → near-black navy vertical gradient (sidebar, auth
+     panel, 404 illustration). DERIVED from the SLIS brand block below — the hexes live there, once,
+     so there is never a second definition of "SLIS blue" to drift. The literal fallbacks are
+     defensive: if `data-brand` is ever dropped from <html>, these keep rendering a navy surface
+     instead of collapsing to an unset (transparent) gradient. */
+  --brand-top: var(--m-brand-deep, #1d2f65);
+  --brand-bottom: var(--m-brand-ink, #0b1229);
   /* Marketing site only (docs/06-UI §8): a warm off-white that alternates with white to
      give the public pages a softer, editorial section rhythm. Not used in the app shell. */
   --bg-warm: #FAF7F3;
@@ -150,17 +159,35 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* --- SLIS marketing brand tokens (M4 rebrand plan, Unit A / Task S1) ---
-   Scoped to `[data-brand="slis"]`, set on the `(marketing)` layout's root element, so these
-   NEVER leak into the authenticated app portal's maroon/green tokens above. Blue is the crest's
-   anchor color (hero/footer bands, primary actions); gold is the accent (CTAs, highlights).
+/* --- SLIS brand tokens — THE single source of every SLIS hex ---
+   Set on `<html>` (app/layout.tsx), so marketing AND the authenticated portal both inherit one
+   palette.
+
+   HISTORY — this reverses an earlier decision on purpose. These tokens were originally scoped to
+   the `(marketing)` layout's root div specifically so they could NEVER reach the portal, back when
+   the portal was meant to look tenant-neutral (maroon + green). The client asked for this build to
+   be tailored to them, so the wall came down: `:root` above now DERIVES --brand-top/--brand-bottom
+   /--primary from the tokens here rather than declaring maroon hexes of its own.
+
    Hex values were sampled directly from the resized crest (`public/slis/logo.jpg`): the shield's
    blue half clusters tightly on #4169E1, the gold half + motto band on #FFD700 — both are, by
-   coincidence, the exact CSS-named "royalblue"/"gold" hues. `--m-accent-ink` is a brand-derived
-   near-navy (not plain gray) chosen for AA/AAA contrast on the gold accent (11.3:1). */
+   coincidence, the exact CSS-named "royalblue"/"gold" hues.
+
+   The blue ramp is one family, lightest to darkest:
+     --m-brand (#4169E1) → --m-brand-strong (#2A4BC8) → --m-brand-deep (#1D2F65) → --m-brand-ink (#0B1229)
+
+   Contrast, measured (not eyeballed): white on --m-brand-strong 7.15:1 · on --m-brand-deep 12.75:1
+   · on --m-brand-ink 18.54:1. Gold on --m-brand-deep 9.09:1 and on --m-brand-ink 13.22:1 — high
+   enough that gold is legible as TEXT on the navy sidebar, not merely as decoration.
+
+   SEAM: a second school would either override this block's values or swap the attribute value on
+   <html>. True per-tenant branding (school name + logo from the `schools` row and Storage) is still
+   unbuilt — see CLAUDE.md §5. */
 [data-brand="slis"] {
   --m-brand: #4169e1; /* royal blue, sampled from the crest shield */
-  --m-brand-deep: #1d2f65; /* darker blue for gradients/footer bands */
+  --m-brand-strong: #2a4bc8; /* darker royal — --primary; 7.15:1 with white, survives /80 hover */
+  --m-brand-deep: #1d2f65; /* darker blue for gradients/footer bands + sidebar top */
+  --m-brand-ink: #0b1229; /* near-black navy — sidebar/auth-panel gradient bottom */
   --m-accent: #ffd700; /* gold, sampled from the crest shield + motto band */
   --m-accent-ink: #142044; /* dark navy text on gold — 11.3:1 contrast, AA/AAA-safe */
   --m-canvas: #ffffff; /* white, from the crest's white background */

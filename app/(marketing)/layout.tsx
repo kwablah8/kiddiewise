@@ -14,13 +14,14 @@ export const metadata: Metadata = {
 
 /**
  * Public marketing shell (docs/06-UI §8) — its OWN layout: header + footer, no auth guard, no
- * app sidebar. A separate visual system from the authenticated portals, sharing only the Geist
- * typeface — NOT the brand colour: `data-brand="slis"` scopes the SLIS blue/gold tokens
- * (app/globals.css) to this subtree only, leaving the app portal's maroon/green untouched.
+ * app sidebar. Still a distinct visual system from the authenticated portals (editorial rhythm,
+ * full-bleed photography, rounded CTAs), but it now shares their palette as well as the Geist
+ * typeface: `data-brand="slis"` moved up to <html> in app/layout.tsx, so the SLIS blue/gold tokens
+ * are global and this layout no longer needs to scope them.
  */
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div data-brand="slis" className="flex min-h-dvh flex-col bg-[var(--surface)]">
+    <div className="flex min-h-dvh flex-col bg-[var(--surface)]">
       <SiteHeader />
       <main id="main" className="flex-1">
         {children}

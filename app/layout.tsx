@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "School Management",
-  description: "Modern multi-school management platform.",
+  title: "SLIS Portal",
+  description: "SNAB Learners International School — school management portal.",
 };
 
 export default function RootLayout({
@@ -24,8 +24,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // `data-brand` lives HERE, on <html>, so the SLIS palette in app/globals.css reaches every
+    // surface — marketing, the authenticated portal, and the auth screens alike. It used to sit on
+    // the `(marketing)` layout to keep the brand OUT of the portal; that wall came down when this
+    // build was tailored to SLIS (see the token block's HISTORY note).
     <html
       lang="en"
+      data-brand="slis"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

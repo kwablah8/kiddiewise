@@ -55,7 +55,11 @@ export const BRAND: Brand = {
     width: 512,
     height: 512,
   },
-  // A calm, architectural frame — a busy group shot turns to mud under the scrim.
+  // Chosen over the campus exteriors for three concrete reasons: it is PORTRAIT (1440x1920), so it
+  // crops into the tall panel with almost no loss where a 4:3 exterior would centre-crop to sky;
+  // it is properly photographed rather than WhatsApp-quality; and the pupil's uniform is royal blue
+  // with the school crest on it, so the frame carries the brand by itself. The exteriors all share
+  // flat overcast sky, overhead power lines and orange pillars that fight the navy/gold palette.
   // SEAM: swap this one line to change the login artwork.
-  authPanelPhoto: { src: "/slis/photos/campus-exterior-garden.jpg" },
+  authPanelPhoto: { src: "/slis/photos/student-portrait-uniform.jpg" },
 } as const;

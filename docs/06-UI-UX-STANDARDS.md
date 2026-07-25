@@ -25,11 +25,37 @@ huge unnecessary cards, cluttered interfaces.
 ## 2. Brand & color tokens
 
 ### Brand
-- **Sidebar / brand surface:** deep **maroon → near-black vertical gradient**
-  (approx `#5C1B22` at top → `#2A0C10` at bottom). This is the signature surface across all
-  authenticated portals.
-- **Primary accent (admin):** **forest green** (approx `#15803D` / `#1E7A46`) — used for the
-  page title, primary links ("View All", "View Calendar"), and positive trend text.
+This build is branded for **SNAB Learners International School (SLIS)**. Every SLIS hex is written
+exactly once, in the `[data-brand="slis"]` block in `app/globals.css`, which is set on `<html>` so
+marketing and the authenticated portal share one palette. `:root` **derives** `--brand-top`,
+`--brand-bottom` and `--primary` from that block rather than declaring colours of its own — so a
+rebrand is one block, not a hex hunt.
+
+> Superseded: this section previously specified a maroon `#5C1B22 → #2A0C10` sidebar and a forest
+> green `#15803D` primary, inherited from the Kiddiewise reference build. Both are gone. See the
+> HISTORY note in `app/globals.css` for why the marketing/portal colour wall came down.
+
+### The SLIS blue ramp
+All four are sampled from or derived from the school's crest (`public/slis/logo.jpg`).
+
+| Token | Hex | Use |
+|---|---|---|
+| `--m-brand` | `#4169E1` | crest royal blue — accents, chips, marketing bands |
+| `--m-brand-strong` | `#2A4BC8` | drives `--primary`; 7.15:1 with white text |
+| `--m-brand-deep` | `#1D2F65` | brand surface gradient **top** |
+| `--m-brand-ink` | `#0B1229` | brand surface gradient **bottom** |
+| `--m-accent` | `#FFD700` | gold |
+| `--m-accent-ink` | `#142044` | text on gold (11.3:1) |
+
+- **Sidebar / brand surface:** deep **navy → near-black navy vertical gradient**
+  (`--m-brand-deep` → `--m-brand-ink`). The signature surface across all authenticated portals,
+  the auth screens' desktop panel, and the 404 illustration.
+- **Primary accent:** `--primary` = `--m-brand-strong`. Page titles, primary buttons, links, focus
+  rings on light surfaces. **Not** the raw crest royal `#4169E1`: that is only 4.85:1 with white
+  and fails AA once shadcn's `hover:bg-primary/80` lightens it.
+- **Gold has exactly two jobs in the portal**, and adding a third needs a reason: the 3px active
+  edge on the sidebar nav item, and the sidebar focus ring (`navFocusRingClass`). Gold is legible
+  as text on navy (9.09:1 / 13.22:1) but restraint is the point — it marks, it does not decorate.
 
 ### Semantic
 | Token | Approx | Use |
@@ -38,12 +64,21 @@ huge unnecessary cards, cluttered interfaces.
 | `--surface` | `#FFFFFF` | cards, panels |
 | `--border` | `#ECEEF1` | hairline card/table borders |
 | `--text` | `#111827` | primary text, numerals |
-| `--muted` | `#6B7280` | secondary text, subtitles |
+| `--muted-foreground` | `#6B7280` | secondary text, subtitles |
 | `--label` | `#9CA3AF` | small uppercase labels / table headers |
-| `--primary` | `#15803D` | primary actions, links, positive |
+| `--primary` | `#2A4BC8` | primary actions, links, focus on light surfaces |
 | `--success-bg` / `--success-fg` | `#E7F6EC` / `#15803D` | trend pills ("+12%") |
 | `--warning-bg` | `#FEF3C7` | amber icon chips / warnings |
 | `--danger` | `#DC2626` | destructive actions, logout, errors |
+
+### Identity
+The crest and the school's name come from `lib/brand.ts` via `components/brand/crest.tsx` and
+`components/brand/brand-lock.tsx` — never a generic glyph, and never retyped inline. The crest's
+white chip is **load-bearing**: `logo.jpg` has a white background and dissolves into navy without it.
+`lib/marketing/site.ts` and `lib/marketing/media.ts` derive their identity fields from `BRAND`.
+
+SEAM: identity is single-tenant today. Reading a school's own name and logo from the `schools` row
+and Storage is unbuilt — CLAUDE.md §5.
 
 ### Stat-card icon chips
 Soft, low-saturation tinted squares behind each metric icon: green, amber, and (teacher

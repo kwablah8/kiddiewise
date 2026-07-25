@@ -5,7 +5,9 @@ import { LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BrandLock } from "@/components/brand/brand-lock";
 import { ChildSwitcher } from "@/components/parent/child-switcher";
+import { BRAND } from "@/lib/brand";
 import { useSession } from "@/lib/auth/useSession";
 import type { Profile } from "@/lib/types";
 import { formatInitials } from "@/lib/format";
@@ -29,9 +31,10 @@ export function ParentShell({ profile, children }: ParentShellProps) {
         <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-4 sm:px-6">
           <Link
             href="/parent/dashboard"
-            className={cn("text-sm font-semibold text-[var(--text)]", lightFocusRingClass)}
+            aria-label={`${BRAND.shortName} — parent dashboard`}
+            className={cn("shrink-0 rounded-lg", lightFocusRingClass)}
           >
-            SNAB Learners
+            <BrandLock tone="dark" crestClassName="size-8 rounded-lg" />
           </Link>
 
           <div className="ml-2 hidden sm:block">

@@ -1,5 +1,5 @@
 /**
- * Bespoke 404 art for the school-management app. A magnifying glass (forest-green ring, maroon
+ * Bespoke 404 art for the school-management app. A magnifying glass (`--primary` blue ring, navy
  * brand-gradient handle) searching a "record card" whose avatar + name/detail lines deliberately
  * echo the Students/Staff table rows (06-UI §6) — the metaphor is a record search that returns
  * nothing. Pure inline SVG on design tokens: no external asset, no new dependency. Decorative;

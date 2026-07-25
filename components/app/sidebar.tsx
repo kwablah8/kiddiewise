@@ -23,6 +23,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { BrandLock } from "@/components/brand/brand-lock";
+import { Crest } from "@/components/brand/crest";
 import { UserCard } from "@/components/app/user-card";
 import { useSidebarCounts } from "@/lib/queries/sidebar";
 import type { Profile } from "@/lib/types";
@@ -118,11 +120,17 @@ export function Sidebar({
             navFocusRingClass,
           )}
         >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white">
-            <GraduationCap className="size-4.5" aria-hidden="true" />
-          </span>
-          {!collapsed && (
-            <span className="truncate text-[15px] font-semibold text-white">School Management</span>
+          {/* The school's real crest, not a generic mortarboard glyph. Collapsed, the crest alone
+              stands in for the lock — and carries its own accessible name, since the wordmark text
+              that normally does that job is hidden. */}
+          {collapsed ? (
+            <Crest tone="light" className="size-8 rounded-lg" sizes="32px" standalone />
+          ) : (
+            // `compact` drops the "Learners International" descriptor: at w-64, minus the crest and
+            // the collapse chevron, the tracked-out descriptor truncates to "LEARNERS INTERNATIO…",
+            // which looks broken. The crest plus "SLIS" is enough identity for app chrome — the full
+            // lock has room to breathe on the marketing header and the auth panel.
+            <BrandLock tone="light" compact crestClassName="size-8 rounded-lg" />
           )}
         </button>
         <button
@@ -169,7 +177,8 @@ export function Sidebar({
               title={collapsed ? item.label : undefined}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                // `relative` anchors the gold active edge below.
+                "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 collapsed && "justify-center px-0",
                 isActive
                   ? "bg-white/15 text-white"
@@ -177,6 +186,16 @@ export function Sidebar({
                 navFocusRingClass,
               )}
             >
+              {/* Gold edge on the active item — one of only two jobs gold has in the portal (the
+                  other is the focus ring). It marks position without relying on the white/15 pill
+                  alone, which is a subtle cue on a dark surface. Decorative: `aria-current` on the
+                  link is what actually conveys "you are here". */}
+              {isActive && (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-[var(--m-accent)]"
+                />
+              )}
               <item.icon className="size-4.5 shrink-0" aria-hidden="true" />
               {!collapsed && (
                 <>

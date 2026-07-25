@@ -30,6 +30,17 @@ export const NAV_ITEMS: readonly NavItem[] = [
 export const APPLY_CTA = { label: "Apply Now", href: "/admissions" } as const;
 
 /**
+ * The way in for people who already belong to the school — parents checking results and fees,
+ * teachers marking attendance, admins running the office.
+ *
+ * Deliberately the QUIETER of the two header actions. Admissions is what the public site is for, so
+ * `APPLY_CTA` keeps the solid gold treatment and this renders as a ghost link to its left: two
+ * competing pills would split attention and cost conversions. Returning users are looking for this
+ * link and will find it; first-time visitors should see "Apply Now" first.
+ */
+export const PORTAL_CTA = { label: "Portal Login", href: "/login" } as const;
+
+/**
  * LEGACY identity/contact shape — DERIVED from `lib/marketing/site.ts`, not re-authored, so the
  * two never drift. `kind` has no real-world source (the crest + flyer don't state one beyond the
  * program range) and is consumed today only by not-yet-rebranded components.

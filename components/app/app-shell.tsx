@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
+import { BrandLock } from "@/components/brand/brand-lock";
 import { Sidebar } from "@/components/app/sidebar";
 import { useSession } from "@/lib/auth/useSession";
 import type { Profile } from "@/lib/types";
@@ -57,7 +58,9 @@ export function AppShell({ profile, children }: AppShellProps) {
           >
             <Menu className="size-5" aria-hidden="true" />
           </button>
-          <span className="text-sm font-semibold text-[var(--text)]">School Management</span>
+          {/* The mobile bar is the ONLY place staff see the identity on a phone — the navy sidebar
+              is off-canvas until they open it — so it carries the crest, not just a word. */}
+          <BrandLock tone="dark" compact crestClassName="size-8 rounded-lg" />
         </header>
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>

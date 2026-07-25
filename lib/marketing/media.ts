@@ -8,6 +8,8 @@
  * see `.superpowers/sdd/slis-unit-A-report.md` for the full photo catalog.
  */
 
+import { BRAND } from "@/lib/brand";
+
 export interface MediaAsset {
   src: string;
   alt: string;
@@ -126,12 +128,9 @@ const eventKidsFuntime: MediaAsset = {
 };
 
 export const MEDIA: MediaManifest = {
-  logo: {
-    src: "/slis/logo.jpg",
-    alt: "SNAB Learners International School (SLIS) crest — a blue and gold shield with an open book and torch",
-    width: 512,
-    height: 512,
-  },
+  // DERIVED from `lib/brand.ts` — the crest is shared with the portal sidebar and auth screens now,
+  // so its path and alt text live in one place rather than here and there.
+  logo: BRAND.crest,
   heroPhoto: campusExteriorBanners,
   aboutPhoto: campusCourtyard,
   introPhoto: studentPortraitUniform,

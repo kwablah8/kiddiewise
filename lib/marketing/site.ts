@@ -10,6 +10,8 @@
  * left out rather than invented — see `socials` below and the M4 rebrand plan's "honesty guard".
  */
 
+import { BRAND } from "@/lib/brand";
+
 export interface ProgramLevel {
   /** Stable identifier, e.g. for `MEDIA.programs` lookups. */
   key: string;
@@ -78,9 +80,11 @@ export interface SiteConfig {
 }
 
 export const SITE: SiteConfig = {
-  name: "SNAB Learners International School",
-  shortName: "SLIS",
-  motto: "Nurturing, Growing & Leading with Excellence.",
+  // Identity is DERIVED from `lib/brand.ts`, not re-authored: the portal shows the same name and
+  // motto now, and it must not import this marketing config to get them (CLAUDE.md §10).
+  name: BRAND.fullName,
+  shortName: BRAND.shortName,
+  motto: BRAND.motto,
   tagline: "Creche to JHS, nurtured with excellence in Oyarifa.",
   location: {
     lines: ["Oyarifa, near the Ghana Flag", "Behind Rehoboth Estate"],

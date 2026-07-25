@@ -3,9 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { LogIn, Menu, X } from "lucide-react";
 
-import { APPLY_CTA, NAV_ITEMS, type NavItem } from "@/components/marketing/nav-config";
+import {
+  APPLY_CTA,
+  NAV_ITEMS,
+  PORTAL_CTA,
+  type NavItem,
+} from "@/components/marketing/nav-config";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { CtaButton } from "@/components/marketing/cta-button";
 import { SITE } from "@/lib/marketing/site";
@@ -141,7 +146,24 @@ export function SiteHeader() {
             })}
           </nav>
 
-          <div className="hidden lg:block">
+          {/* Two actions, deliberately unequal weight: a quiet text link for people who already
+              belong to the school, and the solid gold pill for the visitors the site is built to
+              convert. Kept as a bare link rather than an outlined pill for two reasons — it holds
+              the hierarchy, and it is ~30px narrower, which is what keeps 6 nav items plus two
+              actions from crowding at exactly the `lg` breakpoint. */}
+          <div className="hidden items-center gap-1.5 lg:flex">
+            <Link
+              href={PORTAL_CTA.href}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2",
+                scrolled
+                  ? "text-[var(--muted-foreground)] hover:bg-black/[0.04] hover:text-[var(--text)] focus-visible:ring-[var(--m-brand)]"
+                  : "text-white hover:bg-white/10 focus-visible:ring-white",
+              )}
+            >
+              <LogIn className="size-4" aria-hidden="true" />
+              {PORTAL_CTA.label}
+            </Link>
             <CtaButton href={APPLY_CTA.href} variant="gold" size="md" withArrow>
               {APPLY_CTA.label}
             </CtaButton>
@@ -226,6 +248,19 @@ export function SiteHeader() {
                 className="w-full"
               >
                 Apply for admission
+              </CtaButton>
+              {/* Full-width outlined button here rather than the desktop text link: in a drawer
+                  there is room, and most of this school's traffic is on a phone — so the portal is
+                  the action returning parents most often come here for. */}
+              <CtaButton
+                href={PORTAL_CTA.href}
+                variant="outline-dark"
+                size="lg"
+                onClick={close}
+                className="mt-3 w-full"
+              >
+                <LogIn className="size-4" aria-hidden="true" />
+                {PORTAL_CTA.label}
               </CtaButton>
               <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--muted-foreground)]">
                 {SITE.location.lines[0]} · {SITE.location.area}
