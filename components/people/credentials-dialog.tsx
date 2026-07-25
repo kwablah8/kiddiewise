@@ -1,0 +1,130 @@
+"use client";
+
+import { useState } from "react";
+import { Check, Copy, TriangleAlert } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  credentialsMessage,
+  TEMP_PASSWORD_DAYS,
+  type IssuedCredentials,
+} from "@/lib/temp-password";
+
+/**
+ * Shows admin-issued credentials ONCE.
+ *
+ * "Once" is not a UX choice — the password is stored as a bcrypt hash, so after this dialog closes
+ * there is genuinely nothing left to display. The warning says so plainly, because an admin who
+ * assumes they can look it up later will close this and then have to reissue.
+ *
+ * The primary action copies a ready-to-send WhatsApp message rather than the bare password: that is
+ * the actual task ("get these details to the parent"), and it saves the admin retyping the login URL
+ * and their own explanation every time.
+ */
+export function CredentialsDialog({
+  credentials,
+  schoolName,
+  onClose,
+}: {
+  credentials: IssuedCredentials | null;
+  schoolName: string;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState<"message" | "password" | null>(null);
+
+  if (!credentials) return null;
+
+  const loginUrl = `${window.location.origin}/login`;
+  const message = credentialsMessage({
+    schoolName,
+    personName: credentials.personName,
+    email: credentials.email,
+    tempPassword: credentials.tempPassword,
+    loginUrl,
+  });
+
+  async function copy(what: "message" | "password") {
+    try {
+      await navigator.clipboard.writeText(what === "message" ? message : credentials!.tempPassword);
+      setCopied(what);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      toast.error("Couldn't copy automatically — select the text and copy it manually.");
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(next) => !next && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Credentials for {credentials.personName}</DialogTitle>
+          <DialogDescription>
+            Send these to them however you normally would — WhatsApp, SMS, or written on the admission
+            slip. They&apos;ll be asked to choose their own password when they first sign in.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div className="flex items-start gap-2 rounded-lg border border-[var(--warning-border,var(--border))] bg-[var(--warning-bg,var(--bg))] p-3">
+            <TriangleAlert
+              className="mt-0.5 size-4 shrink-0 text-[var(--warning-fg,var(--text))]"
+              aria-hidden="true"
+            />
+            <p className="text-xs leading-relaxed text-[var(--text)]">
+              This password is shown <strong>once</strong>. We store it encrypted, so it can&apos;t be
+              looked up later — if you lose it, issue a new one from the Parents list. It expires in{" "}
+              {TEMP_PASSWORD_DAYS} days if unused.
+            </p>
+          </div>
+
+          <dl className="space-y-2 rounded-lg border border-[var(--border)] p-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-xs text-[var(--muted-foreground)]">Email</dt>
+              <dd className="font-mono text-sm text-[var(--text)]">{credentials.email}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-xs text-[var(--muted-foreground)]">Temporary password</dt>
+              <dd className="flex items-center gap-2">
+                {/* Selectable text, so it works even where the clipboard API is blocked. */}
+                <span className="select-all font-mono text-sm font-semibold text-[var(--text)]">
+                  {credentials.tempPassword}
+                </span>
+                <Button type="button" variant="outline" size="sm" onClick={() => copy("password")}>
+                  {copied === "password" ? (
+                    <Check className="size-3.5" aria-hidden="true" />
+                  ) : (
+                    <Copy className="size-3.5" aria-hidden="true" />
+                  )}
+                  <span className="sr-only">Copy password</span>
+                </Button>
+              </dd>
+            </div>
+          </dl>
+
+          <Button type="button" className="w-full" onClick={() => copy("message")}>
+            {copied === "message" ? (
+              <Check className="size-4" aria-hidden="true" />
+            ) : (
+              <Copy className="size-4" aria-hidden="true" />
+            )}
+            {copied === "message" ? "Message copied" : "Copy WhatsApp message"}
+          </Button>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Done
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

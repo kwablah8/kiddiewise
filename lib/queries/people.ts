@@ -85,3 +85,17 @@ export const useLinkGuardian = () => {
  * silently, from the moment the person was added.
  */
 export const useInvitePortal = () => useMutation({ mutationFn: actions.invitePortal });
+
+/**
+ * Issue a fresh temporary password so the admin can send credentials again.
+ *
+ * Invalidates the parents list because the reissue resets `must_change_password` — the status column
+ * must flip back to "Awaiting first sign-in".
+ */
+export const useReissueCredentials = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: actions.reissueCredentials,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.parents.all }),
+  });
+};

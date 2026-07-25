@@ -1043,13 +1043,16 @@ export type Database = {
           id: string
           is_active: boolean
           last_name: string
+          must_change_password: boolean
           occupation: string | null
+          password_changed_at: string | null
           phone: string | null
           position: string | null
           qualification: string | null
           role: Database["public"]["Enums"]["user_role"]
           school_id: string | null
           staff_no: string | null
+          temp_password_expires_at: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1063,13 +1066,16 @@ export type Database = {
           id: string
           is_active?: boolean
           last_name: string
+          must_change_password?: boolean
           occupation?: string | null
+          password_changed_at?: string | null
           phone?: string | null
           position?: string | null
           qualification?: string | null
           role: Database["public"]["Enums"]["user_role"]
           school_id?: string | null
           staff_no?: string | null
+          temp_password_expires_at?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1083,13 +1089,16 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_name?: string
+          must_change_password?: boolean
           occupation?: string | null
+          password_changed_at?: string | null
           phone?: string | null
           position?: string | null
           qualification?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           school_id?: string | null
           staff_no?: string | null
+          temp_password_expires_at?: string | null
         }
         Relationships: [
           {
@@ -1663,6 +1672,7 @@ export type Database = {
           students: number
         }[]
       }
+      complete_password_change: { Args: never; Returns: undefined }
       current_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]

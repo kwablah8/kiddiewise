@@ -306,6 +306,14 @@ async function main(): Promise<void> {
     })),
   ]);
 
+  // Seeded accounts are given a real, working password directly (DEMO_PASSWORD), so they are already
+  // the holder's own — not admin-issued temporary credentials awaiting a first sign-in. Stamping
+  // password_changed_at says so, which is what the Parents screen reads to show "Active".
+  await db
+    .from("profiles")
+    .update({ must_change_password: false, password_changed_at: new Date().toISOString() })
+    .eq("school_id", SCHOOL_ID);
+
   // --- subjects, classes, assignments ------------------------------------
   const subjectId: Record<string, string> = {};
   for (const s of SUBJECTS) {

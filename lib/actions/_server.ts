@@ -5,6 +5,13 @@ import { requireProfile } from "@/lib/auth/session";
 import type { Profile } from "@/lib/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
+import {
+  generateTempPassword,
+  tempPasswordExpiry,
+  type IssuedCredentials,
+} from "@/lib/temp-password";
+
+export type { IssuedCredentials };
 
 /**
  * Shared plumbing for the write layer.
@@ -134,14 +141,21 @@ export function passwordSetupUrl(): string {
  *
  * The account is left with no usable password. It cannot be signed into until invited.
  */
-export async function provisionUser(ctx: TenantContext, email: string): Promise<string> {
+export async function provisionUser(
+  ctx: TenantContext,
+  email: string,
+  tempPassword?: string,
+): Promise<string> {
   assertAdmin(ctx);
 
   const admin = createServiceClient();
   const { data, error } = await admin.auth.admin.createUser({
     email,
-    // Pre-confirmed so the later invite goes straight to "set your password" rather than making the
-    // recipient confirm an address the school already vouched for.
+    // Set only when the admin is issuing credentials in person. Omitted for the invite flow, which
+    // leaves the account with no usable password until the recipient sets their own.
+    ...(tempPassword ? { password: tempPassword } : {}),
+    // Pre-confirmed so the recipient goes straight to signing in rather than confirming an address
+    // the school already vouched for face to face.
     email_confirm: true,
   });
 
@@ -158,6 +172,73 @@ export async function provisionUser(ctx: TenantContext, email: string): Promise<
   }
 
   return data.user.id;
+}
+
+/**
+ * Mark a profile as holding an admin-issued temporary password.
+ *
+ * Written with the service role because `authenticated` has no grant on these columns — deliberately,
+ * since `profiles_self_update` would otherwise let the holder clear their own `must_change_password`
+ * flag and skip the change (see migration 0020).
+ */
+export async function markTempCredential(profileId: string, expiresAt: string): Promise<void> {
+  const { error } = await createServiceClient()
+    .from("profiles")
+    .update({
+      must_change_password: true,
+      temp_password_expires_at: expiresAt,
+      password_changed_at: null,
+    })
+    .eq("id", profileId);
+  if (error) throw new Error(`Could not flag the temporary password: ${error.message}`);
+}
+
+/**
+ * Issue a FRESH temporary password for someone who already has an account.
+ *
+ * This exists because the original cannot be shown again — passwords are stored as bcrypt hashes, so
+ * there is nothing to reveal. Keeping the plaintext around to make a "re-copy" button possible would
+ * put every parent's password in the database in readable form, visible to any admin and exposed
+ * wholesale in a breach. Regenerating gives the admin the same outcome (a credential they can send
+ * again) without that: the previous password simply stops working.
+ */
+export async function reissueTempPassword(
+  ctx: TenantContext,
+  profileId: string,
+): Promise<IssuedCredentials> {
+  assertAdmin(ctx);
+
+  // Read through the CALLER's client so RLS confines this to their own school — with the service role
+  // this would be a cross-tenant password-reset machine.
+  const { data: target, error } = await ctx.db
+    .from("profiles")
+    .select("first_name, last_name, email, is_active")
+    .eq("id", profileId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Could not load that person: ${error.message}`);
+  if (!target) throw new Error("That person is not in your school.");
+  if (!target.is_active) {
+    throw new Error("This account is deactivated. Reactivate it before issuing a new password.");
+  }
+
+  const tempPassword = generateTempPassword();
+  const expiresAt = tempPasswordExpiry(new Date());
+
+  const { error: pwError } = await createServiceClient().auth.admin.updateUserById(profileId, {
+    password: tempPassword,
+  });
+  if (pwError) throw new Error(`Could not set a new temporary password: ${pwError.message}`);
+
+  await markTempCredential(profileId, expiresAt);
+
+  return {
+    profileId,
+    personName: `${target.first_name} ${target.last_name}`,
+    email: target.email,
+    tempPassword,
+    expiresAt,
+  };
 }
 
 export interface PortalInvite {

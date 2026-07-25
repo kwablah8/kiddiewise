@@ -94,8 +94,8 @@ Re-print them any time with `npx supabase status`.
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — safe in the browser. It identifies the *project*, not a user;
   RLS decides what the signed-in caller can see.
 - `SUPABASE_SERVICE_ROLE_KEY` — **bypasses RLS entirely.** Server-only: the seed script, the RLS
-  test harness, and the `provision-user` Edge Function. It must never be imported into a client
-  component or prefixed with `NEXT_PUBLIC_`.
+  test harness, and account provisioning inside Server Actions (`lib/actions/_server.ts`). It must
+  never be imported into a client component or prefixed with `NEXT_PUBLIC_`.
 
 ---
 
@@ -172,6 +172,14 @@ view in this project is created `with (security_invoker = true)`. Do not omit it
 **Never use `supabase.auth.getSession()` for an authorization decision.** It only decodes a cookie
 the client controls. Use `getUser()`, which revalidates against the auth server.
 
+**A password-setup page must bind to the session in the LINK, not the browser's current one.** This
+shipped as a real bug and was caught in testing: `/update-password` called `updateUser()` against
+whatever session already existed, so an admin who invited a parent from the office computer and let
+them open the link there had their OWN password set by the parent. The page now adopts the link's
+tokens explicitly via `setSession` and refuses to fall back. The one exception is a holder of an
+admin-issued temporary password, who is *required* to change it and proved knowledge of that
+credential to get there.
+
 **`pnpm test:integration` depends on the seed.** If sign-in fails with "Has `pnpm seed:demo` been
 run?", that's why.
 
@@ -188,7 +196,7 @@ When the hosted project is created, this is the checklist:
 4. **Do not run `seed:demo` against production.** It deletes the tenant it manages before
    re-seeding, and it creates accounts with a published password.
 5. Create the first real `school_admin` through Supabase Studio's auth panel plus a `profiles` row,
-   or via the `provision-user` Edge Function.
+   or by adding them through the app once a first admin exists.
 6. Configure the Auth email templates and the site URL so password-reset links point at the real
    domain instead of `localhost`.
 7. Re-run `pnpm test:rls` against a staging project before going live — tenant isolation is the one
@@ -216,21 +224,47 @@ via `.rpc()`.
   `school_id` stamped from the session, `auth.uid()` recorded as author, and business rules the client
   cannot skip (the admissions state machine, the single-primary-guardian demotion).
 - **Adding a person is provisioning.** `profiles.id` is a foreign key to `auth.users(id)`, so
-  `createStaff` / `createParent` invite an auth account first (service role, server-side only), then
-  insert the profile — rolling back the account if the profile insert fails. **No password is ever
-  set or transmitted:** the invitee gets an email link and chooses their own. Locally that email lands
-  in Mailpit (§4).
+  `createStaff` / `createParent` create an auth account first (service role, server-side only), then
+  insert the profile — rolling back the account if the profile insert fails.
+
+### How parents get portal access
+
+Two routes, both needing **no email or SMS provider**. Email/SMS delivery is deliberately optional
+because Hubtel/Twilio/SMTP approval takes weeks in Ghana.
+
+**1. Temporary password at admission (the default).** While the parent is at the desk, `createParent`
+generates a readable temporary password — `Harmattan-46589-Heron`, shaped to survive handwriting and
+a phone call — and shows it **once**. The admin writes it on the admission slip or taps **Copy
+WhatsApp message** for a ready-to-send message with the login URL, email and password.
+
+On first sign-in the parent is held on `/update-password` by the middleware until they choose their
+own password. When they do, the temporary one dies — so the admin no longer has access to that
+child's records. The Parents screen shows `Active` once that happens, and `Awaiting first sign-in`
+until then, with a running "*n* of *m* parents have signed in and set their own password" count.
+
+Unused temporary passwords **expire after 30 days** (`TEMP_PASSWORD_DAYS`). That bound is the point:
+until the parent takes ownership, the admin who issued the credential can read their child's data.
+
+**"Send credentials" reissues — it cannot re-reveal.** Passwords are stored as bcrypt hashes, so the
+original is gone the moment the dialog closes. Pressing it generates a *new* temporary password and
+invalidates the old one. Keeping the plaintext to allow a true re-copy would put every parent's
+password in the database in readable form; that is why the button behaves this way.
+
+**2. Send a link.** `generateLink` returns a one-time password-setup URL without sending anything —
+the admin pastes it into WhatsApp. Here the admin never knows the password at all. **Email the
+invitation** also exists and needs SMTP; locally those emails land in Mailpit (§4).
 
 ### Current status
 
 | Area | Status |
 |---|---|
-| Schema + RLS (26 tables, 2 views, 7 RPCs) | ✅ Migrated and tested |
+| Schema + RLS (26 tables, 2 views, 8 RPCs) | ✅ Migrated and tested |
 | Auth (login, reset, role routing, server-side guards) | ✅ Real Supabase Auth |
 | Demo seed | ✅ `pnpm db:seed` |
 | `lib/data/*` reads (47 functions) | ✅ Real Supabase |
 | `lib/actions/*` writes (32 functions) | ✅ Server Actions |
-| Staff/parent provisioning + invite email | ✅ Inline in the Server Actions |
+| Parent/staff portal access (temp password + link) | ✅ No provider needed |
+| Forced password change on first sign-in | ✅ Enforced in middleware |
 | `lib/mock/` seam | ✅ Deleted |
 | Test suites (unit, RLS, integration) | ✅ Green |
 

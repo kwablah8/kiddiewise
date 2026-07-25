@@ -6,12 +6,13 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { z } from "zod";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateParent } from "@/lib/queries/people";
+import { CredentialsDialog } from "@/components/people/credentials-dialog";
+import type { IssuedCredentials } from "@/lib/temp-password";
 import { parentCreateSchema, type ParentCreateInput } from "@/lib/validators/people";
 import { cardShellClass } from "@/lib/ui";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ type ParentFormInput = z.input<typeof parentCreateSchema>;
 export function ParentForm() {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [issued, setIssued] = useState<IssuedCredentials | null>(null);
   const createParent = useCreateParent();
 
   const {
@@ -39,20 +41,28 @@ export function ParentForm() {
   async function onSubmit(values: ParentCreateInput) {
     setSubmitError(null);
     try {
-      // The action invites an auth account (emailing the parent a link to set their own password),
-      // then inserts the profile.
+      // The action creates the auth account with a generated temporary password and returns it. This
+      // is the ONLY moment it can be displayed — it is stored hashed, so it cannot be shown again.
       const phone = values.phone && values.phone.trim() !== "" ? values.phone.trim() : null;
-      await createParent.mutateAsync({ ...values, phone });
-      toast.success("Parent added", {
-        description: `${values.first_name} ${values.last_name} has been added.`,
-      });
-      router.push("/parents");
+      const credentials = await createParent.mutateAsync({ ...values, phone });
+      setIssued(credentials);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     }
   }
 
   return (
+    <>
+      {/* Navigation is deferred until the admin closes this: leaving the page is what destroys the
+          only copy of the temporary password. */}
+      <CredentialsDialog
+        credentials={issued}
+        schoolName="Kiddiewise School Complex"
+        onClose={() => {
+          setIssued(null);
+          router.push("/parents");
+        }}
+      />
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
@@ -110,5 +120,6 @@ export function ParentForm() {
         </Button>
       </div>
     </form>
+    </>
   );
 }

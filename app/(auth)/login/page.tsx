@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
 import { createClient } from "@/lib/supabase/client";
+import { isTempPasswordExpired } from "@/lib/temp-password";
 import { homePathForRole, isPathAllowedForRole } from "@/lib/auth/access";
 
 export default function LoginPage() {
@@ -40,7 +41,7 @@ export default function LoginPage() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, is_active")
+      .select("role, is_active, must_change_password, temp_password_expires_at")
       .eq("id", auth.user.id)
       .single();
 
@@ -53,6 +54,28 @@ export default function LoginPage() {
     if (!profile.is_active) {
       await supabase.auth.signOut();
       setSubmitError("This account has been deactivated. Please contact your administrator.");
+      return;
+    }
+
+    // A temporary password the school issued but nobody used has a deadline. Enforcing it here is
+    // what makes the expiry real: until the holder takes ownership, the admin who issued it can reach
+    // that child's records, and an unbounded window would leave that open indefinitely.
+    if (
+      profile.must_change_password &&
+      isTempPasswordExpired(profile.temp_password_expires_at)
+    ) {
+      await supabase.auth.signOut();
+      setSubmitError(
+        "This temporary password has expired. Please ask the school office for a new one.",
+      );
+      return;
+    }
+
+    // Still holding a temporary password — the middleware will hold them on /update-password until
+    // they replace it, so send them straight there instead of to a portal they can't use yet.
+    if (profile.must_change_password) {
+      router.replace("/update-password");
+      router.refresh();
       return;
     }
 

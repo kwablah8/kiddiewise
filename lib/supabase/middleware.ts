@@ -53,7 +53,7 @@ export async function updateSession(request: NextRequest) {
   // access-token hook that stamps the role into app_metadata, not deleting the check.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, must_change_password")
     .eq("id", user.id)
     .single();
 
@@ -63,6 +63,16 @@ export async function updateSession(request: NextRequest) {
     if (isPublicPath(pathname)) return response;
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // Signed in with an admin-issued temporary password: nothing else is reachable until they replace
+  // it. Enforced here rather than as a redirect inside the app shell, so it survives JavaScript being
+  // disabled and cannot be skipped by navigating straight to a deep link.
+  if (profile.must_change_password && pathname !== "/update-password") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/update-password";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

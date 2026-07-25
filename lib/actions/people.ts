@@ -8,11 +8,15 @@ import {
   provisionUser,
   rollbackProvisionedUser,
   invitePortalUser,
+  reissueTempPassword,
+  markTempCredential,
   type TenantContext,
   type PortalInvite,
+  type IssuedCredentials,
 } from "./_server";
 import type { TablesUpdate } from "@/lib/supabase/types";
 import { z } from "zod";
+import { generateTempPassword, tempPasswordExpiry } from "@/lib/temp-password";
 import {
   studentCreateSchema,
   studentUpdateSchema,
@@ -117,7 +121,9 @@ export async function createStudent(input: StudentCreateInput): Promise<{ id: st
   }
 
   if (newGuardian) {
-    const { id: parentId } = await createParent(newGuardian);
+    // createParent also issues temporary credentials. They aren't surfaced here — the student form has
+    // no room to present them — so the admin sends them from the Parents screen via "Send credentials".
+    const { profileId: parentId } = await createParent(newGuardian);
     await linkGuardian({
       student_id: student.id,
       parent_profile_id: parentId,
@@ -221,11 +227,16 @@ export async function invitePortal(input: {
  * Add a parent/guardian. Provisions an auth account because a profile cannot exist without one
  * (`profiles.id` → `auth.users.id`), but notifies nobody — use `invitePortal` for that.
  */
-export async function createParent(input: ParentCreateInput): Promise<{ id: string }> {
+export async function createParent(input: ParentCreateInput): Promise<IssuedCredentials> {
   const data = parentCreateSchema.parse(input);
   const ctx = await tenant();
 
-  const userId = await provisionUser(ctx, data.email);
+  // Issued up front so the admin can hand the credentials over while the parent is still at the desk
+  // during admission — the whole point of this flow is that it needs no email or SMS provider.
+  const tempPassword = generateTempPassword();
+  const expiresAt = tempPasswordExpiry(new Date());
+
+  const userId = await provisionUser(ctx, data.email, tempPassword);
 
   try {
     assertOk(
@@ -242,13 +253,35 @@ export async function createParent(input: ParentCreateInput): Promise<{ id: stri
       }),
       "parent",
     );
+    await markTempCredential(userId, expiresAt);
   } catch (err) {
     // Otherwise the orphaned auth account holds the email hostage and the admin can never retry.
     await rollbackProvisionedUser(userId);
     throw err;
   }
 
-  return { id: userId };
+  return {
+    profileId: userId,
+    personName: `${data.first_name} ${data.last_name}`,
+    email: data.email,
+    tempPassword,
+    expiresAt,
+  };
+}
+
+/**
+ * Issue a fresh temporary password so the admin can send credentials again.
+ *
+ * Named "reissue", not "re-copy", because the original is unrecoverable: passwords are bcrypt hashes.
+ * Storing the plaintext to allow a genuine re-copy would expose every parent's password to any admin
+ * and to any breach — so the old one is replaced instead.
+ */
+export async function reissueCredentials(input: {
+  profile_id: string;
+}): Promise<IssuedCredentials> {
+  const { profile_id } = z.object({ profile_id: z.string().min(1) }).parse(input);
+  const ctx = await tenant();
+  return reissueTempPassword(ctx, profile_id);
 }
 
 /**

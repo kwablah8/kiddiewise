@@ -50,6 +50,23 @@ export const studentDetailVM = studentListItemVM.extend({
 export type StudentDetailVM = z.infer<typeof studentDetailVM>;
 export type GuardianVM = z.infer<typeof guardianVM>;
 
+/**
+ * Whether the holder has taken ownership of their portal account.
+ *  - `active`   — they signed in and replaced the temporary password. The account is theirs.
+ *  - `pending`  — temporary credentials issued, not yet used. The admin still knows the password.
+ *  - `expired`  — the temporary password lapsed unused; the admin must issue a fresh one.
+ *  - `no_access` — no credentials have ever been issued (e.g. invited by link, never completed).
+ */
+export const portalAccessStatus = z.enum(["active", "pending", "expired", "no_access"]);
+export type PortalAccessStatus = z.infer<typeof portalAccessStatus>;
+
+export const PORTAL_ACCESS_LABEL: Record<PortalAccessStatus, string> = {
+  active: "Active",
+  pending: "Awaiting first sign-in",
+  expired: "Password expired",
+  no_access: "No access yet",
+};
+
 export const parentListItemVM = z.object({
   id: z.string(),
   first_name: z.string(),
@@ -58,6 +75,7 @@ export const parentListItemVM = z.object({
   phone: z.string().nullable(),
   occupation: z.string().nullable(),
   children_names: z.array(z.string()),
+  portal_status: portalAccessStatus,
 });
 export type ParentListItemVM = z.infer<typeof parentListItemVM>;
 
