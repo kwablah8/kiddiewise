@@ -4,9 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BRAND } from "@/lib/brand";
@@ -21,9 +22,15 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    // Checked by default because it describes what already happens: @supabase/ssr writes the auth
+    // cookie with a 400-day max-age, so a session already survives closing the browser.
+    defaultValues: { remember: true },
+  });
 
   async function onSubmit(data: LoginInput) {
     setSubmitError(null);
@@ -158,6 +165,33 @@ export default function LoginPage() {
             <p className="text-xs text-[var(--danger)]">{errors.password.message}</p>
           )}
         </div>
+
+        {/*
+          PRESENTATIONAL ONLY — unchecking this currently changes nothing.
+
+          Sessions already persist: @supabase/ssr writes the auth cookie with a 400-day max-age
+          (its DEFAULT_COOKIE_OPTIONS), and none of our three clients override it, so "remembered"
+          is the behaviour with or without this box. Making the unchecked branch real means writing
+          the cookie WITHOUT max-age/expires in all three places that touch it — the browser client,
+          the server client, and the middleware that re-writes it on every token refresh — since the
+          middleware would otherwise restore the 400-day lifetime on the next navigation.
+
+          Left as UI on purpose, not by oversight. Do not add a "remember me" note to the docs or
+          tell a school this protects a shared front-desk machine until that wiring exists.
+        */}
+        <Controller
+          control={control}
+          name="remember"
+          render={({ field }) => (
+            <label className="flex w-fit cursor-pointer items-center gap-2.5 text-sm">
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => field.onChange(checked === true)}
+              />
+              <span className="text-[var(--text)]">Remember me</span>
+            </label>
+          )}
+        />
 
         {/* `role="alert"` so assistive tech actually announces the failure. This was a bare <p>:
             visually obvious, but silent to a screen reader, which left a blind user pressing "Sign
