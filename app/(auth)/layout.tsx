@@ -10,10 +10,15 @@ import { SITE } from "@/lib/marketing/site";
 /**
  * Shell for every auth screen — login, reset-password, update-password.
  *
- * MOBILE-FIRST, and that is a data decision as much as a design one. Most of this school's traffic
- * is on a phone, on Ghanaian mobile data, so phones get a flat navy brand band and download NO
- * photograph at all: the campus image lives in the `lg:` panel, which never renders below that
- * breakpoint. Desktop gets the 50/50 split with the photo under a navy scrim.
+ * ONE brand panel at every width, not two. It is a short hero band above the form on phones and the
+ * left half of a 50/50 split from `lg` up, but it is the same element with the same photo, scrim and
+ * text lock — so there is one place to change the artwork and no chance of the two drifting apart.
+ *
+ * Phones used to get a flat navy band and no photograph, to spare Ghanaian mobile data. That has
+ * been reversed deliberately: the pupil in SLIS blue is what makes this screen the school's rather
+ * than a generic portal, and a parent signing in on a phone is exactly who that should land on. The
+ * cost is kept small rather than ignored — `sizes` below hands phones a ~400–800px wide candidate
+ * instead of the 1440px original, which is tens of kilobytes, not hundreds.
  *
  * The scrim is deliberately heavy. This panel is a backdrop for a text lock, not a gallery — the
  * photo is there to make the screen feel like SLIS and nothing more, so legibility wins over the
@@ -24,23 +29,34 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     // `grid-rows-[auto_1fr]` matters on mobile: with auto rows, the grid stretches BOTH the brand
     // band and the form column to share `min-h-dvh`, which blew the band up to ~330px of empty navy.
     // Pinning row 1 to its content and letting the form take the rest keeps the band compact.
-    // At `lg` the hidden mobile band leaves exactly two grid items, so it reverts to two columns.
     <div className="grid min-h-dvh grid-rows-[auto_1fr] lg:grid-cols-2 lg:grid-rows-1">
-      {/* ---------- Mobile brand band (<lg): no photo, just navy + the identity lock ---------- */}
-      <div className="bg-[linear-gradient(160deg,var(--brand-top),var(--brand-bottom))] px-6 pt-8 pb-7 lg:hidden">
-        <BrandLock tone="light" crestClassName="size-11 rounded-xl" />
-        <p className="mt-4 text-[0.95rem] leading-snug font-medium text-white">{BRAND.motto}</p>
-      </div>
+      {/* ---------- Brand panel: hero band on phones, full-height split panel from lg ---------- */}
+      <div className="relative flex h-[45vw] flex-col justify-between overflow-hidden p-6 md:h-[32vw] lg:h-auto lg:p-12">
+        {/*
+          Two different crops of one portrait frame. The panel is TALL at `lg`, where a centred crop
+          puts the pupil's face at about half height; the band above the form is short and WIDE, so
+          the same centred crop would slice the photo at the chin. `object-[50%_40%]` pulls the
+          visible window up onto the face instead of the table below it.
 
-      {/* ---------- Desktop brand panel (lg+): campus photo under a navy scrim ---------- */}
-      <div className="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex">
+          The band's height is a share of the VIEWPORT WIDTH, not a fixed pixel value, and that is
+          what keeps the crop stable. `object-cover` scales the image to the band's width, so a fixed
+          height shows a progressively thinner slice as the screen widens: at `h-56` on a 1023px
+          screen this was a strip across the pupil's eyes, cut off at the mouth. Tying height to
+          width holds the visible slice at a constant fraction of the frame, so every device in a
+          step gets the same head-and-shoulders crop. Two steps rather than one because 45vw is
+          right on a phone but 460px of photo on a wide tablet: `45vw` (~34% of the frame) below
+          `md`, `32vw` (~24%) from `md` to `lg`, both of which keep the whole face in shot.
+
+          `sizes` is what keeps this affordable on mobile data: without it Next assumes 100vw at
+          every breakpoint and hands a desktop-width file to a phone.
+        */}
         <Image
           src={BRAND.authPanelPhoto.src}
           alt=""
           fill
-          sizes="50vw"
+          sizes="(min-width: 1024px) 50vw, 100vw"
           priority
-          className="object-cover"
+          className="object-cover object-[50%_40%] lg:object-center"
         />
         {/* Two stacked washes: the navy tint that makes the text legible over any part of the photo,
             then a darker foot so the location and copyright lines hold up over whatever the image
@@ -67,11 +83,16 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         </div>
 
         <div className="relative max-w-sm">
-          <p className="text-2xl leading-snug font-semibold text-white">{BRAND.motto}</p>
-          <p className="mt-3 text-sm text-white/75">
+          <p className="text-[0.95rem] leading-snug font-semibold text-white lg:text-2xl">
+            {BRAND.motto}
+          </p>
+          {/* Below `lg` the band is ~176px of a phone's first screen and the form has to stay
+              reachable without scrolling, so the supporting lines are desktop-only. The motto alone
+              carries the band. */}
+          <p className="mt-3 hidden text-sm text-white/75 lg:block">
             Enrolment, attendance, results, fees, and parent communication — in one place.
           </p>
-          <div className="mt-8 space-y-2">
+          <div className="mt-8 hidden space-y-2 lg:block">
             <p className="flex items-center gap-2 text-xs text-white/70">
               <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
               {SITE.location.lines[0]} · {SITE.location.area}
