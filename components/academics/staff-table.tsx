@@ -1,22 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { KeyRound, Loader2, Users } from "lucide-react";
-import { toast } from "@/lib/toast";
+import { Users } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { InvitePortalButton } from "@/components/people/invite-portal-button";
-import { CredentialsDialog } from "@/components/people/credentials-dialog";
+import { SendCredentialsButton } from "@/components/people/send-credentials-button";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { Button } from "@/components/ui/button";
 import { StaffAvatar } from "./staff-avatar";
 import { useStaff } from "@/lib/queries/academics";
-import { useReissueCredentials } from "@/lib/queries/people";
+import { useSession } from "@/lib/auth/useSession";
 import type { StaffVM } from "@/lib/validators/academics";
 import { PORTAL_ACCESS_LABEL, type PortalAccessStatus } from "@/lib/validators/people";
-import type { IssuedCredentials } from "@/lib/temp-password";
 import { cardShellClass } from "@/lib/ui";
 
 // Tone tracks how much attention the row needs: a teacher still holding a password the admin also
@@ -28,10 +25,7 @@ const PORTAL_TONE: Record<PortalAccessStatus, "success" | "warning" | "danger" |
   no_access: "neutral",
 };
 
-function buildColumns(
-  onSend: (row: StaffVM) => void,
-  sendingId: string | null,
-): DataTableColumn<StaffVM>[] {
+function buildColumns(currentUserId: string | null): DataTableColumn<StaffVM>[] {
   return [
     {
       key: "name",
@@ -117,35 +111,36 @@ function buildColumns(
     {
       key: "actions",
       header: "",
-      // Deactivated staff get no actions at all: both the reissue and the invite reject them
-      // server-side, so offering the buttons would only produce an error toast.
-      render: (row) =>
-        row.is_active ? (
+      render: (row) => {
+        // An admin is a staff member, so the row for whoever is signed in is on this list too — and
+        // both of these actions target somebody ELSE's account by definition. "Send credentials" on
+        // your own row revokes the password you are using (see reissueTempPassword's guard, which is
+        // what actually enforces this); an invite link to yourself is merely pointless. Marking the
+        // row rather than leaving the cell blank answers the obvious question of why it has no
+        // buttons.
+        if (row.id === currentUserId) {
+          return <span className="block text-right text-[var(--muted-foreground)]">You</span>;
+        }
+        // Deactivated staff get no actions at all: both the reissue and the invite reject them
+        // server-side, so offering the buttons would only produce an error toast.
+        if (!row.is_active) {
+          return <span className="block text-right text-[var(--muted-foreground)]">—</span>;
+        }
+        return (
           <div className="flex items-center justify-end gap-2">
             {/* Reissues rather than reveals: the original password is a hash and cannot be shown again. */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={sendingId === row.id}
-              onClick={() => onSend(row)}
-            >
-              {sendingId === row.id ? (
-                <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-              ) : (
-                <KeyRound className="size-3.5" aria-hidden="true" />
-              )}
-              Send credentials
-            </Button>
+            <SendCredentialsButton
+              profileId={row.id}
+              personName={`${row.first_name} ${row.last_name}`}
+            />
             <InvitePortalButton
               profileId={row.id}
               personName={`${row.first_name} ${row.last_name}`}
               label="Send link"
             />
           </div>
-        ) : (
-          <span className="block text-right text-[var(--muted-foreground)]">—</span>
-        ),
+        );
+      },
     },
   ];
 }
@@ -158,27 +153,13 @@ interface StaffTableProps {
 export function StaffTable({ onNewStaff }: StaffTableProps) {
   const router = useRouter();
   const { data, isLoading, isError, refetch } = useStaff();
-  const reissue = useReissueCredentials();
-  const [issued, setIssued] = useState<IssuedCredentials | null>(null);
-  const [sendingId, setSendingId] = useState<string | null>(null);
+  // Only to recognise the caller's own row below. Null while the session loads, which merely means
+  // the row shows its buttons for a moment — the server guard is what makes pressing one safe.
+  const { profile } = useSession();
   const isEmpty = !isLoading && !isError && (data?.length ?? 0) === 0;
-
-  async function sendCredentials(row: StaffVM) {
-    setSendingId(row.id);
-    try {
-      setIssued(await reissue.mutateAsync({ profile_id: row.id }));
-    } catch (err) {
-      toast.error("Couldn't issue credentials", {
-        description: err instanceof Error ? err.message : "Please try again.",
-      });
-    } finally {
-      setSendingId(null);
-    }
-  }
 
   return (
     <div className={cardShellClass}>
-      <CredentialsDialog credentials={issued} onClose={() => setIssued(null)} />
       {isError ? (
         <ErrorState message="Couldn't load staff." onRetry={() => refetch()} />
       ) : isEmpty ? (
@@ -194,7 +175,7 @@ export function StaffTable({ onNewStaff }: StaffTableProps) {
         />
       ) : (
         <DataTable
-          columns={buildColumns(sendCredentials, sendingId)}
+          columns={buildColumns(profile?.id ?? null)}
           data={data ?? []}
           getRowId={(row) => row.id}
           isLoading={isLoading}

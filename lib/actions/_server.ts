@@ -206,6 +206,19 @@ export async function reissueTempPassword(
 ): Promise<IssuedCredentials> {
   assertAdmin(ctx);
 
+  // The one row this must never touch is the caller's own. An admin is a staff member, so their row
+  // sits in the staff list beside everyone else's with the same button on it — and pressing it
+  // replaces the password they are signed in with by a generated one shown once, then flags the
+  // account as owing a change. Closing that dialog locks the school's administrator out of the
+  // school. This is a server-side guard rather than only a hidden button because a hidden button
+  // guarantees nothing: the action is reachable by anyone who can post to it.
+  if (profileId === ctx.profile.id) {
+    throw new Error(
+      "You can't issue yourself a temporary password — it would replace the one you signed in with. " +
+        'Use "Forgot password" on the sign-in screen instead.',
+    );
+  }
+
   // Read through the CALLER's client so RLS confines this to their own school — with the service role
   // this would be a cross-tenant password-reset machine.
   const { data: target, error } = await ctx.db

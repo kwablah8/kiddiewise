@@ -1,20 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { KeyRound, Loader2, UserRoundPlus } from "lucide-react";
-import { toast } from "@/lib/toast";
+import { UserRoundPlus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { InvitePortalButton } from "@/components/people/invite-portal-button";
-import { CredentialsDialog } from "@/components/people/credentials-dialog";
+import { SendCredentialsButton } from "@/components/people/send-credentials-button";
 import { StatusPill } from "@/components/data/status-pill";
-import { useParents, useReissueCredentials } from "@/lib/queries/people";
+import { useParents } from "@/lib/queries/people";
 import { PORTAL_ACCESS_LABEL, type ParentListItemVM, type PortalAccessStatus } from "@/lib/validators/people";
-import type { IssuedCredentials } from "@/lib/temp-password";
 import { formatInitials } from "@/lib/format";
 import { cardShellClass } from "@/lib/ui";
 import { cn } from "@/lib/utils";
@@ -34,10 +31,7 @@ const STATUS_TONE: Record<PortalAccessStatus, "success" | "warning" | "danger" |
   no_access: "neutral",
 };
 
-function buildColumns(
-  onSend: (row: ParentListItemVM) => void,
-  sendingId: string | null,
-): DataTableColumn<ParentListItemVM>[] {
+function buildColumns(): DataTableColumn<ParentListItemVM>[] {
   return [
     {
       key: "name",
@@ -86,20 +80,10 @@ function buildColumns(
       render: (row) => (
         <div className="flex items-center justify-end gap-2">
           {/* Reissues rather than reveals: the original password is a hash and cannot be shown again. */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={sendingId === row.id}
-            onClick={() => onSend(row)}
-          >
-            {sendingId === row.id ? (
-              <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-            ) : (
-              <KeyRound className="size-3.5" aria-hidden="true" />
-            )}
-            Send credentials
-          </Button>
+          <SendCredentialsButton
+            profileId={row.id}
+            personName={`${row.first_name} ${row.last_name}`}
+          />
           <InvitePortalButton
             profileId={row.id}
             personName={`${row.first_name} ${row.last_name}`}
@@ -114,23 +98,7 @@ function buildColumns(
 /** Parents list — name w/ initials avatar, email, phone, linked children (06-UI §6). */
 export function ParentsTable() {
   const { data, isLoading, isError, refetch } = useParents();
-  const reissue = useReissueCredentials();
-  const [issued, setIssued] = useState<IssuedCredentials | null>(null);
-  const [sendingId, setSendingId] = useState<string | null>(null);
   const isEmpty = !isLoading && !isError && (data?.length ?? 0) === 0;
-
-  async function sendCredentials(row: ParentListItemVM) {
-    setSendingId(row.id);
-    try {
-      setIssued(await reissue.mutateAsync({ profile_id: row.id }));
-    } catch (err) {
-      toast.error("Couldn't issue credentials", {
-        description: err instanceof Error ? err.message : "Please try again.",
-      });
-    } finally {
-      setSendingId(null);
-    }
-  }
 
   const activated = (data ?? []).filter((p) => p.portal_status === "active").length;
   const total = data?.length ?? 0;
@@ -150,10 +118,6 @@ export function ParentsTable() {
           )}
         </div>
       )}
-      <CredentialsDialog
-        credentials={issued}
-        onClose={() => setIssued(null)}
-      />
       {isError ? (
         <ErrorState message="Couldn't load parents." onRetry={() => refetch()} />
       ) : isEmpty ? (
@@ -169,7 +133,7 @@ export function ParentsTable() {
         />
       ) : (
         <DataTable
-          columns={buildColumns(sendCredentials, sendingId)}
+          columns={buildColumns()}
           data={data ?? []}
           getRowId={(row) => row.id}
           isLoading={isLoading}
