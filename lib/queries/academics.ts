@@ -13,6 +13,7 @@ import * as actions from "@/lib/actions/academics";
 // property a concrete function type and inference works as it did before. Do not inline these.
 const createYear = mutate(actions.createYear);
 const createTerm = mutate(actions.createTerm);
+const setReopeningDate = mutate(actions.setReopeningDate);
 const setActiveYear = mutate(actions.setActiveYear);
 const setActiveTerm = mutate(actions.setActiveTerm);
 const createClass = mutate(actions.createClass);
@@ -86,6 +87,24 @@ export const useCreateTerm = () => {
       // every per-year-filtered variant already cached) plus years, since term_count changed.
       qc.invalidateQueries({ queryKey: ["academics", "terms"] });
       qc.invalidateQueries({ queryKey: queryKeys.academics.years });
+    },
+  });
+};
+
+/**
+ * Set or clear a term's reopening date.
+ *
+ * Invalidates the whole terms prefix, and the reports tree with it: the date is printed on the
+ * term's report cards, so a sheet still showing the old one would contradict the database.
+ */
+export const useSetReopeningDate = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: setReopeningDate,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["academics", "terms"] });
+      qc.invalidateQueries({ queryKey: ["reports"] });
+      qc.invalidateQueries({ queryKey: ["parent"] });
     },
   });
 };

@@ -1,7 +1,8 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { CalendarDays, Download } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { formatDate } from "@/lib/format";
 
 import { ChildTabs } from "@/components/parent/child-tabs";
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,15 @@ function ReportCard({ report }: { report: TerminalReportVM }) {
         {report.class_teacher_remark && (
           <p className="mt-2 max-w-xl text-sm text-[var(--text)] italic">
             &ldquo;{report.class_teacher_remark}&rdquo;
+          </p>
+        )}
+        {/* Given its own line rather than folded into the summary: after the grade, this is the
+            thing a parent came to find, and they plan childcare and travel around it. Absent when
+            the school has not confirmed a date — better blank than a guess. */}
+        {report.reopening_date && (
+          <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-[var(--text)]">
+            <CalendarDays className="size-4 shrink-0 text-[var(--muted-foreground)]" aria-hidden="true" />
+            School reopens {formatDate(report.reopening_date)}
           </p>
         )}
       </div>

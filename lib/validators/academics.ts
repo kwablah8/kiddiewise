@@ -14,8 +14,18 @@ export const termVM = z.object({
   id: z.string(), academic_year_id: z.string(), name: z.string(),
   ordinal: z.number().int().min(1).max(3),
   start_date: z.string(), end_date: z.string(), is_active: z.boolean(),
+  // When school reopens after this term — printed on its reports. Null until confirmed; a
+  // placeholder date on a report card is worse than a blank one. See migration 0023.
+  reopening_date: z.string().nullable(),
 });
 export type TermVM = z.infer<typeof termVM>;
+
+export const setReopeningDateSchema = z.object({
+  term_id: z.string().min(1),
+  // Null clears it, which is the "×" on the terminal reports banner.
+  reopening_date: z.string().nullable(),
+});
+export type SetReopeningDateInput = z.infer<typeof setReopeningDateSchema>;
 
 export const classVM = z.object({
   id: z.string(), name: z.string(), level: z.string(),

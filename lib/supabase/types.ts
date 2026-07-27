@@ -1535,6 +1535,7 @@ export type Database = {
           is_active: boolean
           name: string
           ordinal: number
+          reopening_date: string | null
           school_id: string
           start_date: string
         }
@@ -1546,6 +1547,7 @@ export type Database = {
           is_active?: boolean
           name: string
           ordinal: number
+          reopening_date?: string | null
           school_id: string
           start_date: string
         }
@@ -1557,6 +1559,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           ordinal?: number
+          reopening_date?: string | null
           school_id?: string
           start_date?: string
         }

@@ -48,7 +48,7 @@ export async function listAcademicYears(): Promise<AcademicYearVM[]> {
 export async function listTerms(yearId?: string): Promise<TermVM[]> {
   let q = db()
     .from("terms")
-    .select("id, academic_year_id, name, ordinal, start_date, end_date, is_active")
+    .select("id, academic_year_id, name, ordinal, start_date, end_date, is_active, reopening_date")
     .order("ordinal");
   if (yearId !== undefined) q = q.eq("academic_year_id", yearId);
   return unwrapList(await q, "terms");
@@ -61,7 +61,7 @@ export async function getActiveContext(): Promise<ActiveContextVM> {
     db().from("academic_years").select(YEAR_SELECT).eq("is_active", true).maybeSingle(),
     db()
       .from("terms")
-      .select("id, academic_year_id, name, ordinal, start_date, end_date, is_active")
+      .select("id, academic_year_id, name, ordinal, start_date, end_date, is_active, reopening_date")
       .eq("is_active", true)
       .maybeSingle(),
   ]);

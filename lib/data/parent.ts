@@ -35,7 +35,7 @@ const CHILD_PROFILE_SELECT: string = `
 `;
 
 const CHILD_REPORT_SELECT: string =
-  "id, class_teacher_comment, average_score, is_published, term_id, terms(name)";
+  "id, class_teacher_comment, average_score, is_published, term_id, terms(name, reopening_date)";
 
 interface ChildProfileRow {
   id: string;
@@ -55,7 +55,7 @@ interface ChildReportRow {
   average_score: number | null;
   is_published: boolean;
   term_id: string;
-  terms: { name: string } | null;
+  terms: { name: string; reopening_date: string | null } | null;
 }
 
 interface ActiveTermRow {
@@ -318,6 +318,7 @@ export async function getChildReport(
   return {
     id: report.id,
     term_name: report.terms?.name ?? term?.name ?? "This term",
+    reopening_date: report.terms?.reopening_date ?? null,
     published: true,
     overall_average: average,
     overall_grade: average !== null ? (scoreToGrade(average, 100, bands)?.grade ?? null) : null,

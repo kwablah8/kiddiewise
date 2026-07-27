@@ -25,6 +25,7 @@ import {
   staffCreateSchema,
   staffUpdateSchema,
   assignSubjectSchema,
+  setReopeningDateSchema,
   type AcademicYearCreateInput,
   type TermCreateInput,
   type ClassCreateInput,
@@ -32,6 +33,7 @@ import {
   type SubjectCreateInput,
   type StaffCreateInput,
   type AssignSubjectInput,
+  type SetReopeningDateInput,
 } from "@/lib/validators/academics";
 import type { TablesUpdate } from "@/lib/supabase/types";
 import { z } from "zod";
@@ -122,6 +124,33 @@ export async function setActiveTerm(input: { id: string }): Promise<ActionResult
     assertOk(await ctx.db.from("terms").update({ is_active: false }).eq("is_active", true), "term");
     const row = assertWrite(
       await ctx.db.from("terms").update({ is_active: true }).eq("id", id).select("id").single(),
+      "term",
+    );
+    return { id: row.id };
+  });
+}
+
+/**
+ * Set (or clear) when school reopens after a term.
+ *
+ * Lives on the term, not on the reports, so every child in the class is told the same date and the
+ * value exists before a batch is generated — see migration 0023. Called from the reopening-date
+ * banner on /terminal-reports, which is where the person writing reports is standing.
+ */
+export async function setReopeningDate(
+  input: SetReopeningDateInput,
+): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const data = setReopeningDateSchema.parse(input);
+    const ctx = await tenant();
+
+    const row = assertWrite(
+      await ctx.db
+        .from("terms")
+        .update({ reopening_date: data.reopening_date })
+        .eq("id", data.term_id)
+        .select("id")
+        .single(),
       "term",
     );
     return { id: row.id };

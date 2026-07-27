@@ -25,6 +25,7 @@ import {
   useSetReportsPublished,
 } from "@/lib/queries/reports";
 import { ReportCommentsDialog } from "./report-comments-dialog";
+import { ReopeningDateBanner } from "./reopening-date-banner";
 import type { TerminalReportRowVM } from "@/lib/validators/reports";
 
 /**
@@ -45,6 +46,7 @@ export function TerminalReports() {
   const generate = useGenerateReports();
   const publish = useSetReportsPublished();
 
+  const selectedTerm = (terms ?? []).find((t) => t.id === termId) ?? null;
   const rows = sheet?.rows ?? [];
   const allPublished = rows.length > 0 && sheet?.published_count === sheet?.generated_count && (sheet?.generated_count ?? 0) > 0;
 
@@ -173,6 +175,14 @@ export function TerminalReports() {
 
   return (
     <div className="space-y-6">
+      {/* Above the selectors, mirroring the reference build: it is a property of the term, not of
+          the class being viewed, so it should not read as part of the filter row. */}
+      <ReopeningDateBanner
+        termId={termId}
+        termName={selectedTerm?.name ?? null}
+        reopeningDate={selectedTerm?.reopening_date ?? null}
+      />
+
       <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="tr-class">Class</Label>

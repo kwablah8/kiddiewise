@@ -17,7 +17,7 @@ export async function getTeacherDashboard(teacherId: string): Promise<TeacherDas
     db().from("subjects").select("id, name"),
     db()
       .from("terms")
-      .select("id, academic_year_id, name, ordinal, start_date, end_date, is_active")
+      .select("id, academic_year_id, name, ordinal, start_date, end_date, is_active, reopening_date")
       .eq("is_active", true)
       .maybeSingle(),
   ]);

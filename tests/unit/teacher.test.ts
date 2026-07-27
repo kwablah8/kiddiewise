@@ -30,6 +30,7 @@ const students = [
 const activeTerm: TermVM = {
   id: "trm-3", academic_year_id: "ay-1", name: "Third Term",
   ordinal: 3, start_date: "2026-04-20", end_date: "2026-07-31", is_active: true,
+  reopening_date: null,
 };
 
 describe("deriveTeacherDashboard", () => {

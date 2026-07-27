@@ -88,5 +88,8 @@ export const terminalReportVM = z.object({
   overall_average: z.number().nullable(),
   overall_grade: z.string().nullable(),
   class_teacher_remark: z.string(),
+  // When school reopens after this term, if the school has set it. The line parents look for first
+  // after the grades — they plan childcare, travel and fees around it.
+  reopening_date: z.string().nullable(),
 });
 export type TerminalReportVM = z.infer<typeof terminalReportVM>;
