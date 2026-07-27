@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Receipt } from "lucide-react";
+import { Download, Receipt } from "lucide-react";
 import { SearchField } from "@/components/data/search-field";
+import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -10,9 +11,14 @@ import { usePayments } from "@/lib/queries/fees";
 import { PAYMENT_METHOD_LABEL, type PaymentVM, type FeesFilter } from "@/lib/validators/fees";
 import { formatDate, formatGHS } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
+import { buildReceipt } from "@/lib/receipt";
+import { downloadReceipt } from "@/lib/pdf/receipt-pdf";
+import { useSchool } from "@/lib/queries/school";
+import { useSession } from "@/lib/auth/useSession";
 import { cardShellClass } from "@/lib/ui";
 
-const columns: DataTableColumn<PaymentVM>[] = [
+function buildColumns(onReceipt: (p: PaymentVM) => void): DataTableColumn<PaymentVM>[] {
+  return [
   {
     key: "student",
     header: "Student",
@@ -37,11 +43,38 @@ const columns: DataTableColumn<PaymentVM>[] = [
     header: "Date",
     render: (r) => <span className="text-[var(--muted-foreground)]">{formatDate(r.paid_at)}</span>,
   },
-];
+  {
+    key: "receipt",
+    header: "",
+    align: "right",
+    render: (r) => (
+      <Button type="button" variant="outline" size="sm" onClick={() => onReceipt(r)}>
+        <Download className="size-3.5" aria-hidden="true" />
+        Receipt
+      </Button>
+    ),
+  },
+  ];
+}
 
 export function PaymentHistoryTab({ filter }: { filter: FeesFilter }) {
   const { data, isLoading, isError, refetch } = usePayments(filter);
+  const { data: school } = useSchool();
+  const { profile } = useSession();
   const [query, setQuery] = useState("");
+
+  function onReceipt(payment: PaymentVM) {
+    downloadReceipt(
+      buildReceipt({
+        payment,
+        // Read from the tenant, not hardcoded: the receipt is the school's document, and a wrong
+        // name on it is worse than a plain one.
+        schoolName: school?.name ?? "School",
+        methodLabel: PAYMENT_METHOD_LABEL[payment.method],
+        issuedBy: profile ? `${profile.first_name} ${profile.last_name}` : "the school office",
+      }),
+    );
+  }
 
   // Reference is searchable alongside the name because that is how a disputed payment gets found:
   // a parent arrives with a receipt or a MoMo reference, not with a row number.
@@ -77,7 +110,12 @@ export function PaymentHistoryTab({ filter }: { filter: FeesFilter }) {
           }
         />
       ) : (
-        <DataTable columns={columns} data={rows} getRowId={(row) => row.id} isLoading={isLoading} />
+        <DataTable
+          columns={buildColumns(onReceipt)}
+          data={rows}
+          getRowId={(row) => row.id}
+          isLoading={isLoading}
+        />
       )}
     </div>
   );
