@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/brand";
 import type { PaymentVM } from "@/lib/validators/fees";
 
 /**
@@ -33,6 +34,12 @@ export interface ReceiptData {
   reference: string | null;
   paidAt: string;
   issuedBy: string;
+  /**
+   * Where the crest is fetched from at render time. Resolved here rather than in the renderer so the
+   * rule stays pure and testable — and so the Storage upload, when it lands, needs no change to
+   * `lib/pdf/*`.
+   */
+  logoSrc: string;
 }
 
 /** Assemble everything the receipt prints, from a payment row plus who is issuing it. */
@@ -41,6 +48,8 @@ export function buildReceipt(params: {
   schoolName: string;
   methodLabel: string;
   issuedBy: string;
+  /** The tenant's own `schools.logo_url`, or null when they haven't uploaded one. */
+  logoUrl: string | null;
 }): ReceiptData {
   return {
     receiptNo: receiptNumber(params.payment.id),
@@ -53,6 +62,8 @@ export function buildReceipt(params: {
     reference: params.payment.reference,
     paidAt: params.payment.paid_at,
     issuedBy: params.issuedBy,
+    // The tenant's own upload wins; the bundled crest covers a school that hasn't uploaded one.
+    logoSrc: params.logoUrl ?? BRAND.crest.src,
   };
 }
 

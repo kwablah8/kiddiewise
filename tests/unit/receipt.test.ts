@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { BRAND } from "@/lib/brand";
 import { buildReceipt, receiptFilename, receiptNumber } from "@/lib/receipt";
 import type { PaymentVM } from "@/lib/validators/fees";
 
@@ -36,6 +37,7 @@ describe("buildReceipt", () => {
     schoolName: "SNAB Learners International School",
     methodLabel: "Mobile money",
     issuedBy: "Ama Mensah",
+    logoUrl: null,
   });
 
   it("carries the payment onto the receipt", () => {
@@ -57,8 +59,35 @@ describe("buildReceipt", () => {
       schoolName: "S",
       methodLabel: "Cash",
       issuedBy: "A",
+      logoUrl: null,
     });
     expect(noRef.reference).toBeNull();
+  });
+});
+
+describe("buildReceipt logo", () => {
+  it("prefers the tenant's own uploaded logo", () => {
+    const uploaded =
+      "https://example.supabase.co/storage/v1/object/public/school-logos/abc/logo.png";
+    const data = buildReceipt({
+      payment,
+      schoolName: "S",
+      methodLabel: "Cash",
+      issuedBy: "A",
+      logoUrl: uploaded,
+    });
+    expect(data.logoSrc).toBe(uploaded);
+  });
+
+  it("falls back to the bundled crest when the school has not uploaded one", () => {
+    const data = buildReceipt({
+      payment,
+      schoolName: "S",
+      methodLabel: "Cash",
+      issuedBy: "A",
+      logoUrl: null,
+    });
+    expect(data.logoSrc).toBe(BRAND.crest.src);
   });
 });
 
@@ -69,6 +98,7 @@ describe("receiptFilename", () => {
       schoolName: "S",
       methodLabel: "Cash",
       issuedBy: "A",
+      logoUrl: null,
     });
     expect(receiptFilename(data)).toBe("RCP-9C1F2B7A-Kofi-Mensah.pdf");
   });
@@ -79,6 +109,7 @@ describe("receiptFilename", () => {
       schoolName: "S",
       methodLabel: "Cash",
       issuedBy: "A",
+      logoUrl: null,
     });
     expect(receiptFilename(data)).toBe("RCP-9C1F2B7A-N-Diaye-Kwame-Junior.pdf");
   });
