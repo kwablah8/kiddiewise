@@ -58,6 +58,12 @@ export function FlyerPoster({ on = "brand", className }: FlyerPosterProps) {
         width={MEDIA.flyer.width}
         height={MEDIA.flyer.height}
         sizes="(min-width: 1024px) 28rem, (min-width: 640px) 24rem, 100vw"
+        // Eager, against the usual below-the-fold instinct: Next's own dev warning flags this as the
+        // LCP element on both pages it appears on, and lazy-loading it left the framed poster
+        // rendering as an empty rectangle whenever the load lost the race with paint. A blank frame
+        // is the worst possible failure for the page's main conversion asset, and the optimized
+        // derivative is ~100KB at the size actually served, so the trade is worth it.
+        loading="eager"
         className={cn("h-auto w-full rounded-2xl shadow-2xl ring-1 ring-inset", FRAME[on])}
       />
       <a
