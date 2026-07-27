@@ -180,6 +180,12 @@
    · on --m-brand-ink 18.54:1. Gold on --m-brand-deep 9.09:1 and on --m-brand-ink 13.22:1 — high
    enough that gold is legible as TEXT on the navy sidebar, not merely as decoration.
 
+   MIRRORED in `lib/brand.ts` as `BRAND.palette` (deep / strong / accent, plus a `tint` that exists
+   only there). That mirror is for the PDF renderers: a jsPDF document takes literal RGB and cannot
+   read a custom property, and having `lib/pdf/*` reach into the DOM for a computed style would undo
+   the very split that keeps `renderReceipt` testable without a browser. Change a hex here, change it
+   there.
+
    SEAM: a second school would either override this block's values or swap the attribute value on
    <html>. True per-tenant branding (school name + logo from the `schools` row and Storage) is still
    unbuilt — see CLAUDE.md §5. */

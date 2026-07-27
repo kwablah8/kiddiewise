@@ -25,6 +25,26 @@ export interface BrandCrest {
   height: number;
 }
 
+/**
+ * The brand's hexes, for surfaces that cannot read a CSS variable.
+ *
+ * MIRRORS the `--m-*` block in `app/globals.css`, which is the visual source of truth and documents
+ * where each hue was sampled from the crest. This is a deliberate second REPRESENTATION of one fact,
+ * not a duplicate of it: jsPDF takes literal RGB, and reading
+ * `getComputedStyle(document.documentElement)` would couple `lib/pdf/*` to the DOM — precisely the
+ * coupling `renderReceipt` is split apart to avoid. Change one, change the other.
+ */
+export interface BrandPalette {
+  /** Deep navy — headings on white. The lighter royal looks thin at display sizes. */
+  deep: string;
+  /** Royal blue, darkened — figures and rules. Same value as `--primary`. */
+  strong: string;
+  /** Gold — accents and rules ONLY. It fails contrast as text on white. */
+  accent: string;
+  /** A ~8% `strong` wash over white — emphasis-block fills. */
+  tint: string;
+}
+
 export interface Brand {
   /** Initialism used in tight chrome — sidebar, auth panel, nav. */
   shortName: string;
@@ -33,6 +53,7 @@ export interface Brand {
   /** The words under the short name in the identity lock. */
   descriptor: string;
   motto: string;
+  palette: BrandPalette;
   crest: BrandCrest;
   /**
    * Backdrop for the auth screens' desktop side panel. `src` only, deliberately: it sits under a
@@ -49,6 +70,12 @@ export const BRAND: Brand = {
   fullName: "SNAB Learners International School",
   descriptor: "Learners International",
   motto: "Nurturing, Growing & Leading with Excellence.",
+  palette: {
+    deep: "#1d2f65",
+    strong: "#2a4bc8",
+    accent: "#ffd700",
+    tint: "#edf0fb",
+  },
   crest: {
     src: "/slis/logo.jpg",
     alt: "SNAB Learners International School (SLIS) crest — a blue and gold shield with an open book and torch",
