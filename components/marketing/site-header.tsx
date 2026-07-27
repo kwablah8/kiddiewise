@@ -124,7 +124,7 @@ export function SiteHeader() {
             aria-label={`${SITE.name} — home`}
             className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[var(--m-brand)]"
           >
-            <Wordmark tone={scrolled ? "dark" : "light"} />
+            <Wordmark tone={scrolled ? "dark" : "light"} name="full" />
           </Link>
 
           <nav aria-label="Primary" className="hidden items-center gap-7 lg:flex">
@@ -205,7 +205,7 @@ export function SiteHeader() {
             className="absolute inset-y-0 right-0 flex w-[86%] max-w-sm flex-col bg-[var(--surface)] shadow-2xl animate-in slide-in-from-right duration-300 motion-reduce:animate-none"
           >
             <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-5">
-              <Wordmark tone="dark" />
+              <Wordmark tone="dark" name="full" />
               <button
                 type="button"
                 onClick={close}

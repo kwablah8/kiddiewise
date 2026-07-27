@@ -4,6 +4,8 @@ interface WordmarkProps {
   /** "light" for dark (blue) surfaces — header/footer bands, "dark" for the white header/menu. */
   tone?: "light" | "dark";
   className?: string;
+  /** Spell the school out instead of showing the initialism. See `BrandLock`. */
+  name?: "short" | "full";
 }
 
 /**
@@ -14,6 +16,6 @@ interface WordmarkProps {
  * parent shell started showing the same lock, so the surfaces cannot drift. Kept under this name
  * because every marketing call site already imports `Wordmark`.
  */
-export function Wordmark({ tone = "dark", className }: WordmarkProps) {
-  return <BrandLock tone={tone} className={className} />;
+export function Wordmark({ tone = "dark", className, name }: WordmarkProps) {
+  return <BrandLock tone={tone} className={className} name={name} />;
 }
