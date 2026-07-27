@@ -9,6 +9,8 @@ import { cardShellClass } from "@/lib/ui";
 import { formatDate } from "@/lib/format";
 import { useTeacherDashboard } from "@/lib/queries/teacher";
 import { QuickActions } from "./quick-actions";
+import { AnnouncementsPanel } from "@/components/communication/announcements-panel";
+import { EventsPanel } from "@/components/communication/events-panel";
 
 export function TeacherDashboard({ teacherId }: { teacherId: string }) {
   const { data, isLoading, isError, refetch } = useTeacherDashboard(teacherId);
@@ -122,6 +124,11 @@ export function TeacherDashboard({ teacherId }: { teacherId: string }) {
           emptyTitle="No recent activity"
           emptyDescription="Attendance you mark and results you submit will appear here."
         />
+
+        {/* What the office has said, and what is coming up. RLS decides which announcements reach a
+            teacher, so this is the same component and the same query the parent dashboard uses. */}
+        <AnnouncementsPanel />
+        <EventsPanel />
       </div>
     </div>
   );

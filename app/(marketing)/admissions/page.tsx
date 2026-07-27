@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 
 import { Section } from "@/components/marketing/section";
 import { CtaButton } from "@/components/marketing/cta-button";
-import { AdmissionsPrograms } from "@/components/marketing/admissions/programs-overview";
 import { AdmissionsProcessSteps } from "@/components/marketing/admissions/process-steps";
 import { AdmissionsRequirements } from "@/components/marketing/admissions/requirements";
+import { AdmissionsFlyer } from "@/components/marketing/admissions/flyer";
 import { InquiryForm } from "@/components/marketing/admissions/inquiry-form";
 import { SITE } from "@/lib/marketing/site";
 
@@ -12,8 +12,13 @@ export const metadata: Metadata = { title: "Admissions" };
 
 /**
  * Admissions — the funnel's main conversion page (01-REQ "Marketing website": process,
- * requirements, contact). Hero -> process steps -> requirements -> the inquiry form, which
- * writes into `admissions_inquiries` via the mock seam (05-USER-FLOWS §10).
+ * requirements, contact). Hero -> process steps -> requirements -> the school's own admission flyer
+ * -> the inquiry form, which writes into `admissions_inquiries` (05-USER-FLOWS §10).
+ *
+ * A levels-and-ages section opened this page until the flyer landed. The flyer's own "Our levels"
+ * panel states the same five levels and the same age ranges from `SITE.programs`, on this very
+ * screen, and Home and About both still carry the section — so listing them a third time here only
+ * delayed the form. Cut, leaving the flyer as this page's level listing.
  */
 export default function AdmissionsPage() {
   return (
@@ -50,9 +55,9 @@ export default function AdmissionsPage() {
         </div>
       </Section>
 
-      <AdmissionsPrograms />
       <AdmissionsProcessSteps />
       <AdmissionsRequirements />
+      <AdmissionsFlyer />
 
       <Section tone="white" id="inquiry" aria-labelledby="inquiry-title">
         <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">

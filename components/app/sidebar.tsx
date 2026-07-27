@@ -21,6 +21,7 @@ import {
   Wallet,
   X,
   type LucideIcon,
+  Megaphone,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { BrandLock } from "@/components/brand/brand-lock";
@@ -54,6 +55,9 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Grading", href: "/grading", icon: SlidersHorizontal },
   { label: "Terminal Reports", href: "/terminal-reports", icon: FileBarChart2 },
   { label: "Promotion", href: "/promotion", icon: TrendingUp },
+  // Announcements AND events live behind this one entry, as two tabs. Both are "tell the school
+  // something", and the sidebar is already long.
+  { label: "Announcements", href: "/announcements", icon: Megaphone },
 ];
 
 const TEACHER_NAV_ITEMS: NavItem[] = [

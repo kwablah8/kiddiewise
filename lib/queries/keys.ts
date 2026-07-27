@@ -5,6 +5,11 @@ export const queryKeys = {
   sidebar: {
     counts: ["sidebar", "counts"] as const,
   },
+  communication: {
+    announcements: ["communication", "announcements"] as const,
+    events: ["communication", "events"] as const,
+    upcomingEvents: ["communication", "events", "upcoming"] as const,
+  },
   promotion: {
     candidates: (classId: string, yearId: string) =>
       ["promotion", "candidates", classId, yearId] as const,

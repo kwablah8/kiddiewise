@@ -17,6 +17,12 @@ export interface MediaAsset {
   height?: number;
 }
 
+/** A `MediaAsset` whose intrinsic size is known — for `next/image` without `fill`. */
+export interface SizedMediaAsset extends MediaAsset {
+  width: number;
+  height: number;
+}
+
 export type ProgramKey = "creche" | "nursery" | "kindergarten" | "primary" | "jhs";
 
 export interface MediaManifest {
@@ -31,9 +37,10 @@ export interface MediaManifest {
   gallery: readonly MediaAsset[];
   promoVideo: { src: string };
   promoPoster: MediaAsset;
-  /** The school's own admission flyer graphic — not a photo, kept out of `gallery`. Available if
-   * Admissions wants to embed it verbatim (docs/plan Task S2). */
-  flyer: MediaAsset;
+  /** The school's own admission flyer graphic — not a photo, kept out of `gallery`. Rendered
+   * verbatim by `FlyerPoster` on Home and Admissions, and served as-is to the poster's download
+   * link, so it is the one asset here that reaches parents as a file rather than as a page. */
+  flyer: SizedMediaAsset;
 }
 
 const campusExteriorBanners: MediaAsset = {
@@ -164,10 +171,13 @@ export const MEDIA: MediaManifest = {
     width: 1280,
     height: 720,
   },
+  // SEAM: next year's artwork replaces this one file + these two lines. Nothing else references the
+  // path, and the alt text is deliberately a description of what the flyer *says* — it is the only
+  // way the flyer's content (a raster) reaches a screen reader or a search engine.
   flyer: {
-    src: "/slis/flyer-admission.jpg",
-    alt: "SLIS admission-open flyer for 2026 registration, listing all five program levels and contact details",
-    width: 1600,
-    height: 769,
+    src: "/slis/flyer-admission-2026-2027.jpg",
+    alt: "SLIS admission flyer: admissions open for the 2026/2027 school year with an early-bird discount. It lists the five levels — Creche (6 months–2 years), Nursery (3–4), KG (4–5), Primary (6+) and JSS — the campus facilities, and the school's email and phone numbers.",
+    width: 1023,
+    height: 1537,
   },
 } as const;

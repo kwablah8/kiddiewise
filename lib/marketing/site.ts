@@ -12,6 +12,13 @@
 
 import { BRAND } from "@/lib/brand";
 
+/**
+ * The school year currently being admitted for, from the 2026/2027 admission flyer. Declared once
+ * here because `admissionsNote` embeds it and page copy names it inline — a `const` object cannot
+ * reference its own fields, so the alternative is writing the year twice.
+ */
+const ADMISSIONS_YEAR = "2026/2027";
+
 export interface ProgramLevel {
   /** Stable identifier, e.g. for `MEDIA.programs` lookups. */
   key: string;
@@ -70,7 +77,12 @@ export interface SiteConfig {
   tagline: string;
   location: SiteLocation;
   contact: SiteContact;
+  /** The school year admissions are open for, e.g. "2026/2027" — for copy that names it inline. */
+  admissionsYear: string;
   admissionsNote: string;
+  /** The early-bird offer as one standalone sentence. The flyer advertises that a discount exists
+   * but states neither an amount nor a deadline, so this says exactly that and no more. */
+  earlyBird: string;
   hours: OfficeHours;
   programs: readonly ProgramLevel[];
   /** Co-curricular life beyond the academic ladder (shown in the "What we offer" home section). */
@@ -94,7 +106,9 @@ export const SITE: SiteConfig = {
     email: "snab.learner@gmail.com",
     phones: ["0256855366", "0244210139"],
   },
-  admissionsNote: "Admission open for 2026",
+  admissionsYear: ADMISSIONS_YEAR,
+  admissionsNote: `Admission open for ${ADMISSIONS_YEAR}`,
+  earlyBird: "An early-bird discount applies to families who register early.",
   hours: {
     entries: [
       { days: "Monday – Friday", time: "6:00am – 8:00pm" },

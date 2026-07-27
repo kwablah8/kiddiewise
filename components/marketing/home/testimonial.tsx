@@ -5,10 +5,14 @@ import { SITE } from "@/lib/marketing/site";
  * The school's own promise — deliberately NOT a testimonial. The M4 honesty guard forbids
  * inventing a named parent or student quote for a real client, so this is an unattributed
  * statement in the school's voice, credited to the school itself.
+ *
+ * `tone="warm"`, not white: this section follows the white story section directly now that the
+ * "why families choose us" band between them is gone, and two white bands in a row would flatten
+ * the alternation that carries the page's structure.
  */
 export function HomeTestimonial() {
   return (
-    <Section tone="white" aria-labelledby="promise-heading">
+    <Section tone="warm" aria-labelledby="promise-heading">
       <h2 id="promise-heading" className="sr-only">
         Our promise to families
       </h2>
