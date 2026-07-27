@@ -6,14 +6,24 @@ import type { ClassOptionVM, StudentCreateInput } from "@/lib/validators/people"
 
 // Inquiry lifecycle (03-DATABASE inquiry_status enum; 05-USER-FLOWS §3):
 //   new ─▶ reviewing ─▶ accepted ─▶ converted
-//    └────────┴────────▶ rejected
-// `rejected` and `converted` are terminal. This table is the single source of truth for BOTH
-// which action buttons the UI offers AND the server-side guard in lib/actions/inquiries.ts.
+//    └────────┴────────▶ rejected ─┐
+//                          ▲───────┘ (reconsidered)
+// Only `converted` is terminal — once an inquiry has become a student record, undoing it here would
+// leave that record orphaned from its origin.
+//
+// `rejected` is NOT terminal, and that is deliberate. An admissions decision gets reversed all the
+// time: a place frees up, a parent supplies the missing document, someone rejects the wrong row in a
+// busy list. Making it final meant the only way back was to re-enter the whole application by hand,
+// losing the original submission date and everything the parent typed.
+//
+// This table is the single source of truth for BOTH which action buttons the UI offers AND the
+// server-side guard in lib/actions/inquiries.ts, so allowing it here is the entire change.
 export const INQUIRY_TRANSITIONS: Record<InquiryStatus, InquiryStatus[]> = {
   new: ["reviewing", "accepted", "rejected"],
   reviewing: ["accepted", "rejected"],
   accepted: ["converted", "rejected"],
-  rejected: [],
+  // Back to reviewing for "we'll look again", or straight to accepted for a decision already made.
+  rejected: ["reviewing", "accepted"],
   converted: [],
 };
 

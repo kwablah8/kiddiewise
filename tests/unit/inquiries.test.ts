@@ -19,10 +19,17 @@ describe("inquiry transitions", () => {
   it("only allows convert or reject from accepted", () => {
     expect(nextInquiryStatuses("accepted")).toEqual(["converted", "rejected"]);
   });
-  it("treats rejected and converted as terminal", () => {
-    expect(nextInquiryStatuses("rejected")).toEqual([]);
+  it("treats only converted as terminal", () => {
     expect(nextInquiryStatuses("converted")).toEqual([]);
     expect(canTransitionInquiry("converted", "reviewing")).toBe(false);
+  });
+  it("lets a rejected application be reconsidered", () => {
+    // Admissions decisions get reversed: a place frees up, a document arrives, or the wrong row was
+    // rejected in a busy list. Without this the only way back was re-keying the whole application.
+    expect(canTransitionInquiry("rejected", "accepted")).toBe(true);
+    expect(canTransitionInquiry("rejected", "reviewing")).toBe(true);
+    // Still not a shortcut into the student roster — that has to go through accepted.
+    expect(canTransitionInquiry("rejected", "converted")).toBe(false);
   });
   it("forbids skipping straight from new to converted", () => {
     expect(canTransitionInquiry("new", "converted")).toBe(false);
