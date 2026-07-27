@@ -5,11 +5,15 @@ import { attempt, UserFacingError, type ActionResult } from "./result";
 import { tenant, activeContext, assertWrite, assertOk, type TenantContext } from "./_server";
 import {
   feeStructureCreateSchema,
+  feeStructureUpdateSchema,
+  feeStructureDeleteSchema,
   bulkAssignFeesSchema,
   assignIndividualFeeSchema,
   extraFeeStructureCreateSchema,
   recordPaymentSchema,
   type FeeStructureCreateInput,
+  type FeeStructureUpdateInput,
+  type FeeStructureDeleteInput,
   type BulkAssignFeesInput,
   type AssignIndividualFeeInput,
   type ExtraFeeStructureCreateInput,
@@ -113,6 +117,73 @@ export async function createFeeStructure(input: FeeStructureCreateInput): Promis
         })
         .select("id")
         .single(),
+      "fee structure",
+    );
+    return { id: row.id };
+  });
+}
+
+/**
+ * Correct a fee structure.
+ *
+ * Editing this changes the school's published price list and NO student's balance: `fee_items` has
+ * no link to `invoices` — the assign dialogs take a typed amount and never read a row from here.
+ * Closing that gap is separate work.
+ *
+ * No `.eq("school_id", …)` guard: `fi_admin`'s `using` clause is the tenant boundary (golden rule 2),
+ * so another school's id matches zero rows and `assertWrite` reports it as not found.
+ */
+export async function updateFeeStructure(
+  input: FeeStructureUpdateInput,
+): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const data = feeStructureUpdateSchema.parse(input);
+    const ctx = await tenant();
+
+    const row = assertWrite(
+      await ctx.db
+        .from("fee_items")
+        .update({
+          // Kept in step with `description` using the same derivation `createFeeStructure` uses.
+          // Omit it and a row's `name` drifts out of step with its description on the first edit.
+          name: data.description ?? "School fees",
+          class_id: data.class_id,
+          academic_year_id: data.academic_year_id,
+          fee_term: data.term,
+          amount: data.amount,
+          due_date: data.due_date,
+          late_fee: data.late_fee,
+          description: data.description,
+          is_mandatory: data.is_mandatory,
+        })
+        .eq("id", data.id)
+        .select("id")
+        .single(),
+      "fee structure",
+    );
+    return { id: row.id };
+  });
+}
+
+/**
+ * Remove a fee structure.
+ *
+ * Safe: the only foreign key pointing at `fee_items` anywhere is
+ * `invoice_items.fee_item_id … on delete set null`, and nothing writes `invoice_items`. No invoice
+ * or payment can be orphaned.
+ *
+ * `.select("id").single()` rather than a bare delete so a row that RLS refuses, or that another
+ * admin already removed, reports a real error instead of a silent success.
+ */
+export async function deleteFeeStructure(
+  input: FeeStructureDeleteInput,
+): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const data = feeStructureDeleteSchema.parse(input);
+    const ctx = await tenant();
+
+    const row = assertWrite(
+      await ctx.db.from("fee_items").delete().eq("id", data.id).select("id").single(),
       "fee structure",
     );
     return { id: row.id };

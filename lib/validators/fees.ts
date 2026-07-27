@@ -84,6 +84,17 @@ export const feeStructureCreateSchema = z.object({
 });
 export type FeeStructureCreateInput = z.infer<typeof feeStructureCreateSchema>;
 
+// Edit contract. A full replace rather than a partial patch: the dialog renders and submits every
+// field, so optional-everything would be ceremony with a live footgun — a field accidentally left
+// out of the patch keeps its old value and the compiler says nothing.
+export const feeStructureUpdateSchema = feeStructureCreateSchema.extend({
+  id: z.string().min(1, "Required"),
+});
+export type FeeStructureUpdateInput = z.infer<typeof feeStructureUpdateSchema>;
+
+export const feeStructureDeleteSchema = z.object({ id: z.string().min(1, "Required") });
+export type FeeStructureDeleteInput = z.infer<typeof feeStructureDeleteSchema>;
+
 // Shared filter for the fees screens (undefined = "all").
 export interface FeesFilter {
   class_id?: string;

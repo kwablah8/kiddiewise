@@ -14,6 +14,8 @@ import type { FeesFilter } from "@/lib/validators/fees";
 // `void`, so every `onSuccess(_result, variables)` below becomes an error. Binding first gives the
 // property a concrete function type and inference works as it did before. Do not inline these.
 const createFeeStructure = mutate(actions.createFeeStructure);
+const updateFeeStructure = mutate(actions.updateFeeStructure);
+const deleteFeeStructure = mutate(actions.deleteFeeStructure);
 const bulkAssignFees = mutate(actions.bulkAssignFees);
 const assignIndividualFee = mutate(actions.assignIndividualFee);
 const createExtraFeeStructure = mutate(actions.createExtraFeeStructure);
@@ -65,6 +67,22 @@ export function useCreateFeeStructure() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: createFeeStructure,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}
+
+export function useUpdateFeeStructure() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: updateFeeStructure,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}
+
+export function useDeleteFeeStructure() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteFeeStructure,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
   });
 }
