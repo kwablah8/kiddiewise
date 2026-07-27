@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { z } from "zod";
@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateSubject, useUpdateSubject } from "@/lib/queries/academics";
@@ -50,6 +51,7 @@ export function SubjectFormDialog({ mode, subject, open, onOpenChange }: Subject
 
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
@@ -57,8 +59,8 @@ export function SubjectFormDialog({ mode, subject, open, onOpenChange }: Subject
     resolver: zodResolver(subjectCreateSchema),
     defaultValues:
       mode === "edit" && subject
-        ? { name: subject.name, code: subject.code }
-        : { name: "", code: null },
+        ? { name: subject.name, code: subject.code, is_active: subject.is_active }
+        : { name: "", code: null, is_active: true },
   });
 
   async function onSubmit(values: SubjectCreateInput) {
@@ -97,7 +99,7 @@ export function SubjectFormDialog({ mode, subject, open, onOpenChange }: Subject
             <DialogDescription>
               {mode === "create"
                 ? "Add a subject taught across classes."
-                : "Update this subject's name or code."}
+                : "Update this subject's name, code or status."}
             </DialogDescription>
           </DialogHeader>
 
@@ -122,6 +124,29 @@ export function SubjectFormDialog({ mode, subject, open, onOpenChange }: Subject
               />
               {errors.code && <p className="text-xs text-[var(--danger)]">{errors.code.message}</p>}
             </div>
+            {/* Edit only. Creating a subject you are not teaching makes no sense, so the create
+                form does not ask — the schema defaults it to active. */}
+            {mode === "edit" && (
+              <Controller
+                control={control}
+                name="is_active"
+                render={({ field }) => (
+                  <div className="space-y-1.5">
+                    <label className="flex w-fit cursor-pointer items-center gap-2.5 text-sm">
+                      <Checkbox
+                        checked={field.value ?? true}
+                        onCheckedChange={(checked) => field.onChange(checked === true)}
+                      />
+                      <span className="text-[var(--text)]">Currently taught</span>
+                    </label>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      Clear this when the school stops teaching the subject. Existing marks, class
+                      assignments and past reports are kept — it just stops being offered.
+                    </p>
+                  </div>
+                )}
+              />
+            )}
             {submitError && <p className="text-sm text-[var(--danger)]">{submitError}</p>}
           </div>
 

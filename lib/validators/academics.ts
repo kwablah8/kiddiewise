@@ -28,6 +28,9 @@ export type ClassVM = z.infer<typeof classVM>;
 
 export const subjectVM = z.object({
   id: z.string(), name: z.string(), code: z.string().nullable(), class_count: z.number(),
+  // False when the school has stopped teaching it. Kept rather than deleted so existing marks and
+  // class assignments still resolve — see migration 0022.
+  is_active: z.boolean(),
 });
 export type SubjectVM = z.infer<typeof subjectVM>;
 
@@ -98,6 +101,9 @@ export type ClassUpdateInput = z.infer<typeof classUpdateSchema>;
 
 export const subjectCreateSchema = z.object({
   name: z.string().min(1, "Required"), code: z.string().nullable().default(null),
+  // A subject is created because it is being taught, so the default is active. The form does not
+  // ask; the status is changed later, from the list, when the school drops it.
+  is_active: z.boolean().default(true),
 });
 export type SubjectCreateInput = z.infer<typeof subjectCreateSchema>;
 export const subjectUpdateSchema = subjectCreateSchema.partial().extend({ id: z.string() });

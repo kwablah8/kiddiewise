@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BookOpen, Pencil } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,18 @@ export function SubjectsTable({ onNewSubject }: SubjectsTableProps) {
       header: "Classes",
       align: "right",
       render: (row) => row.class_count,
+    },
+    {
+      key: "status",
+      header: "Status",
+      // Same wording and tones as the staff list's Employment column: an admin scanning either
+      // screen should not have to learn two vocabularies for the same idea.
+      render: (row) => (
+        <StatusPill
+          label={row.is_active ? "Active" : "Inactive"}
+          tone={row.is_active ? "success" : "neutral"}
+        />
+      ),
     },
     {
       key: "actions",

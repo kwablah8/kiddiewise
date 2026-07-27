@@ -4,9 +4,9 @@ import { subjectStats } from "@/lib/academics";
 describe("subjectStats", () => {
   it("counts total, assigned, unassigned, and total class assignments", () => {
     const s = subjectStats([
-      { id: "1", name: "Mathematics", code: "MATH", class_count: 6 },
-      { id: "2", name: "English", code: "ENG", class_count: 4 },
-      { id: "3", name: "French", code: null, class_count: 0 },
+      { id: "1", name: "Mathematics", code: "MATH", class_count: 6, is_active: true },
+      { id: "2", name: "English", code: "ENG", class_count: 4, is_active: true },
+      { id: "3", name: "French", code: null, class_count: 0, is_active: false },
     ]);
     expect(s).toEqual({ total: 3, assigned: 2, unassigned: 1, classAssignments: 10 });
   });

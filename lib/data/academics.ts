@@ -127,13 +127,14 @@ export async function getClass(id: string): Promise<ClassVM | null> {
 // ---------------------------------------------------------------------------
 export async function listSubjects(): Promise<SubjectVM[]> {
   const rows = unwrapList(
-    await db().from("subjects").select("id, name, code, class_subjects(count)").order("name"),
+    await db().from("subjects").select("id, name, code, is_active, class_subjects(count)").order("name"),
     "subjects",
   );
   return rows.map((s) => ({
     id: s.id,
     name: s.name,
     code: s.code,
+    is_active: s.is_active,
     class_count: s.class_subjects[0]?.count ?? 0,
   }));
 }

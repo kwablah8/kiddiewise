@@ -190,7 +190,7 @@ export async function createSubject(input: SubjectCreateInput): Promise<ActionRe
     const row = assertWrite(
       await ctx.db
         .from("subjects")
-        .insert({ name: data.name, code: data.code ?? null, school_id: ctx.schoolId })
+        .insert({ name: data.name, code: data.code ?? null, is_active: data.is_active, school_id: ctx.schoolId })
         .select("id")
         .single(),
       "subject",
@@ -210,6 +210,7 @@ export async function updateSubject(
 
     const patch: TablesUpdate<"subjects"> = { code: data.code };
     if (data.name !== undefined) patch.name = data.name;
+    if (data.is_active !== undefined) patch.is_active = data.is_active;
 
     const row = assertWrite(
       await ctx.db.from("subjects").update(patch).eq("id", data.id).select("id").single(),
