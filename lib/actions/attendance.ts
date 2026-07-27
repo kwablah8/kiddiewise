@@ -1,5 +1,7 @@
 "use server";
 
+import { attempt, UserFacingError, type ActionResult } from "./result";
+
 import { revalidatePath } from "next/cache";
 import { tenant, activeContext, assertOk } from "./_server";
 import { saveAttendanceSchema, type SaveAttendanceInput } from "@/lib/validators/attendance";
@@ -17,34 +19,36 @@ import { saveAttendanceSchema, type SaveAttendanceInput } from "@/lib/validators
  */
 export async function saveAttendance(
   input: SaveAttendanceInput,
-): Promise<{ ok: true; count: number }> {
-  const { class_id, date, entries } = saveAttendanceSchema.parse(input);
-  const ctx = await tenant();
-  const { termId } = await activeContext(ctx);
+): Promise<ActionResult<{ ok: true; count: number }>> {
+  return attempt(async () => {
+    const { class_id, date, entries } = saveAttendanceSchema.parse(input);
+    const ctx = await tenant();
+    const { termId } = await activeContext(ctx);
 
-  if (!termId) {
-    throw new Error("Set an active term before taking attendance.");
-  }
+    if (!termId) {
+      throw new UserFacingError("Set an active term before taking attendance.");
+    }
 
-  const rows = entries.map((e) => ({
-    school_id: ctx.schoolId,
-    student_id: e.student_id,
-    class_id,
-    term_id: termId,
-    date,
-    status: e.status,
-    marked_by: ctx.profile.id,
-    updated_at: new Date().toISOString(),
-  }));
+    const rows = entries.map((e) => ({
+      school_id: ctx.schoolId,
+      student_id: e.student_id,
+      class_id,
+      term_id: termId,
+      date,
+      status: e.status,
+      marked_by: ctx.profile.id,
+      updated_at: new Date().toISOString(),
+    }));
 
-  assertOk(
-    await ctx.db.from("attendance").upsert(rows, { onConflict: "student_id,date" }),
-    "attendance",
-  );
+    assertOk(
+      await ctx.db.from("attendance").upsert(rows, { onConflict: "student_id,date" }),
+      "attendance",
+    );
 
-  // The same rows back the parent portal and the admin dashboard; revalidate so a server-rendered
-  // view doesn't keep serving yesterday's numbers.
-  revalidatePath("/teacher/attendance");
+    // The same rows back the parent portal and the admin dashboard; revalidate so a server-rendered
+    // view doesn't keep serving yesterday's numbers.
+    revalidatePath("/teacher/attendance");
 
-  return { ok: true, count: rows.length };
+    return { ok: true, count: rows.length };
+  });
 }

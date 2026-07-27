@@ -1,8 +1,22 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { mutate } from "@/lib/actions/result";
 import { queryKeys } from "./keys";
 import * as data from "@/lib/data/people";
 import * as actions from "@/lib/actions/people";
+
+
+// Each action is bound to a const here rather than wrapped inline at `mutationFn`. That is not
+// style: `mutationFn: mutate(actions.x)` is a generic CALL in a contextually-typed position, and
+// TypeScript stops inferring useMutation's variables type through it — it silently falls back to
+// `void`, so every `onSuccess(_result, variables)` below becomes an error. Binding first gives the
+// property a concrete function type and inference works as it did before. Do not inline these.
+const createStudent = mutate(actions.createStudent);
+const updateStudent = mutate(actions.updateStudent);
+const createParent = mutate(actions.createParent);
+const linkGuardian = mutate(actions.linkGuardian);
+const invitePortal = mutate(actions.invitePortal);
+const reissueCredentials = mutate(actions.reissueCredentials);
 
 export const useStudents = (
   params: { search?: string; status?: string; gender?: string; class_id?: string } = {},
@@ -36,7 +50,7 @@ export const useClassOptions = () =>
 export const useCreateStudent = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.createStudent,
+    mutationFn: createStudent,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.students.all });
       qc.invalidateQueries({ queryKey: queryKeys.students.stats });
@@ -47,7 +61,7 @@ export const useCreateStudent = () => {
 export const useUpdateStudent = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.updateStudent,
+    mutationFn: updateStudent,
     onSuccess: (_result, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.students.all });
       qc.invalidateQueries({ queryKey: queryKeys.students.detail(variables.id) });
@@ -59,7 +73,7 @@ export const useUpdateStudent = () => {
 export const useCreateParent = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.createParent,
+    mutationFn: createParent,
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.parents.all }),
   });
 };
@@ -67,7 +81,7 @@ export const useCreateParent = () => {
 export const useLinkGuardian = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.linkGuardian,
+    mutationFn: linkGuardian,
     onSuccess: (_result, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.students.detail(variables.student_id) });
       qc.invalidateQueries({ queryKey: queryKeys.students.all });
@@ -84,7 +98,7 @@ export const useLinkGuardian = () => {
  * No cache invalidation: inviting doesn't change any row the UI renders — the account already existed,
  * silently, from the moment the person was added.
  */
-export const useInvitePortal = () => useMutation({ mutationFn: actions.invitePortal });
+export const useInvitePortal = () => useMutation({ mutationFn: invitePortal });
 
 /**
  * Issue a fresh temporary password so the admin can send credentials again.
@@ -97,7 +111,7 @@ export const useInvitePortal = () => useMutation({ mutationFn: actions.invitePor
 export const useReissueCredentials = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.reissueCredentials,
+    mutationFn: reissueCredentials,
     onSuccess: (_result, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.parents.all });
       qc.invalidateQueries({ queryKey: queryKeys.academics.staff });

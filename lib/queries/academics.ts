@@ -1,8 +1,28 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { mutate } from "@/lib/actions/result";
 import { queryKeys } from "./keys";
 import * as data from "@/lib/data/academics";
 import * as actions from "@/lib/actions/academics";
+
+
+// Each action is bound to a const here rather than wrapped inline at `mutationFn`. That is not
+// style: `mutationFn: mutate(actions.x)` is a generic CALL in a contextually-typed position, and
+// TypeScript stops inferring useMutation's variables type through it — it silently falls back to
+// `void`, so every `onSuccess(_result, variables)` below becomes an error. Binding first gives the
+// property a concrete function type and inference works as it did before. Do not inline these.
+const createYear = mutate(actions.createYear);
+const createTerm = mutate(actions.createTerm);
+const setActiveYear = mutate(actions.setActiveYear);
+const setActiveTerm = mutate(actions.setActiveTerm);
+const createClass = mutate(actions.createClass);
+const updateClass = mutate(actions.updateClass);
+const createSubject = mutate(actions.createSubject);
+const updateSubject = mutate(actions.updateSubject);
+const createStaff = mutate(actions.createStaff);
+const updateStaff = mutate(actions.updateStaff);
+const assignSubject = mutate(actions.assignSubject);
+const unassign = mutate(actions.unassign);
 
 // ---- reads -------------------------------------------------------------
 
@@ -52,7 +72,7 @@ export const useAssignmentsForStaff = (staffId: string) =>
 export const useCreateYear = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.createYear,
+    mutationFn: createYear,
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.academics.years }),
   });
 };
@@ -60,7 +80,7 @@ export const useCreateYear = () => {
 export const useCreateTerm = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.createTerm,
+    mutationFn: createTerm,
     onSuccess: () => {
       // Invalidate the whole "academics","terms",* prefix (covers both the unfiltered list and
       // every per-year-filtered variant already cached) plus years, since term_count changed.
@@ -73,7 +93,7 @@ export const useCreateTerm = () => {
 export const useSetActiveYear = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.setActiveYear,
+    mutationFn: setActiveYear,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.academics.years });
       qc.invalidateQueries({ queryKey: queryKeys.academics.activeContext });
@@ -84,7 +104,7 @@ export const useSetActiveYear = () => {
 export const useSetActiveTerm = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.setActiveTerm,
+    mutationFn: setActiveTerm,
     onSuccess: () => {
       // Every listTerms(yearId) entry (and the unfiltered listTerms()) can have its is_active
       // flag change, so invalidate the whole "academics","terms",* prefix rather than one id.
@@ -97,7 +117,7 @@ export const useSetActiveTerm = () => {
 export const useCreateClass = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.createClass,
+    mutationFn: createClass,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.academics.classes });
       qc.invalidateQueries({ queryKey: queryKeys.classes.options });
@@ -108,7 +128,7 @@ export const useCreateClass = () => {
 export const useUpdateClass = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.updateClass,
+    mutationFn: updateClass,
     onSuccess: (_result, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.academics.classes });
       qc.invalidateQueries({ queryKey: queryKeys.academics.class(variables.id) });
@@ -122,7 +142,7 @@ export const useUpdateClass = () => {
 export const useCreateSubject = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.createSubject,
+    mutationFn: createSubject,
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.academics.subjects }),
   });
 };
@@ -130,7 +150,7 @@ export const useCreateSubject = () => {
 export const useUpdateSubject = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.updateSubject,
+    mutationFn: updateSubject,
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.academics.subjects }),
   });
 };
@@ -138,7 +158,7 @@ export const useUpdateSubject = () => {
 export const useCreateStaff = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.createStaff,
+    mutationFn: createStaff,
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.academics.staff }),
   });
 };
@@ -146,7 +166,7 @@ export const useCreateStaff = () => {
 export const useUpdateStaff = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.updateStaff,
+    mutationFn: updateStaff,
     onSuccess: (_result, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.academics.staff });
       qc.invalidateQueries({ queryKey: queryKeys.academics.staffMember(variables.id) });
@@ -157,7 +177,7 @@ export const useUpdateStaff = () => {
 export const useAssignSubject = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.assignSubject,
+    mutationFn: assignSubject,
     onSuccess: (_result, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.academics.assignments(variables.class_id) });
       qc.invalidateQueries({ queryKey: queryKeys.academics.class(variables.class_id) });
@@ -180,7 +200,7 @@ export const useAssignSubject = () => {
 export const useUnassign = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: actions.unassign,
+    mutationFn: unassign,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["academics", "assignments"] });
       qc.invalidateQueries({ queryKey: queryKeys.academics.classes });

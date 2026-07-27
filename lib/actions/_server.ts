@@ -10,6 +10,7 @@ import {
   tempPasswordExpiry,
   type IssuedCredentials,
 } from "@/lib/temp-password";
+import { UserFacingError } from "./result";
 
 export type { IssuedCredentials };
 
@@ -40,7 +41,7 @@ export async function tenant(): Promise<TenantContext> {
   // profiles_school_required guarantees a school for every non-super_admin role; super_admin has no
   // school and therefore no tenant to write into.
   if (!profile.school_id) {
-    throw new Error("This account isn't attached to a school, so it can't create records.");
+    throw new UserFacingError("This account isn't attached to a school, so it can't create records.");
   }
   return { db, profile, schoolId: profile.school_id };
 }
@@ -83,17 +84,22 @@ export function assertWrite<T>(
   if (res.error) {
     const code = res.error.code;
     if (code === "23505") {
-      throw new Error(friendly ?? `That ${context} already exists.`);
+      throw new UserFacingError(friendly ?? `That ${context} already exists.`);
     }
     if (code === "23503") {
-      throw new Error(
+      throw new UserFacingError(
         friendly ?? `That ${context} refers to something that no longer exists.`,
       );
     }
     // 42501 is RLS/privilege denial — the row exists but this caller may not touch it.
     if (code === "42501") {
-      throw new Error("You don't have permission to make that change.");
+      throw new UserFacingError("You don't have permission to make that change.");
     }
+    // Any other Postgres code is a fault, not a rule the user broke — a bad column, a broken
+    // constraint, a dropped connection. A plain Error (not UserFacingError) so `attempt` rethrows
+    // it: the raw driver text goes to the server log where it is useful, and the user gets the
+    // plain-language fallback instead of "null value in column \"school_id\" violates not-null
+    // constraint", which tells an administrator nothing and reads as if the product is broken.
     throw new Error(`${context}: ${res.error.message}`);
   }
   if (res.data === null || res.data === undefined) {
@@ -113,7 +119,7 @@ export function assertOk(
 
 function assertAdmin(ctx: TenantContext): void {
   if (ctx.profile.role !== "school_admin" && ctx.profile.role !== "super_admin") {
-    throw new Error("Only an administrator can add staff or parents or send portal invitations.");
+    throw new UserFacingError("Only an administrator can add staff or parents or send portal invitations.");
   }
 }
 
@@ -162,7 +168,7 @@ export async function provisionUser(
     // violation on profiles.
     const message = error?.message.toLowerCase() ?? "";
     if (message.includes("already been registered") || message.includes("already exists")) {
-      throw new Error("Someone with that email address already has an account.");
+      throw new UserFacingError("Someone with that email address already has an account.");
     }
     throw new Error(
       `Could not create an account for ${email}: ${error?.message ?? "unknown error"}`,
@@ -213,7 +219,7 @@ export async function reissueTempPassword(
   // school. This is a server-side guard rather than only a hidden button because a hidden button
   // guarantees nothing: the action is reachable by anyone who can post to it.
   if (profileId === ctx.profile.id) {
-    throw new Error(
+    throw new UserFacingError(
       "You can't issue yourself a temporary password — it would replace the one you signed in with. " +
         'Use "Forgot password" on the sign-in screen instead.',
     );
@@ -228,9 +234,9 @@ export async function reissueTempPassword(
     .maybeSingle();
 
   if (error) throw new Error(`Could not load that person: ${error.message}`);
-  if (!target) throw new Error("That person is not in your school.");
+  if (!target) throw new UserFacingError("That person is not in your school.");
   if (!target.is_active) {
-    throw new Error("This account is deactivated. Reactivate it before issuing a new password.");
+    throw new UserFacingError("This account is deactivated. Reactivate it before issuing a new password.");
   }
 
   const tempPassword = generateTempPassword();
@@ -290,9 +296,9 @@ export async function invitePortalUser(
     .maybeSingle();
 
   if (error) throw new Error(`Could not load that person: ${error.message}`);
-  if (!target) throw new Error("That person is not in your school.");
+  if (!target) throw new UserFacingError("That person is not in your school.");
   if (!target.is_active) {
-    throw new Error("This account is deactivated. Reactivate it before inviting them.");
+    throw new UserFacingError("This account is deactivated. Reactivate it before inviting them.");
   }
 
   const redirectTo = passwordSetupUrl();

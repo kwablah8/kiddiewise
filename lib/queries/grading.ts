@@ -1,5 +1,6 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { mutate, type ActionResult } from "@/lib/actions/result";
 import { queryKeys } from "./keys";
 import * as data from "@/lib/data/grading";
 import * as actions from "@/lib/actions/grading";
@@ -12,10 +13,11 @@ export const useAssessmentTypes = () =>
 
 // Grade-band mutations invalidate bands; assessment detail derives grades from bands, so also
 // invalidate any cached assessment detail (prefix ["assessments"]).
-function useBandMutation<TArgs>(fn: (a: TArgs) => Promise<unknown>) {
+function useBandMutation<TArgs>(fn: (a: TArgs) => Promise<ActionResult<unknown>>) {
   const qc = useQueryClient();
+  const mutationFn = mutate(fn);
   return useMutation({
-    mutationFn: fn,
+    mutationFn,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.grading.bands });
       qc.invalidateQueries({ queryKey: ["assessments"] });
@@ -26,10 +28,11 @@ export const useCreateGradeBand = () => useBandMutation(actions.createGradeBand)
 export const useUpdateGradeBand = () => useBandMutation(actions.updateGradeBand);
 export const useDeleteGradeBand = () => useBandMutation(actions.deleteGradeBand);
 
-function useTypeMutation<TArgs>(fn: (a: TArgs) => Promise<unknown>) {
+function useTypeMutation<TArgs>(fn: (a: TArgs) => Promise<ActionResult<unknown>>) {
   const qc = useQueryClient();
+  const mutationFn = mutate(fn);
   return useMutation({
-    mutationFn: fn,
+    mutationFn,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.grading.types });
       qc.invalidateQueries({ queryKey: ["assessments"] });

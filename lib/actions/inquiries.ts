@@ -1,5 +1,7 @@
 "use server";
 
+import { attempt, UserFacingError, type ActionResult } from "./result";
+
 import { createClient } from "@/lib/supabase/server";
 import { tenant, assertWrite, assertOk, publicSchoolId } from "./_server";
 import {
@@ -24,20 +26,22 @@ import { canTransitionInquiry } from "@/lib/inquiries";
  * ever enquired. Write-only is the correct shape for a public form: the visitor needs confirmation it
  * was received, not the row.
  */
-export async function submitInquiry(input: InquiryCreateInput): Promise<{ ok: true }> {
-  const data = inquiryCreateSchema.parse(input);
-  const schoolId = await publicSchoolId();
-  const db = await createClient();
+export async function submitInquiry(input: InquiryCreateInput): Promise<ActionResult<{ ok: true }>> {
+  return attempt(async () => {
+    const data = inquiryCreateSchema.parse(input);
+    const schoolId = await publicSchoolId();
+    const db = await createClient();
 
-  assertOk(
-    await db
-      .from("admissions_inquiries")
-      .insert({ ...data, school_id: schoolId, status: "new" }),
-    "inquiry",
-    "We couldn't submit your enquiry just now. Please try again, or call the school office.",
-  );
+    assertOk(
+      await db
+        .from("admissions_inquiries")
+        .insert({ ...data, school_id: schoolId, status: "new" }),
+      "inquiry",
+      "We couldn't submit your enquiry just now. Please try again, or call the school office.",
+    );
 
-  return { ok: true };
+    return { ok: true };
+  });
 }
 
 /**
@@ -49,25 +53,27 @@ export async function submitInquiry(input: InquiryCreateInput): Promise<{ ok: tr
  * straight to `converted`, or mutating a row that was already rejected. Read-check-write happens here,
  * where the client cannot skip it.
  */
-export async function setInquiryStatus(input: InquiryStatusUpdateInput): Promise<{ id: string }> {
-  const { id, status } = inquiryStatusUpdateSchema.parse(input);
-  const ctx = await tenant();
+export async function setInquiryStatus(input: InquiryStatusUpdateInput): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const { id, status } = inquiryStatusUpdateSchema.parse(input);
+    const ctx = await tenant();
 
-  const { data: current } = await ctx.db
-    .from("admissions_inquiries")
-    .select("status")
-    .eq("id", id)
-    .maybeSingle();
+    const { data: current } = await ctx.db
+      .from("admissions_inquiries")
+      .select("status")
+      .eq("id", id)
+      .maybeSingle();
 
-  if (!current) throw new Error("This inquiry no longer exists.");
-  if (!canTransitionInquiry(current.status, status)) {
-    throw new Error(`Can't move an inquiry from "${current.status}" to "${status}".`);
-  }
+    if (!current) throw new UserFacingError("This inquiry no longer exists.");
+    if (!canTransitionInquiry(current.status, status)) {
+      throw new UserFacingError(`Can't move an inquiry from "${current.status}" to "${status}".`);
+    }
 
-  const row = assertWrite(
-    await ctx.db.from("admissions_inquiries").update({ status }).eq("id", id).select("id").single(),
-    "inquiry",
-  );
+    const row = assertWrite(
+      await ctx.db.from("admissions_inquiries").update({ status }).eq("id", id).select("id").single(),
+      "inquiry",
+    );
 
-  return { id: row.id };
+    return { id: row.id };
+  });
 }
