@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
+
 import Link from "next/link";
 import { UserRoundPlus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { SearchField } from "@/components/data/search-field";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { buttonVariants } from "@/components/ui/button";
@@ -13,6 +16,7 @@ import { StatusPill } from "@/components/data/status-pill";
 import { useParents } from "@/lib/queries/people";
 import { PORTAL_ACCESS_LABEL, type ParentListItemVM, type PortalAccessStatus } from "@/lib/validators/people";
 import { formatInitials } from "@/lib/format";
+import { matchesQuery } from "@/lib/search";
 import { cardShellClass } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 
@@ -98,7 +102,14 @@ function buildColumns(): DataTableColumn<ParentListItemVM>[] {
 /** Parents list — name w/ initials avatar, email, phone, linked children (06-UI §6). */
 export function ParentsTable() {
   const { data, isLoading, isError, refetch } = useParents();
-  const isEmpty = !isLoading && !isError && (data?.length ?? 0) === 0;
+  const [query, setQuery] = useState("");
+  // Children's names are searchable too: staff far more often know "Kofi's mother" than the
+  // guardian's own name, and that is the lookup this screen has to answer at the front desk.
+  const rows = (data ?? []).filter((r) =>
+    matchesQuery(query, r.first_name, r.last_name, r.email, r.phone, ...r.children_names),
+  );
+  const isEmpty = !isLoading && !isError && rows.length === 0;
+  const noneAtAll = (data?.length ?? 0) === 0;
 
   const activated = (data ?? []).filter((p) => p.portal_status === "active").length;
   const total = data?.length ?? 0;
@@ -118,23 +129,37 @@ export function ParentsTable() {
           )}
         </div>
       )}
+      <div className="px-4 pt-4">
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          placeholder="Search by parent, child, email or phone"
+          label="Search parents"
+        />
+      </div>
       {isError ? (
         <ErrorState message="Couldn't load parents." onRetry={() => refetch()} />
       ) : isEmpty ? (
         <EmptyState
           icon={UserRoundPlus}
-          title="No parents yet"
-          description="Add a parent record to start linking guardians to students."
+          title={noneAtAll ? "No parents yet" : "No matching parents"}
+          description={
+            noneAtAll
+              ? "Add a parent record to start linking guardians to students."
+              : `Nothing matches “${query}”. Check the spelling, or clear the search.`
+          }
           action={
-            <Link href="/parents/new" className={cn(buttonVariants())}>
-              New Parent
-            </Link>
+            noneAtAll ? (
+              <Link href="/parents/new" className={cn(buttonVariants())}>
+                New Parent
+              </Link>
+            ) : undefined
           }
         />
       ) : (
         <DataTable
           columns={buildColumns()}
-          data={data ?? []}
+          data={rows}
           getRowId={(row) => row.id}
           isLoading={isLoading}
           emptyTitle="No parents yet"

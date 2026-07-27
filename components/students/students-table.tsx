@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { SearchField } from "@/components/data/search-field";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -121,19 +121,15 @@ export function StudentsTable() {
   return (
     <div className={cardShellClass}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="relative w-full max-w-sm">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-[var(--muted-foreground)]"
-            aria-hidden="true"
-          />
-          <Input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by name or admission no."
-            aria-label="Search students"
-            className="h-9 pl-8"
-          />
-        </div>
+        {/* The one list that searches SERVER-side (debounced above): a roster is the table that
+            genuinely grows, and its query is already paginated. Same control either way, so the
+            affordance is identical to every other list. */}
+        <SearchField
+          value={searchInput}
+          onChange={setSearchInput}
+          placeholder="Search by name or admission no."
+          label="Search students"
+        />
         {!isLoading && !isError && (
           <p className="text-sm whitespace-nowrap text-[var(--muted-foreground)]">
             {count} {count === 1 ? "student" : "students"}

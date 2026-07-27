@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, Wallet } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { SearchField } from "@/components/data/search-field";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -11,6 +12,7 @@ import { FeeStructureDialog } from "./fee-structure-dialog";
 import { useFeeStructures } from "@/lib/queries/fees";
 import { FEE_TERM_LABEL, type FeeStructureVM, type FeesFilter } from "@/lib/validators/fees";
 import { formatDate, formatGHS } from "@/lib/format";
+import { matchesQuery } from "@/lib/search";
 import { cardShellClass } from "@/lib/ui";
 
 const columns: DataTableColumn<FeeStructureVM>[] = [
@@ -53,7 +55,12 @@ export function FeeStructureTab({ filter }: { filter: FeesFilter }) {
   const { data, isLoading, isError, refetch } = useFeeStructures(filter);
   const [open, setOpen] = useState(false);
   const [dialogKey, setDialogKey] = useState(0);
-  const isEmpty = !isLoading && !isError && (data?.length ?? 0) === 0;
+  const [query, setQuery] = useState("");
+  const rows = (data ?? []).filter((r) =>
+    matchesQuery(query, r.class_name, r.academic_year_name, r.description, r.amount),
+  );
+  const isEmpty = !isLoading && !isError && rows.length === 0;
+  const noneAtAll = (data?.length ?? 0) === 0;
 
   return (
     <div className="space-y-4">
@@ -71,18 +78,29 @@ export function FeeStructureTab({ filter }: { filter: FeesFilter }) {
       </div>
 
       <div className={cardShellClass}>
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          placeholder="Search by class, year or description"
+          label="Search fee structures"
+          className="mb-3"
+        />
         {isError ? (
           <ErrorState message="Couldn't load fee structures." onRetry={() => refetch()} />
         ) : isEmpty ? (
           <EmptyState
             icon={Wallet}
-            title="No fee structures yet"
-            description="Create a fee structure to define what a class owes for a year or term."
+            title={noneAtAll ? "No fee structures yet" : "No matching fee structures"}
+            description={
+              noneAtAll
+                ? "Create a fee structure to define what a class owes for a year or term."
+                : `Nothing matches “${query}”. Check the spelling, or clear the search.`
+            }
           />
         ) : (
           <DataTable
             columns={columns}
-            data={data ?? []}
+            data={rows}
             getRowId={(row) => row.id}
             isLoading={isLoading}
           />

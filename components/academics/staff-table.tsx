@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
+
 import { useRouter } from "next/navigation";
 import { Users } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { SearchField } from "@/components/data/search-field";
 import { InvitePortalButton } from "@/components/people/invite-portal-button";
 import { SendCredentialsButton } from "@/components/people/send-credentials-button";
 import { StatusPill } from "@/components/data/status-pill";
@@ -14,6 +17,7 @@ import { useStaff } from "@/lib/queries/academics";
 import { useSession } from "@/lib/auth/useSession";
 import type { StaffVM } from "@/lib/validators/academics";
 import { PORTAL_ACCESS_LABEL, type PortalAccessStatus } from "@/lib/validators/people";
+import { matchesQuery } from "@/lib/search";
 import { cardShellClass } from "@/lib/ui";
 
 // Tone tracks how much attention the row needs: a teacher still holding a password the admin also
@@ -156,27 +160,45 @@ export function StaffTable({ onNewStaff }: StaffTableProps) {
   // Only to recognise the caller's own row below. Null while the session loads, which merely means
   // the row shows its buttons for a moment — the server guard is what makes pressing one safe.
   const { profile } = useSession();
-  const isEmpty = !isLoading && !isError && (data?.length ?? 0) === 0;
+  const [query, setQuery] = useState("");
+  const rows = (data ?? []).filter((r) =>
+    matchesQuery(query, r.first_name, r.last_name, r.email, r.staff_no, r.department, r.position),
+  );
+  const isEmpty = !isLoading && !isError && rows.length === 0;
+  const noneAtAll = (data?.length ?? 0) === 0;
 
   return (
     <div className={cardShellClass}>
+      <SearchField
+        value={query}
+        onChange={setQuery}
+        placeholder="Search by name, email, staff no. or department"
+        label="Search staff"
+        className="mb-3"
+      />
       {isError ? (
         <ErrorState message="Couldn't load staff." onRetry={() => refetch()} />
       ) : isEmpty ? (
         <EmptyState
           icon={Users}
-          title="No staff yet"
-          description="Add your first staff member to start assigning classes and subjects."
+          title={noneAtAll ? "No staff yet" : "No matching staff"}
+          description={
+            noneAtAll
+              ? "Add your first staff member to start assigning classes and subjects."
+              : `Nothing matches “${query}”. Check the spelling, or clear the search.`
+          }
           action={
-            <Button type="button" onClick={onNewStaff}>
-              New Staff
-            </Button>
+            noneAtAll ? (
+              <Button type="button" onClick={onNewStaff}>
+                New Staff
+              </Button>
+            ) : undefined
           }
         />
       ) : (
         <DataTable
           columns={buildColumns(profile?.id ?? null)}
-          data={data ?? []}
+          data={rows}
           getRowId={(row) => row.id}
           isLoading={isLoading}
           onRowClick={(row) => router.push(`/staff/${row.id}`)}

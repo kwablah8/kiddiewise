@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Coins, Plus, Receipt } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { SearchField } from "@/components/data/search-field";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -18,6 +19,7 @@ import {
   type FeesFilter,
 } from "@/lib/validators/fees";
 import { formatGHS } from "@/lib/format";
+import { matchesQuery } from "@/lib/search";
 import { cardShellClass } from "@/lib/ui";
 
 const structureColumns: DataTableColumn<ExtraFeeStructureVM>[] = [
@@ -60,10 +62,23 @@ export function ExtraFeesTab({ filter }: { filter: FeesFilter }) {
   const [open, setOpen] = useState(false);
   const [dialogKey, setDialogKey] = useState(0);
 
-  const structEmpty =
-    !structures.isLoading && !structures.isError && (structures.data?.length ?? 0) === 0;
-  const assignEmpty =
-    !assignments.isLoading && !assignments.isError && (assignments.data?.length ?? 0) === 0;
+  // Two independent searches, because these are two different questions. "Which extra fees do we
+  // offer?" is asked of the structures; "has this child paid for transport?" is asked of the
+  // assignments. One shared box would make answering either awkward.
+  const [structQuery, setStructQuery] = useState("");
+  const [assignQuery, setAssignQuery] = useState("");
+
+  const structRows = (structures.data ?? []).filter((r) =>
+    matchesQuery(structQuery, r.name, r.description, r.scope, r.amount),
+  );
+  const assignRows = (assignments.data ?? []).filter((r) =>
+    matchesQuery(assignQuery, r.student_name, r.class_name, r.fee_name),
+  );
+
+  const structEmpty = !structures.isLoading && !structures.isError && structRows.length === 0;
+  const assignEmpty = !assignments.isLoading && !assignments.isError && assignRows.length === 0;
+  const noStructsAtAll = (structures.data?.length ?? 0) === 0;
+  const noAssignsAtAll = (assignments.data?.length ?? 0) === 0;
 
   return (
     <div className="space-y-6">
@@ -83,18 +98,29 @@ export function ExtraFeesTab({ filter }: { filter: FeesFilter }) {
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-[var(--text)]">Extra Fee Structures</h2>
         <div className={cardShellClass}>
+          <SearchField
+            value={structQuery}
+            onChange={setStructQuery}
+            placeholder="Search by name or scope"
+            label="Search extra fee structures"
+            className="mb-3"
+          />
           {structures.isError ? (
             <ErrorState message="Couldn't load extra fee structures." onRetry={() => structures.refetch()} />
           ) : structEmpty ? (
             <EmptyState
               icon={Coins}
-              title="No extra fee structures"
-              description="Create an extra fee (transport, feeding, uniform, etc.) to assign to students."
+              title={noStructsAtAll ? "No extra fee structures" : "No matching extra fees"}
+              description={
+                noStructsAtAll
+                  ? "Create an extra fee (transport, feeding, uniform, etc.) to assign to students."
+                  : `Nothing matches “${structQuery}”. Check the spelling, or clear the search.`
+              }
             />
           ) : (
             <DataTable
               columns={structureColumns}
-              data={structures.data ?? []}
+              data={structRows}
               getRowId={(row) => row.id}
               isLoading={structures.isLoading}
             />
@@ -105,18 +131,29 @@ export function ExtraFeesTab({ filter }: { filter: FeesFilter }) {
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-[var(--text)]">Assigned Extra Fees</h2>
         <div className={cardShellClass}>
+          <SearchField
+            value={assignQuery}
+            onChange={setAssignQuery}
+            placeholder="Search by student, class or fee"
+            label="Search assigned extra fees"
+            className="mb-3"
+          />
           {assignments.isError ? (
             <ErrorState message="Couldn't load assigned extra fees." onRetry={() => assignments.refetch()} />
           ) : assignEmpty ? (
             <EmptyState
               icon={Receipt}
-              title="No extra fees assigned"
-              description="Extra fees assigned to students will appear here."
+              title={noAssignsAtAll ? "No extra fees assigned" : "No matching assignments"}
+              description={
+                noAssignsAtAll
+                  ? "Extra fees assigned to students will appear here."
+                  : `Nothing matches “${assignQuery}”. Check the spelling, or clear the search.`
+              }
             />
           ) : (
             <DataTable
               columns={assignmentColumns}
-              data={assignments.data ?? []}
+              data={assignRows}
               getRowId={(row) => row.id}
               isLoading={assignments.isLoading}
             />

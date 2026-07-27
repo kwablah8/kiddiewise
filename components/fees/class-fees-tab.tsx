@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Users } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { SearchField } from "@/components/data/search-field";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -15,6 +16,7 @@ import { useClassFees } from "@/lib/queries/fees";
 import { useClasses } from "@/lib/queries/academics";
 import { FEE_STATUS_LABEL, type StudentFeeVM, type FeesFilter } from "@/lib/validators/fees";
 import { formatGHS } from "@/lib/format";
+import { matchesQuery } from "@/lib/search";
 import { cardShellClass } from "@/lib/ui";
 
 const columns: DataTableColumn<StudentFeeVM>[] = [
@@ -49,7 +51,10 @@ export function ClassFeesTab({ filter }: { filter: FeesFilter }) {
   const [indivOpen, setIndivOpen] = useState(false);
   const [indivKey, setIndivKey] = useState(0);
   const [paymentTarget, setPaymentTarget] = useState<StudentFeeVM | null>(null);
-  const isEmpty = !isLoading && !isError && (data?.length ?? 0) === 0;
+  const [query, setQuery] = useState("");
+  const rows = (data ?? []).filter((r) => matchesQuery(query, r.student_name, r.class_name));
+  const isEmpty = !isLoading && !isError && rows.length === 0;
+  const noneAtAll = (data?.length ?? 0) === 0;
   const selectedClass = filter.class_id ? classes?.find((c) => c.id === filter.class_id) : undefined;
 
   const allColumns: DataTableColumn<StudentFeeVM>[] = [
@@ -105,18 +110,29 @@ export function ClassFeesTab({ filter }: { filter: FeesFilter }) {
       )}
 
       <div className={cardShellClass}>
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          placeholder="Search by student or class"
+          label="Search class fees"
+          className="mb-3"
+        />
         {isError ? (
           <ErrorState message="Couldn't load class fees." onRetry={() => refetch()} />
         ) : isEmpty ? (
           <EmptyState
             icon={Users}
-            title="No student fees yet"
-            description="Assign fees to a class or an individual student to get started."
+            title={noneAtAll ? "No student fees yet" : "No matching students"}
+            description={
+              noneAtAll
+                ? "Assign fees to a class or an individual student to get started."
+                : `Nothing matches “${query}”. Check the spelling, or clear the search.`
+            }
           />
         ) : (
           <DataTable
             columns={allColumns}
-            data={data ?? []}
+            data={rows}
             getRowId={(row) => row.id}
             isLoading={isLoading}
           />

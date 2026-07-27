@@ -1,13 +1,17 @@
 "use client";
 
+import { useState } from "react";
+
 import { useRouter } from "next/navigation";
 import { School } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { SearchField } from "@/components/data/search-field";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { Button } from "@/components/ui/button";
 import { useClasses } from "@/lib/queries/academics";
 import type { ClassVM } from "@/lib/validators/academics";
+import { matchesQuery } from "@/lib/search";
 import { cardShellClass } from "@/lib/ui";
 
 const columns: DataTableColumn<ClassVM>[] = [
@@ -56,27 +60,45 @@ interface ClassesTableProps {
 export function ClassesTable({ onNewClass }: ClassesTableProps) {
   const router = useRouter();
   const { data, isLoading, isError, refetch } = useClasses();
-  const isEmpty = !isLoading && !isError && (data?.length ?? 0) === 0;
+  const [query, setQuery] = useState("");
+  const rows = (data ?? []).filter((r) =>
+    matchesQuery(query, r.name, r.level, r.class_teacher_name),
+  );
+  const isEmpty = !isLoading && !isError && rows.length === 0;
+  const noneAtAll = (data?.length ?? 0) === 0;
 
   return (
     <div className={cardShellClass}>
+      <SearchField
+        value={query}
+        onChange={setQuery}
+        placeholder="Search by class, level or teacher"
+        label="Search classes"
+        className="mb-3"
+      />
       {isError ? (
         <ErrorState message="Couldn't load classes." onRetry={() => refetch()} />
       ) : isEmpty ? (
         <EmptyState
           icon={School}
-          title="No classes yet"
-          description="Add your first class to start building rosters and subject assignments."
+          title={noneAtAll ? "No classes yet" : "No matching classes"}
+          description={
+            noneAtAll
+              ? "Add your first class to start building rosters and subject assignments."
+              : `Nothing matches “${query}”. Check the spelling, or clear the search.`
+          }
           action={
-            <Button type="button" onClick={onNewClass}>
-              New Class
-            </Button>
+            noneAtAll ? (
+              <Button type="button" onClick={onNewClass}>
+                New Class
+              </Button>
+            ) : undefined
           }
         />
       ) : (
         <DataTable
           columns={columns}
-          data={data ?? []}
+          data={rows}
           getRowId={(row) => row.id}
           isLoading={isLoading}
           onRowClick={(row) => router.push(`/classes/${row.id}`)}
