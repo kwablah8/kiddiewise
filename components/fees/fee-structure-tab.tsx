@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Wallet } from "lucide-react";
+import { Pencil, Plus, Wallet } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { SearchField } from "@/components/data/search-field";
 import { StatusPill } from "@/components/data/status-pill";
@@ -15,7 +15,10 @@ import { formatDate, formatGHS } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
 import { cardShellClass } from "@/lib/ui";
 
-const columns: DataTableColumn<FeeStructureVM>[] = [
+function buildColumns(
+  onEdit: (row: FeeStructureVM) => void,
+): DataTableColumn<FeeStructureVM>[] {
+  return [
   {
     key: "class",
     header: "Class",
@@ -49,13 +52,41 @@ const columns: DataTableColumn<FeeStructureVM>[] = [
         <span className="text-[var(--muted-foreground)]">Optional</span>
       ),
   },
-];
+  {
+    key: "actions",
+    header: "",
+    align: "right",
+    // The label names the class AND the term: two Basic 1 rows differing only by term are exactly
+    // the case this column exists to untangle, and "Edit Basic 1" twice over tells a screen-reader
+    // user nothing.
+    render: (r) => (
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label={`Edit ${r.class_name} ${FEE_TERM_LABEL[r.term]} fee`}
+        onClick={() => onEdit(r)}
+      >
+        <Pencil className="size-4" aria-hidden="true" />
+      </Button>
+    ),
+  },
+  ];
+}
 
 export function FeeStructureTab({ filter }: { filter: FeesFilter }) {
   const { data, isLoading, isError, refetch } = useFeeStructures(filter);
   const [open, setOpen] = useState(false);
   const [dialogKey, setDialogKey] = useState(0);
+  const [editStructure, setEditStructure] = useState<FeeStructureVM | null>(null);
+  const [editKey, setEditKey] = useState(0);
   const [query, setQuery] = useState("");
+
+  const columns = buildColumns((row) => {
+    setEditKey((k) => k + 1);
+    setEditStructure(row);
+  });
+
   const rows = (data ?? []).filter((r) =>
     matchesQuery(query, r.class_name, r.academic_year_name, r.description, r.amount),
   );
@@ -107,7 +138,17 @@ export function FeeStructureTab({ filter }: { filter: FeesFilter }) {
         )}
       </div>
 
-      <FeeStructureDialog key={dialogKey} open={open} onOpenChange={setOpen} />
+      <FeeStructureDialog key={dialogKey} mode="create" open={open} onOpenChange={setOpen} />
+
+      <FeeStructureDialog
+        key={`edit-${editKey}`}
+        mode="edit"
+        structure={editStructure ?? undefined}
+        open={!!editStructure}
+        onOpenChange={(next) => {
+          if (!next) setEditStructure(null);
+        }}
+      />
     </div>
   );
 }
