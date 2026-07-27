@@ -11,6 +11,7 @@ import { usePayments } from "@/lib/queries/fees";
 import { PAYMENT_METHOD_LABEL, type PaymentVM, type FeesFilter } from "@/lib/validators/fees";
 import { formatDate, formatGHS } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
+import { toast } from "@/lib/toast";
 import { buildReceipt } from "@/lib/receipt";
 import { downloadReceipt } from "@/lib/pdf/receipt-pdf";
 import { useSchool } from "@/lib/queries/school";
@@ -63,17 +64,28 @@ export function PaymentHistoryTab({ filter }: { filter: FeesFilter }) {
   const { profile } = useSession();
   const [query, setQuery] = useState("");
 
-  function onReceipt(payment: PaymentVM) {
-    downloadReceipt(
-      buildReceipt({
-        payment,
-        // Read from the tenant, not hardcoded: the receipt is the school's document, and a wrong
-        // name on it is worse than a plain one.
-        schoolName: school?.name ?? "School",
-        methodLabel: PAYMENT_METHOD_LABEL[payment.method],
-        issuedBy: profile ? `${profile.first_name} ${profile.last_name}` : "the school office",
-      }),
-    );
+  // Async because the crest has to be fetched and decoded before jsPDF can embed it. A failure to
+  // load the crest is swallowed inside `downloadReceipt` and still produces a receipt; this catch is
+  // for the rarer case of the render or the save itself failing, which must not be silent when an
+  // admin is standing at the desk with a parent.
+  async function onReceipt(payment: PaymentVM) {
+    try {
+      await downloadReceipt(
+        buildReceipt({
+          payment,
+          // Read from the tenant, not hardcoded: the receipt is the school's document, and a wrong
+          // name on it is worse than a plain one.
+          schoolName: school?.name ?? "School",
+          methodLabel: PAYMENT_METHOD_LABEL[payment.method],
+          // The tenant's own uploaded crest when there is one; buildReceipt falls back to the
+          // bundled SLIS crest otherwise.
+          logoUrl: school?.logo_url ?? null,
+          issuedBy: profile ? `${profile.first_name} ${profile.last_name}` : "the school office",
+        }),
+      );
+    } catch {
+      toast.error("Couldn't generate the receipt. Please try again.");
+    }
   }
 
   // Reference is searchable alongside the name because that is how a disputed payment gets found:
