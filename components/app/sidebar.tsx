@@ -22,6 +22,7 @@ import {
   X,
   type LucideIcon,
   Megaphone,
+  NotebookPen,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { BrandLock } from "@/components/brand/brand-lock";
@@ -65,6 +66,7 @@ const TEACHER_NAV_ITEMS: NavItem[] = [
   { label: "Grade", href: "/teacher/grade", icon: PencilLine },
   { label: "Assessment", href: "/teacher/assessment", icon: ClipboardList },
   { label: "Attendance", href: "/teacher/attendance", icon: CalendarCheck },
+  { label: "Daily Report", href: "/teacher/daily-report", icon: NotebookPen },
 ];
 
 // Nav list by role. Admin/teacher live here; the M6 parent slice adds its `parent` entry. An unmapped

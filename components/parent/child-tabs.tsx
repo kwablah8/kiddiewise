@@ -12,6 +12,7 @@ export function ChildTabs({ childId }: { childId: string }) {
   const base = `/parent/children/${childId}`;
   const tabs = [
     { label: "Profile", href: base, exact: true },
+    { label: "Daily Report", href: `${base}/daily-report`, exact: false },
     { label: "Attendance", href: `${base}/attendance`, exact: false },
     { label: "Results", href: `${base}/results`, exact: false },
   ];
