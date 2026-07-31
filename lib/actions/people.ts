@@ -12,6 +12,7 @@ import {
   invitePortalUser,
   reissueTempPassword,
   markTempCredential,
+  logActivity,
   type TenantContext,
   type PortalInvite,
   type IssuedCredentials,
@@ -138,6 +139,8 @@ export async function createStudent(input: StudentCreateInput): Promise<ActionRe
         }),
       );
     }
+
+    await logActivity(ctx, "admitted a new student", "student", student.id);
 
     // `guardian_ids` is validated but not linked here: student_guardians needs a relationship and a
     // primary flag per guardian, which a bare id list can't carry. The UI calls linkGuardian per parent.

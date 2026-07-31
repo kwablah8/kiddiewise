@@ -3,7 +3,7 @@
 import { attempt, UserFacingError, type ActionResult } from "./result";
 
 import { revalidatePath } from "next/cache";
-import { tenant, activeContext, assertOk } from "./_server";
+import { tenant, activeContext, assertOk, logActivity } from "./_server";
 import { saveAttendanceSchema, type SaveAttendanceInput } from "@/lib/validators/attendance";
 
 /**
@@ -44,6 +44,9 @@ export async function saveAttendance(
       await ctx.db.from("attendance").upsert(rows, { onConflict: "student_id,date" }),
       "attendance",
     );
+
+    const { data: klass } = await ctx.db.from("classes").select("name").eq("id", class_id).maybeSingle();
+    await logActivity(ctx, `marked attendance for ${klass?.name ?? "a class"}`, "attendance");
 
     // The same rows back the parent portal and the admin dashboard; revalidate so a server-rendered
     // view doesn't keep serving yesterday's numbers.

@@ -3,7 +3,7 @@
 import { attempt, UserFacingError, type ActionResult } from "./result";
 
 import { revalidatePath } from "next/cache";
-import { tenant, assertOk } from "./_server";
+import { tenant, assertOk, logActivity } from "./_server";
 import { saveResultsSchema, type SaveResultsInput } from "@/lib/validators/assessments";
 
 /**
@@ -29,7 +29,7 @@ export async function saveResults(
     // server-side, which means it holds even for a request that never went through the form.
     const { data: assessment, error } = await ctx.db
       .from("assessments")
-      .select("max_score")
+      .select("max_score, title, classes(name)")
       .eq("id", assessment_id)
       .maybeSingle();
 
@@ -79,6 +79,17 @@ export async function saveResults(
       ),
       "results",
     );
+
+    // Only submission is feed-worthy — draft saves happen every few minutes while a sheet is
+    // being filled and would drown the dashboard.
+    if (submit) {
+      await logActivity(
+        ctx,
+        `submitted ${assessment.title} results${assessment.classes ? ` for ${assessment.classes.name}` : ""}`,
+        "result",
+        assessment_id,
+      );
+    }
 
     // These marks feed the admin's assessment view, the student's academic record and the parent
     // portal, so a server-rendered view must not keep serving the pre-save numbers.

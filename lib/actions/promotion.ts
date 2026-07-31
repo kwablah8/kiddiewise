@@ -2,7 +2,7 @@
 
 import { attempt, UserFacingError, type ActionResult } from "./result";
 
-import { tenant, assertOk } from "./_server";
+import { tenant, assertOk, logActivity } from "./_server";
 import { summarizeDecisions } from "@/lib/promotion";
 import {
   promoteStudentsSchema,
@@ -87,6 +87,9 @@ export async function promoteStudents(
         "enrollment",
       );
     }
+
+    const n = data.decisions.length;
+    await logActivity(ctx, `recorded promotion decisions for ${n} student${n === 1 ? "" : "s"}`, "promotion");
 
     // Counted by the same function the confirmation dialog used, so what the admin was promised and
     // what they are told happened cannot disagree.

@@ -2,7 +2,7 @@
 
 import { attempt, UserFacingError, type ActionResult } from "./result";
 
-import { tenant, activeContext, assertWrite, assertOk, type TenantContext } from "./_server";
+import { tenant, activeContext, assertWrite, assertOk, logActivity, type TenantContext } from "./_server";
 import {
   feeStructureCreateSchema,
   feeStructureUpdateSchema,
@@ -297,6 +297,8 @@ export async function recordPayment(input: RecordPaymentInput): Promise<ActionRe
         .single(),
       "payment",
     );
+
+    await logActivity(ctx, "recorded a fee payment", "payment", row.id);
 
     return { id: row.id };
   });

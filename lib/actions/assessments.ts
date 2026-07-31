@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { attempt, UserFacingError, type ActionResult } from "./result";
 
-import { tenant, assertWrite, assertOk } from "./_server";
+import { tenant, assertWrite, assertOk, logActivity } from "./_server";
 import {
   assessmentCreateSchema,
   assessmentUpdateSchema,
@@ -45,6 +45,9 @@ export async function createAssessment(input: AssessmentCreateInput): Promise<Ac
         .single(),
       "assessment",
     );
+
+    const { data: klass } = await ctx.db.from("classes").select("name").eq("id", data.class_id).maybeSingle();
+    await logActivity(ctx, `created an assessment for ${klass?.name ?? "a class"}`, "assessment", row.id);
 
     return { id: row.id };
   });

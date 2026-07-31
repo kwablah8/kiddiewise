@@ -3,7 +3,7 @@
 import { attempt, UserFacingError, type ActionResult } from "./result";
 
 import { revalidatePath } from "next/cache";
-import { tenant, assertWrite, assertOk } from "./_server";
+import { tenant, assertWrite, assertOk, logActivity } from "./_server";
 import { aggregateSubjectResults } from "@/lib/results";
 import { reportTotals, assignPositions, attendanceTotals } from "@/lib/terminal-reports";
 import {
@@ -191,6 +191,12 @@ export async function setReportsPublished(
       .select("id");
 
     if (error) throw new Error(`Could not ${published ? "publish" : "retract"} these reports: ${error.message}`);
+
+    // Publication is the feed-worthy moment — it's when parents can suddenly see the reports.
+    if (published && (data?.length ?? 0) > 0) {
+      const { data: klass } = await ctx.db.from("classes").select("name").eq("id", class_id).maybeSingle();
+      await logActivity(ctx, `published terminal reports for ${klass?.name ?? "a class"}`, "terminal_report");
+    }
 
     revalidatePath("/terminal-reports");
     return { affected: data?.length ?? 0, published };

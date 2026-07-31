@@ -150,6 +150,32 @@ export async function deleteAuthUser(userId: string): Promise<void> {
   if (error) throw new Error(`Could not delete that account: ${error.message}`);
 }
 
+/**
+ * Record a line in the school's activity feed (the admin dashboard's "Recent Activities" and the
+ * teacher dashboard's own recent actions).
+ *
+ * Best-effort by design: the feed is a byproduct, and a logging hiccup must never fail the write
+ * it describes — hence the error goes to the server log, not to the caller. Inserted with the
+ * CALLER's rights: `al_insert_self` (0010) makes a forged actor impossible, and the row is
+ * tenant-stamped like every other write. `action` should read as a sentence fragment after the
+ * actor's name — "recorded a fee payment", "marked attendance for Basic 1".
+ */
+export async function logActivity(
+  ctx: TenantContext,
+  action: string,
+  entityType: string,
+  entityId?: string,
+): Promise<void> {
+  const { error } = await ctx.db.from("activity_log").insert({
+    school_id: ctx.schoolId,
+    actor_id: ctx.profile.id,
+    action,
+    entity_type: entityType,
+    entity_id: entityId ?? null,
+  });
+  if (error) console.error(`activity_log (${entityType}): ${error.message}`);
+}
+
 /** Where an invited user is sent to choose their password. */
 export function passwordSetupUrl(): string {
   // Must be on Supabase's redirect allowlist (site_url + additional_redirect_urls in config.toml),
