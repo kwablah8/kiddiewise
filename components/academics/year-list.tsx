@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarRange, Loader2 } from "lucide-react";
+import { CalendarRange, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import {
   Dialog,
@@ -17,7 +17,7 @@ import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { YearFormDialog } from "./year-form";
-import { useAcademicYears, useSetActiveYear } from "@/lib/queries/academics";
+import { useAcademicYears, useSetActiveYear, useDeleteYear } from "@/lib/queries/academics";
 import type { AcademicYearVM } from "@/lib/validators/academics";
 import { formatDate } from "@/lib/format";
 import { cardShellClass } from "@/lib/ui";
@@ -34,6 +34,9 @@ export function YearList({ selectedYearId, onSelectYear }: YearListProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [createKey, setCreateKey] = useState(0);
   const [confirmYear, setConfirmYear] = useState<AcademicYearVM | null>(null);
+  const [editYear, setEditYear] = useState<AcademicYearVM | null>(null);
+  const [editKey, setEditKey] = useState(0);
+  const [deleteYear, setDeleteYear] = useState<AcademicYearVM | null>(null);
 
   return (
     <div className={cardShellClass}>
@@ -104,20 +107,49 @@ export function YearList({ selectedYearId, onSelectYear }: YearListProps) {
                         {year.term_count} {year.term_count === 1 ? "term" : "terms"}
                       </p>
                     </div>
-                    {!year.is_active && (
+                    <div className="flex shrink-0 items-center gap-1">
+                      {!year.is_active && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmYear(year);
+                          }}
+                        >
+                          Set active
+                        </Button>
+                      )}
                       <Button
                         type="button"
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Edit ${year.name}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setConfirmYear(year);
+                          setEditKey((k) => k + 1);
+                          setEditYear(year);
                         }}
                       >
-                        Set active
+                        <Pencil className="size-4" aria-hidden="true" />
                       </Button>
-                    )}
+                      {/* The active year can't be deleted (the server refuses); no dead button. */}
+                      {!year.is_active && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Delete ${year.name}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteYear(year);
+                          }}
+                        >
+                          <Trash2 className="size-4 text-[var(--danger)]" aria-hidden="true" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </li>
               );
@@ -127,8 +159,73 @@ export function YearList({ selectedYearId, onSelectYear }: YearListProps) {
       </div>
 
       <YearFormDialog key={createKey} open={createOpen} onOpenChange={setCreateOpen} />
+      {editYear && (
+        <YearFormDialog
+          key={`edit-${editYear.id}-${editKey}`}
+          year={editYear}
+          open
+          onOpenChange={() => setEditYear(null)}
+        />
+      )}
       <ConfirmSetActiveYearDialog year={confirmYear} onOpenChange={() => setConfirmYear(null)} />
+      <ConfirmDeleteYearDialog year={deleteYear} onOpenChange={() => setDeleteYear(null)} />
     </div>
+  );
+}
+
+function ConfirmDeleteYearDialog({
+  year,
+  onOpenChange,
+}: {
+  year: AcademicYearVM | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const deleteYear = useDeleteYear();
+
+  async function handleConfirm() {
+    if (!year) return;
+    try {
+      await deleteYear.mutateAsync({ id: year.id });
+      toast.success("Academic year deleted", { description: `${year.name} has been removed.` });
+      onOpenChange(false);
+    } catch (err) {
+      // The common failure is the block-if-history guard; its message explains the alternative.
+      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      onOpenChange(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!year} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete academic year?</DialogTitle>
+          <DialogDescription>
+            {year && (
+              <>
+                <strong className="text-[var(--text)]">{year.name}</strong> and its empty terms will
+                be removed. A year with enrolments, results or fee records behind it can&apos;t be
+                deleted.
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="mt-2">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={deleteYear.isPending}
+          >
+            {deleteYear.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            Delete Year
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

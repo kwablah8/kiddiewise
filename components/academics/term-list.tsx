@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, Loader2 } from "lucide-react";
+import { CalendarClock, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import {
   Dialog,
@@ -17,7 +17,7 @@ import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { TermFormDialog } from "./term-form";
-import { useTerms, useSetActiveTerm } from "@/lib/queries/academics";
+import { useTerms, useSetActiveTerm, useDeleteTerm } from "@/lib/queries/academics";
 import type { AcademicYearVM, TermVM } from "@/lib/validators/academics";
 import { formatDate } from "@/lib/format";
 import { cardShellClass } from "@/lib/ui";
@@ -33,6 +33,9 @@ export function TermList({ year }: TermListProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [createKey, setCreateKey] = useState(0);
   const [confirmTerm, setConfirmTerm] = useState<TermVM | null>(null);
+  const [editTerm, setEditTerm] = useState<TermVM | null>(null);
+  const [editKey, setEditKey] = useState(0);
+  const [deleteTerm, setDeleteTerm] = useState<TermVM | null>(null);
 
   return (
     <div className={cardShellClass}>
@@ -98,17 +101,42 @@ export function TermList({ year }: TermListProps) {
                       {formatDate(term.start_date)} – {formatDate(term.end_date)}
                     </p>
                   </div>
-                  {!term.is_active && (
+                  <div className="flex shrink-0 items-center gap-1">
+                    {!term.is_active && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConfirmTerm(term)}
+                      >
+                        Set active
+                      </Button>
+                    )}
                     <Button
                       type="button"
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0"
-                      onClick={() => setConfirmTerm(term)}
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Edit ${term.name}`}
+                      onClick={() => {
+                        setEditKey((k) => k + 1);
+                        setEditTerm(term);
+                      }}
                     >
-                      Set active
+                      <Pencil className="size-4" aria-hidden="true" />
                     </Button>
-                  )}
+                    {/* The active term can't be deleted (the server refuses); no dead button. */}
+                    {!term.is_active && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Delete ${term.name}`}
+                        onClick={() => setDeleteTerm(term)}
+                      >
+                        <Trash2 className="size-4 text-[var(--danger)]" aria-hidden="true" />
+                      </Button>
+                    )}
+                  </div>
                 </li>
               ))}
           </ul>
@@ -124,8 +152,75 @@ export function TermList({ year }: TermListProps) {
           onOpenChange={setCreateOpen}
         />
       )}
+      {year && editTerm && (
+        <TermFormDialog
+          key={`edit-${editTerm.id}-${editKey}`}
+          academicYearId={year.id}
+          yearName={year.name}
+          term={editTerm}
+          open
+          onOpenChange={() => setEditTerm(null)}
+        />
+      )}
       <ConfirmSetActiveTermDialog term={confirmTerm} onOpenChange={() => setConfirmTerm(null)} />
+      <ConfirmDeleteTermDialog term={deleteTerm} onOpenChange={() => setDeleteTerm(null)} />
     </div>
+  );
+}
+
+function ConfirmDeleteTermDialog({
+  term,
+  onOpenChange,
+}: {
+  term: TermVM | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const deleteTerm = useDeleteTerm();
+
+  async function handleConfirm() {
+    if (!term) return;
+    try {
+      await deleteTerm.mutateAsync({ id: term.id });
+      toast.success("Term deleted", { description: `${term.name} has been removed.` });
+      onOpenChange(false);
+    } catch (err) {
+      // The common failure is the block-if-history guard; its message explains the alternative.
+      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      onOpenChange(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!term} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete term?</DialogTitle>
+          <DialogDescription>
+            {term && (
+              <>
+                <strong className="text-[var(--text)]">{term.name}</strong> will be removed. A term
+                with attendance, assessments, reports or fee records behind it can&apos;t be
+                deleted.
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="mt-2">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={deleteTerm.isPending}
+          >
+            {deleteTerm.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            Delete Term
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

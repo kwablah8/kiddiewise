@@ -24,8 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCreateTerm } from "@/lib/queries/academics";
-import { termCreateSchema, type TermCreateInput } from "@/lib/validators/academics";
+import { useCreateTerm, useUpdateTerm } from "@/lib/queries/academics";
+import { termCreateSchema, type TermCreateInput, type TermVM } from "@/lib/validators/academics";
 
 const ORDINAL_OPTIONS = [
   { value: "1", label: "First Term" },
@@ -49,10 +49,12 @@ interface TermFormDialogProps {
   yearName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** When set, the dialog edits this term instead of creating a new one. */
+  term?: TermVM;
 }
 
 /**
- * "New Term" dialog, scoped to one academic year (create-only). The term's `name` is derived
+ * "New Term" / "Edit term" dialog, scoped to one academic year. The term's `name` is derived
  * from the chosen ordinal (First/Second/Third Term) rather than free-typed — Ghanaian terms are
  * always one of those three, so exposing a separate text field would only invite typos/duplicates
  * of the same fixed vocabulary. Submitted as a hidden field, same pattern as `student_id` in
@@ -63,9 +65,11 @@ export function TermFormDialog({
   yearName,
   open,
   onOpenChange,
+  term,
 }: TermFormDialogProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const createTerm = useCreateTerm();
+  const updateTerm = useUpdateTerm();
 
   const {
     control,
@@ -75,22 +79,42 @@ export function TermFormDialog({
     formState: { errors, isSubmitting },
   } = useForm<TermFormInput, unknown, TermCreateInput>({
     resolver: zodResolver(termCreateSchema),
-    defaultValues: {
-      academic_year_id: academicYearId,
-      name: nameForOrdinal(1),
-      ordinal: 1,
-      start_date: "",
-      end_date: "",
-    },
+    defaultValues: term
+      ? {
+          academic_year_id: academicYearId,
+          name: term.name,
+          ordinal: term.ordinal,
+          start_date: term.start_date,
+          end_date: term.end_date,
+        }
+      : {
+          academic_year_id: academicYearId,
+          name: nameForOrdinal(1),
+          ordinal: 1,
+          start_date: "",
+          end_date: "",
+        },
   });
 
   async function onSubmit(values: TermCreateInput) {
     setSubmitError(null);
     try {
-      await createTerm.mutateAsync(values);
-      toast.success("Term created", {
-        description: `${values.name} has been added to ${yearName}.`,
-      });
+      if (term) {
+        // A term never moves between years, so the update contract has no academic_year_id.
+        await updateTerm.mutateAsync({
+          id: term.id,
+          name: values.name,
+          ordinal: values.ordinal,
+          start_date: values.start_date,
+          end_date: values.end_date,
+        });
+        toast.success("Term updated", { description: `${values.name} has been saved.` });
+      } else {
+        await createTerm.mutateAsync(values);
+        toast.success("Term created", {
+          description: `${values.name} has been added to ${yearName}.`,
+        });
+      }
       onOpenChange(false);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -102,8 +126,12 @@ export function TermFormDialog({
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <DialogHeader>
-            <DialogTitle>New term</DialogTitle>
-            <DialogDescription>Add a term to {yearName}.</DialogDescription>
+            <DialogTitle>{term ? `Edit ${term.name}` : "New term"}</DialogTitle>
+            <DialogDescription>
+              {term
+                ? `Change this term's dates or position in ${yearName}.`
+                : `Add a term to ${yearName}.`}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="mt-4 space-y-4">
@@ -177,7 +205,7 @@ export function TermFormDialog({
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-              Create Term
+              {term ? "Save Changes" : "Create Term"}
             </Button>
           </DialogFooter>
         </form>

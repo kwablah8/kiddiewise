@@ -16,22 +16,29 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCreateYear } from "@/lib/queries/academics";
-import { academicYearCreateSchema, type AcademicYearCreateInput } from "@/lib/validators/academics";
+import { useCreateYear, useUpdateYear } from "@/lib/queries/academics";
+import {
+  academicYearCreateSchema,
+  type AcademicYearCreateInput,
+  type AcademicYearVM,
+} from "@/lib/validators/academics";
 
 interface YearFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** When set, the dialog edits this year instead of creating a new one. */
+  year?: AcademicYearVM;
 }
 
 /**
- * "New Year" dialog (create-only — years have no edit action in this slice). Form state isn't
- * reset on close; the caller remounts with a fresh `key` on every open (mirrors
- * `LinkGuardianDialog`), which is what gives every open a clean form.
+ * "New Year" / "Edit year" dialog. Form state isn't reset on close; the caller remounts with a
+ * fresh `key` on every open (mirrors `LinkGuardianDialog`), which is what gives every open a
+ * clean form.
  */
-export function YearFormDialog({ open, onOpenChange }: YearFormDialogProps) {
+export function YearFormDialog({ open, onOpenChange, year }: YearFormDialogProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const createYear = useCreateYear();
+  const updateYear = useUpdateYear();
 
   const {
     register,
@@ -39,16 +46,25 @@ export function YearFormDialog({ open, onOpenChange }: YearFormDialogProps) {
     formState: { errors, isSubmitting },
   } = useForm<AcademicYearCreateInput>({
     resolver: zodResolver(academicYearCreateSchema),
-    defaultValues: { name: "", start_date: "", end_date: "" },
+    defaultValues: year
+      ? { name: year.name, start_date: year.start_date, end_date: year.end_date }
+      : { name: "", start_date: "", end_date: "" },
   });
 
   async function onSubmit(values: AcademicYearCreateInput) {
     setSubmitError(null);
     try {
-      await createYear.mutateAsync(values);
-      toast.success("Academic year created", {
-        description: `${values.name} has been added. Set it active when you're ready.`,
-      });
+      if (year) {
+        await updateYear.mutateAsync({ id: year.id, ...values });
+        toast.success("Academic year updated", {
+          description: `${values.name} has been saved.`,
+        });
+      } else {
+        await createYear.mutateAsync(values);
+        toast.success("Academic year created", {
+          description: `${values.name} has been added. Set it active when you're ready.`,
+        });
+      }
       onOpenChange(false);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -60,9 +76,11 @@ export function YearFormDialog({ open, onOpenChange }: YearFormDialogProps) {
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <DialogHeader>
-            <DialogTitle>New academic year</DialogTitle>
+            <DialogTitle>{year ? `Edit ${year.name}` : "New academic year"}</DialogTitle>
             <DialogDescription>
-              Add an academic year, then set it active from the Years panel.
+              {year
+                ? "Change the year's name or dates. Its terms and records stay as they are."
+                : "Add an academic year, then set it active from the Years panel."}
             </DialogDescription>
           </DialogHeader>
 
@@ -112,7 +130,7 @@ export function YearFormDialog({ open, onOpenChange }: YearFormDialogProps) {
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-              Create Year
+              {year ? "Save Changes" : "Create Year"}
             </Button>
           </DialogFooter>
         </form>
