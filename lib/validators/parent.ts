@@ -81,6 +81,17 @@ export type ChildResultsVM = z.infer<typeof childResultsVM>;
 // The published terminal report for a term. Only published reports are ever returned (the
 // `tr_parent_read` policy checks is_published, and the read filters on it too) — an unpublished or
 // absent report resolves to null.
+/** One frozen subject row of the child's report card, as published by the school. */
+export const childReportSubjectVM = z.object({
+  subject_name: z.string(),
+  class_score: z.number().nullable(),
+  exam_score: z.number().nullable(),
+  total: z.number().nullable(),
+  position: z.number().nullable(),
+  remark: z.string().nullable(),
+});
+export type ChildReportSubjectVM = z.infer<typeof childReportSubjectVM>;
+
 export const terminalReportVM = z.object({
   id: z.string(),
   term_name: z.string(),
@@ -88,6 +99,8 @@ export const terminalReportVM = z.object({
   overall_average: z.number().nullable(),
   overall_grade: z.string().nullable(),
   class_teacher_remark: z.string(),
+  /** The GES subject table. Empty for reports generated before the subject snapshot existed. */
+  subjects: z.array(childReportSubjectVM),
   // When school reopens after this term, if the school has set it. The line parents look for first
   // after the grades — they plan childcare, travel and fees around it.
   reopening_date: z.string().nullable(),

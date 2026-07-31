@@ -42,7 +42,7 @@ export async function getReportSheet(
     db()
       .from("terminal_reports")
       .select(
-        "id, student_id, total_score, average_score, position, attendance_present, attendance_total, class_teacher_comment, head_teacher_comment, is_published, generated_at",
+        "id, student_id, total_score, average_score, position, attendance_present, attendance_total, class_teacher_comment, head_teacher_comment, conduct, attitude, interest, promoted_to, enrolled_count, is_published, generated_at, terminal_report_subjects(subject_name, class_score, exam_score, total, position, remark)",
       )
       .eq("class_id", classId)
       .eq("term_id", termId),
@@ -129,6 +129,23 @@ export async function getReportSheet(
       attendance_total: stored ? stored.attendance_total : attendance.total,
       class_teacher_comment: stored?.class_teacher_comment ?? null,
       head_teacher_comment: stored?.head_teacher_comment ?? null,
+      conduct: stored?.conduct ?? null,
+      attitude: stored?.attitude ?? null,
+      interest: stored?.interest ?? null,
+      promoted_to: stored?.promoted_to ?? null,
+      enrolled_count: stored?.enrolled_count ?? null,
+      // Frozen at generation. Empty until then — the dialog derives nothing live, because the
+      // subject table is the part of the card the school signs off on.
+      subjects: (stored?.terminal_report_subjects ?? [])
+        .map((sub) => ({
+          subject_name: sub.subject_name,
+          class_score: numberOrNull(sub.class_score),
+          exam_score: numberOrNull(sub.exam_score),
+          total: numberOrNull(sub.total),
+          position: sub.position,
+          remark: sub.remark,
+        }))
+        .sort((a, b) => a.subject_name.localeCompare(b.subject_name)),
       is_published: stored?.is_published ?? false,
       generated_at: stored?.generated_at ?? null,
       storedPosition: stored?.position ?? null,

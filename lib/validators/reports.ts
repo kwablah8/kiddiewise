@@ -6,6 +6,17 @@ import { z } from "zod";
  * The stored figures (total, average, position, attendance) are a snapshot taken when the report is
  * generated. See lib/terminal-reports.ts for why a report is frozen while `results.grade` is not.
  */
+/** One frozen subject row on the GES card: Class Score · Exams Score · Total · Position · Remarks. */
+export const reportSubjectRowVM = z.object({
+  subject_name: z.string(),
+  class_score: z.number().nullable(),
+  exam_score: z.number().nullable(),
+  total: z.number().nullable(),
+  position: z.number().nullable(),
+  remark: z.string().nullable(),
+});
+export type ReportSubjectRowVM = z.infer<typeof reportSubjectRowVM>;
+
 export const terminalReportRowVM = z.object({
   /** Null before the report has been generated for this student. */
   id: z.string().nullable(),
@@ -22,6 +33,15 @@ export const terminalReportRowVM = z.object({
   attendance_total: z.number(),
   class_teacher_comment: z.string().nullable(),
   head_teacher_comment: z.string().nullable(),
+  // The class teacher's per-student card fields (spec 2026-07-31 §2).
+  conduct: z.string().nullable(),
+  attitude: z.string().nullable(),
+  interest: z.string().nullable(),
+  promoted_to: z.string().nullable(),
+  /** "Number on roll" at generation time; null before the report exists. */
+  enrolled_count: z.number().nullable(),
+  /** Frozen at generation; empty until the report has been generated. */
+  subjects: z.array(reportSubjectRowVM),
   is_published: z.boolean(),
   generated_at: z.string().nullable(),
 });
@@ -52,17 +72,24 @@ export const generateReportsSchema = z.object({
 });
 export type GenerateReportsInput = z.infer<typeof generateReportsSchema>;
 
+// Empty string from a cleared textarea means "not filled", which is null in the column.
+const cardText = (max: number, label: string) =>
+  z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+    z.string().max(max, `Keep ${label} under ${max} characters`).nullable(),
+  );
+
+// Every field optional: an omitted key means "leave that column alone" (the action patches only
+// what was sent), while an empty string explicitly clears. Same lesson as staffUpdateSchema — a
+// caller saving one field must not wipe the others.
 export const reportCommentsSchema = z.object({
   id: z.string().min(1),
-  // Empty string from a cleared textarea means "no comment", which is null in the column.
-  class_teacher_comment: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? null : v),
-    z.string().max(1000, "Keep the comment under 1000 characters").nullable(),
-  ),
-  head_teacher_comment: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? null : v),
-    z.string().max(1000, "Keep the comment under 1000 characters").nullable(),
-  ),
+  class_teacher_comment: cardText(1000, "the comment").optional(),
+  head_teacher_comment: cardText(1000, "the comment").optional(),
+  conduct: cardText(500, "conduct").optional(),
+  attitude: cardText(500, "attitude").optional(),
+  interest: cardText(500, "interest").optional(),
+  promoted_to: cardText(100, "promoted-to").optional(),
 });
 export type ReportCommentsInput = z.infer<typeof reportCommentsSchema>;
 

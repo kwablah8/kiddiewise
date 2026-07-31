@@ -35,7 +35,8 @@ const CHILD_PROFILE_SELECT: string = `
 `;
 
 const CHILD_REPORT_SELECT: string =
-  "id, class_teacher_comment, average_score, is_published, term_id, terms(name, reopening_date)";
+  "id, class_teacher_comment, average_score, is_published, term_id, terms(name, reopening_date), " +
+  "terminal_report_subjects(subject_name, class_score, exam_score, total, position, remark)";
 
 interface ChildProfileRow {
   id: string;
@@ -56,6 +57,14 @@ interface ChildReportRow {
   is_published: boolean;
   term_id: string;
   terms: { name: string; reopening_date: string | null } | null;
+  terminal_report_subjects: {
+    subject_name: string;
+    class_score: number | string | null;
+    exam_score: number | string | null;
+    total: number | string | null;
+    position: number | null;
+    remark: string | null;
+  }[];
 }
 
 interface ActiveTermRow {
@@ -330,5 +339,16 @@ export async function getChildReport(
     overall_average: average,
     overall_grade: average !== null ? (scoreToGrade(average, 100, bands)?.grade ?? null) : null,
     class_teacher_remark: report.class_teacher_comment ?? "",
+    // RLS (trs_parent_read) already confines these to published reports of the parent's own child.
+    subjects: (report.terminal_report_subjects ?? [])
+      .map((s) => ({
+        subject_name: s.subject_name,
+        class_score: s.class_score === null ? null : Number(s.class_score),
+        exam_score: s.exam_score === null ? null : Number(s.exam_score),
+        total: s.total === null ? null : Number(s.total),
+        position: s.position,
+        remark: s.remark,
+      }))
+      .sort((a, b) => a.subject_name.localeCompare(b.subject_name)),
   };
 }
