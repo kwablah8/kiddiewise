@@ -142,9 +142,25 @@ export const staffCreateSchema = z.object({
   qualification: z.string().nullable().default(null),
 });
 export type StaffCreateInput = z.infer<typeof staffCreateSchema>;
-export const staffUpdateSchema = staffCreateSchema
-  .partial()
-  .extend({ id: z.string(), is_active: z.boolean().optional() });
+// NOT `staffCreateSchema.partial()`: the create schema's `.default(null)`s would turn an omitted
+// key into an explicit null, and updateStaff writes what it's given — a status-only toggle
+// (`{ id, is_active }`) would silently wipe every other column. Here an omitted key stays
+// undefined, which the action reads as "leave that column alone". `role` is deliberately absent —
+// changing someone's role is not an edit, it's a re-provisioning decision this app doesn't offer.
+export const staffUpdateSchema = z.object({
+  id: z.string(),
+  first_name: z.string().min(1, "Required").optional(),
+  last_name: z.string().min(1, "Required").optional(),
+  email: z.string().email("Enter a valid email").optional(),
+  phone: z.string().nullable().optional(),
+  position: z.string().nullable().optional(),
+  department: z.string().nullable().optional(),
+  gender: staffGender.nullable().optional(),
+  date_of_birth: z.string().nullable().optional(),
+  hire_date: z.string().nullable().optional(),
+  qualification: z.string().nullable().optional(),
+  is_active: z.boolean().optional(),
+});
 
 export const assignSubjectSchema = z.object({
   class_id: z.string().min(1), subject_id: z.string().min(1),

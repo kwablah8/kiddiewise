@@ -439,18 +439,20 @@ export async function updateStaff(
       throw new UserFacingError("You can't deactivate your own account.");
     }
 
-    const patch: TablesUpdate<"profiles"> = {
-      phone: data.phone,
-      position: data.position,
-      department: data.department,
-      gender: data.gender,
-      date_of_birth: data.date_of_birth,
-      hire_date: data.hire_date,
-      qualification: data.qualification,
-    };
+    // Only the keys the caller actually sent are written: the edit form submits every field, the
+    // status toggle submits `{ id, is_active }` alone, and neither may clobber the other's columns
+    // (see the note on staffUpdateSchema).
+    const patch: TablesUpdate<"profiles"> = {};
     if (data.first_name !== undefined) patch.first_name = data.first_name;
     if (data.last_name !== undefined) patch.last_name = data.last_name;
     if (data.email !== undefined) patch.email = data.email;
+    if (data.phone !== undefined) patch.phone = data.phone;
+    if (data.position !== undefined) patch.position = data.position;
+    if (data.department !== undefined) patch.department = data.department;
+    if (data.gender !== undefined) patch.gender = data.gender;
+    if (data.date_of_birth !== undefined) patch.date_of_birth = data.date_of_birth;
+    if (data.hire_date !== undefined) patch.hire_date = data.hire_date;
+    if (data.qualification !== undefined) patch.qualification = data.qualification;
     if (data.is_active !== undefined) patch.is_active = data.is_active;
 
     const row = assertWrite(
