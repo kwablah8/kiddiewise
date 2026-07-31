@@ -122,11 +122,12 @@ export function renderReportCard(data: ReportCardData, logo?: PdfImage | null): 
   const examWeight = 100 - data.caWeight;
   const tableTop = y + 2;
   const cols = [
-    { header: "SUBJECTS", width: 58, align: "left" as const },
-    { header: `Class Score ${data.caWeight}%`, width: 27, align: "center" as const },
-    { header: `Exams Score ${examWeight}%`, width: 27, align: "center" as const },
-    { header: "Total Score 100%", width: 27, align: "center" as const },
-    { header: "Position", width: 18, align: "center" as const },
+    { header: "SUBJECTS", width: 48, align: "left" as const },
+    { header: `Class Score ${data.caWeight}%`, width: 26, align: "center" as const },
+    { header: `Exams Score ${examWeight}%`, width: 26, align: "center" as const },
+    { header: "Total Score 100%", width: 26, align: "center" as const },
+    { header: "Position", width: 16, align: "center" as const },
+    // Wide enough for "Very Good" on ONE line — a wrapped remark collides with the next row.
     { header: "Remarks", width: 0, align: "left" as const }, // 0 = stretch to the right edge
   ];
   const tableWidth = right - margin;
@@ -184,15 +185,16 @@ export function renderReportCard(data: ReportCardData, logo?: PdfImage | null): 
   y = tableBottom + 12;
   const attendance =
     data.attendanceTotal === 0 ? "—" : `${data.attendancePresent} OUT OF ${data.attendanceTotal}`;
+  // getTextWidth drops a trailing space, so the gap is added explicitly.
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("ATTENDANCE: ", margin, y);
+  doc.text("ATTENDANCE:", margin, y);
   doc.setFont("helvetica", "normal");
-  doc.text(attendance, margin + doc.getTextWidth("ATTENDANCE: "), y);
+  doc.text(attendance, margin + doc.getTextWidth("ATTENDANCE:") + 2, y);
   doc.setFont("helvetica", "bold");
-  doc.text("PROMOTED TO: ", pageWidth / 2, y);
+  doc.text("PROMOTED TO:", pageWidth / 2, y);
   doc.setFont("helvetica", "normal");
-  doc.text(data.promotedTo ?? "—", pageWidth / 2 + doc.getTextWidth("PROMOTED TO: "), y);
+  doc.text(data.promotedTo ?? "—", pageWidth / 2 + doc.getTextWidth("PROMOTED TO:") + 2, y);
   y += 10;
 
   const paragraph = (label: string, value: string | null) => {
