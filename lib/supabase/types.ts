@@ -510,6 +510,182 @@ export type Database = {
           },
         ]
       }
+      daily_reports_parent: {
+        Row: {
+          ate_before_school: boolean | null
+          comments: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          feeding_time: string | null
+          food: string | null
+          had_medication: boolean | null
+          id: string
+          medication_details: string | null
+          medication_reason: string | null
+          parent_comments: string | null
+          pickup_info: string | null
+          portion: string | null
+          school_id: string
+          seems: Database["public"]["Enums"]["daily_child_mood"] | null
+          slept: Database["public"]["Enums"]["daily_sleep"] | null
+          special_requests: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          ate_before_school?: boolean | null
+          comments?: string | null
+          created_at?: string
+          created_by?: string | null
+          date: string
+          feeding_time?: string | null
+          food?: string | null
+          had_medication?: boolean | null
+          id?: string
+          medication_details?: string | null
+          medication_reason?: string | null
+          parent_comments?: string | null
+          pickup_info?: string | null
+          portion?: string | null
+          school_id: string
+          seems?: Database["public"]["Enums"]["daily_child_mood"] | null
+          slept?: Database["public"]["Enums"]["daily_sleep"] | null
+          special_requests?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          ate_before_school?: boolean | null
+          comments?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          feeding_time?: string | null
+          food?: string | null
+          had_medication?: boolean | null
+          id?: string
+          medication_details?: string | null
+          medication_reason?: string | null
+          parent_comments?: string | null
+          pickup_info?: string | null
+          portion?: string | null
+          school_id?: string
+          seems?: Database["public"]["Enums"]["daily_child_mood"] | null
+          slept?: Database["public"]["Enums"]["daily_sleep"] | null
+          special_requests?: string | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_reports_parent_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_reports_parent_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_reports_parent_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_reports_teacher: {
+        Row: {
+          activities: string[]
+          breakfast: Database["public"]["Enums"]["daily_portion"] | null
+          created_at: string
+          created_by: string | null
+          date: string
+          id: string
+          lunch: Database["public"]["Enums"]["daily_portion"] | null
+          medication_given: string | null
+          mood_lessons: Database["public"]["Enums"]["daily_lesson_mood"] | null
+          mood_play: Database["public"]["Enums"]["daily_play_mood"] | null
+          nap_start: string | null
+          nap_wake: string | null
+          school_id: string
+          snack: Database["public"]["Enums"]["daily_portion"] | null
+          student_id: string
+          teacher_comments: string | null
+          toileting: Json
+          updated_at: string
+        }
+        Insert: {
+          activities?: string[]
+          breakfast?: Database["public"]["Enums"]["daily_portion"] | null
+          created_at?: string
+          created_by?: string | null
+          date: string
+          id?: string
+          lunch?: Database["public"]["Enums"]["daily_portion"] | null
+          medication_given?: string | null
+          mood_lessons?: Database["public"]["Enums"]["daily_lesson_mood"] | null
+          mood_play?: Database["public"]["Enums"]["daily_play_mood"] | null
+          nap_start?: string | null
+          nap_wake?: string | null
+          school_id: string
+          snack?: Database["public"]["Enums"]["daily_portion"] | null
+          student_id: string
+          teacher_comments?: string | null
+          toileting?: Json
+          updated_at?: string
+        }
+        Update: {
+          activities?: string[]
+          breakfast?: Database["public"]["Enums"]["daily_portion"] | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          id?: string
+          lunch?: Database["public"]["Enums"]["daily_portion"] | null
+          medication_given?: string | null
+          mood_lessons?: Database["public"]["Enums"]["daily_lesson_mood"] | null
+          mood_play?: Database["public"]["Enums"]["daily_play_mood"] | null
+          nap_start?: string | null
+          nap_wake?: string | null
+          school_id?: string
+          snack?: Database["public"]["Enums"]["daily_portion"] | null
+          student_id?: string
+          teacher_comments?: string | null
+          toileting?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_reports_teacher_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_reports_teacher_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_reports_teacher_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enrollments: {
         Row: {
           academic_year_id: string
@@ -1750,6 +1926,11 @@ export type Database = {
       announcement_audience: "everyone" | "parents" | "teachers"
       attendance_status: "present" | "absent" | "late"
       blood_group: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-"
+      daily_child_mood: "happy" | "funny" | "other"
+      daily_lesson_mood: "attentive" | "fidgeting" | "unwell"
+      daily_play_mood: "mingled" | "did_not_mingle" | "unwell"
+      daily_portion: "all" | "some" | "none"
+      daily_sleep: "good" | "ok" | "not_well"
       enrollment_status:
         | "active"
         | "inactive"
@@ -1907,6 +2088,11 @@ export const Constants = {
       announcement_audience: ["everyone", "parents", "teachers"],
       attendance_status: ["present", "absent", "late"],
       blood_group: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+      daily_child_mood: ["happy", "funny", "other"],
+      daily_lesson_mood: ["attentive", "fidgeting", "unwell"],
+      daily_play_mood: ["mingled", "did_not_mingle", "unwell"],
+      daily_portion: ["all", "some", "none"],
+      daily_sleep: ["good", "ok", "not_well"],
       enrollment_status: [
         "active",
         "inactive",

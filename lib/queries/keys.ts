@@ -80,6 +80,11 @@ export const queryKeys = {
   reports: {
     sheet: (classId: string, termId: string) => ["reports", "sheet", classId, termId] as const,
   },
+  dailyReports: {
+    report: (studentId: string, date: string) => ["daily-reports", studentId, date] as const,
+    classStatus: (classId: string, date: string) =>
+      ["daily-reports", "class", classId, date] as const,
+  },
   parent: {
     children: ["parent", "children"] as const,
     announcements: ["parent", "announcements"] as const,
