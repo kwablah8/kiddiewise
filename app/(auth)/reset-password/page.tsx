@@ -1,109 +1,53 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Loader2, MailCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ErrorState } from "@/components/states/error-state";
-import { resetPasswordSchema, type ResetPasswordInput } from "@/lib/validators/auth";
-import { createClient } from "@/lib/supabase/client";
+import { KeyRound } from "lucide-react";
 
+/**
+ * "Forgot password?" — deliberately NOT an email form.
+ *
+ * The school runs without an email/SMS provider (docs/09 §portal access), so a reset link would
+ * simply never arrive; a form promising one is a dead end that reads as a broken product. Instead
+ * this mirrors how credentials are issued in the first place: an administrator regenerates a
+ * temporary password from the Staff or Parents screen ("Send credentials") and hands it over in
+ * person or on WhatsApp, and the holder is forced to choose their own at next sign-in. If an SMTP
+ * provider is ever configured, the previous email form is one `git revert` away.
+ */
 export default function ResetPasswordPage() {
-  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
-  const [hasError, setHasError] = useState(false);
-  const {
-    register,
-    handleSubmit,
-    getValues,
-    formState: { errors, isSubmitting },
-  } = useForm<ResetPasswordInput>({ resolver: zodResolver(resetPasswordSchema) });
-
-  async function onSubmit(values: ResetPasswordInput) {
-    setHasError(false);
-    const supabase = createClient();
-
-    const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-      redirectTo: `${window.location.origin}/update-password`,
-    });
-
-    // A failure here usually means the mail transport is down, not that the email is unknown —
-    // Supabase returns success for unregistered addresses on purpose, so we never confirm or deny
-    // that an account exists. The success screen below is worded to match.
-    if (error) {
-      setHasError(true);
-      return;
-    }
-    setSubmittedEmail(values.email);
-  }
-
-  if (submittedEmail) {
-    return (
-      <div className="flex flex-col items-center text-center">
-        <span className="flex size-10 items-center justify-center rounded-full bg-[var(--success-bg)] text-[var(--success-fg)]">
-          <MailCheck className="size-5" aria-hidden="true" />
-        </span>
-        <h1 className="mt-4 text-xl font-semibold text-[var(--text)]">Check your email</h1>
-        <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-          If an account exists for <span className="font-medium text-[var(--text)]">{submittedEmail}</span>,
-          we&apos;ve sent a link to reset your password.
-        </p>
-        <Link
-          href="/login"
-          className="mt-6 text-sm font-medium text-[var(--primary)] hover:underline"
-        >
-          Back to sign in
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-[var(--text)]">Reset your password</h1>
-      <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-        Enter the email linked to your account and we&apos;ll send you a reset link.
+      <span className="flex size-10 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
+        <KeyRound className="size-5" aria-hidden="true" />
+      </span>
+      <h1 className="mt-4 text-2xl font-semibold text-[var(--text)]">Forgot your password?</h1>
+      <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+        Password resets are handled by the school office. Ask your school administrator to issue
+        you a <span className="font-medium text-[var(--text)]">new temporary password</span>
+        {" — "}the same way you received your first one. You&apos;ll choose your own password the
+        next time you sign in.
       </p>
-
-      {hasError ? (
-        <div className="mt-8">
-          <ErrorState
-            message="We couldn't send the reset link. Please try again."
-            onRetry={() => onSubmit(getValues())}
-          />
-        </div>
-      ) : (
-        <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@school.edu.gh"
-              aria-invalid={!!errors.email}
-              {...register("email")}
-            />
-            {errors.email && (
-              <p className="text-xs text-[var(--danger)]">{errors.email.message}</p>
-            )}
-          </div>
-
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            Send reset link
-          </Button>
-
-          <p className="text-center text-sm text-[var(--muted-foreground)]">
-            <Link href="/login" className="font-medium text-[var(--primary)] hover:underline">
-              Back to sign in
-            </Link>
-          </p>
-        </form>
-      )}
+      <ul className="mt-6 space-y-3 text-sm text-[var(--muted-foreground)]">
+        <li className="flex gap-2">
+          <span className="font-semibold text-[var(--text)]">1.</span>
+          Contact the school office and confirm it&apos;s you.
+        </li>
+        <li className="flex gap-2">
+          <span className="font-semibold text-[var(--text)]">2.</span>
+          They&apos;ll send you a fresh temporary password (or a sign-in link) — usually over
+          WhatsApp or in person.
+        </li>
+        <li className="flex gap-2">
+          <span className="font-semibold text-[var(--text)]">3.</span>
+          Sign in with it and set a password of your own.
+        </li>
+      </ul>
+      <p className="mt-6 text-xs text-[var(--muted-foreground)]">
+        School administrators: issue temporary passwords from the Staff or Parents screen. If you
+        are the administrator who is locked out, another administrator can do the same for you.
+      </p>
+      <p className="mt-8 text-center text-sm text-[var(--muted-foreground)]">
+        <Link href="/login" className="font-medium text-[var(--primary)] hover:underline">
+          Back to sign in
+        </Link>
+      </p>
     </div>
   );
 }
