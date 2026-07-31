@@ -2,7 +2,17 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { BookOpen, Pencil, UserRoundX } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BookOpen, Loader2, Pencil, Trash2, UserRoundCheck, UserRoundX } from "lucide-react";
+import { toast } from "@/lib/toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PageHeader } from "@/components/app/page-header";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { StatusPill } from "@/components/data/status-pill";
@@ -11,8 +21,14 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { StaffAvatar } from "./staff-avatar";
 import { StaffFormDialog } from "./staff-form";
-import { useAssignmentsForStaff, useClasses, useStaffMember } from "@/lib/queries/academics";
-import type { StaffRole } from "@/lib/validators/academics";
+import {
+  useAssignmentsForStaff,
+  useClasses,
+  useDeleteStaff,
+  useStaffMember,
+  useUpdateStaff,
+} from "@/lib/queries/academics";
+import type { StaffRole, StaffVM } from "@/lib/validators/academics";
 import { formatDate } from "@/lib/format";
 import { cardShellClass } from "@/lib/ui";
 import { cn } from "@/lib/utils";
@@ -29,6 +45,8 @@ export function StaffDetail({ id }: StaffDetailProps) {
   const { data, isLoading, isError, refetch } = useStaffMember(id);
   const [editOpen, setEditOpen] = useState(false);
   const [editKey, setEditKey] = useState(0);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (isLoading) return <StaffDetailSkeleton />;
 
@@ -75,17 +93,36 @@ export function StaffDetail({ id }: StaffDetailProps) {
         backHref="/staff"
         backLabel="Staff"
         action={
-          <Button
-            type="button"
-            className="gap-1.5"
-            onClick={() => {
-              setEditKey((k) => k + 1);
-              setEditOpen(true);
-            }}
-          >
-            <Pencil className="size-4" aria-hidden="true" />
-            Edit
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => setStatusOpen(true)}
+            >
+              {data.is_active ? (
+                <UserRoundX className="size-4" aria-hidden="true" />
+              ) : (
+                <UserRoundCheck className="size-4" aria-hidden="true" />
+              )}
+              {data.is_active ? "Deactivate" : "Activate"}
+            </Button>
+            <Button type="button" variant="destructive" className="gap-1.5" onClick={() => setDeleteOpen(true)}>
+              <Trash2 className="size-4" aria-hidden="true" />
+              Delete
+            </Button>
+            <Button
+              type="button"
+              className="gap-1.5"
+              onClick={() => {
+                setEditKey((k) => k + 1);
+                setEditOpen(true);
+              }}
+            >
+              <Pencil className="size-4" aria-hidden="true" />
+              Edit
+            </Button>
+          </div>
         }
       />
 
@@ -145,7 +182,131 @@ export function StaffDetail({ id }: StaffDetailProps) {
       </div>
 
       <StaffFormDialog key={editKey} mode="edit" staffId={id} open={editOpen} onOpenChange={setEditOpen} />
+      <ConfirmStatusDialog staff={data} open={statusOpen} onOpenChange={setStatusOpen} />
+      <ConfirmDeleteStaffDialog staff={data} open={deleteOpen} onOpenChange={setDeleteOpen} />
     </div>
+  );
+}
+
+function ConfirmStatusDialog({
+  staff,
+  open,
+  onOpenChange,
+}: {
+  staff: StaffVM;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const updateStaff = useUpdateStaff();
+  const deactivating = staff.is_active;
+  const fullName = `${staff.first_name} ${staff.last_name}`;
+
+  async function handleConfirm() {
+    try {
+      await updateStaff.mutateAsync({ id: staff.id, is_active: !staff.is_active });
+      toast.success(deactivating ? "Staff deactivated" : "Staff reactivated", {
+        description: deactivating
+          ? `${fullName} can no longer sign in to the portal.`
+          : `${fullName} can sign in again.`,
+      });
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{deactivating ? "Deactivate staff member?" : "Reactivate staff member?"}</DialogTitle>
+          <DialogDescription>
+            {deactivating ? (
+              <>
+                <strong className="text-[var(--text)]">{fullName}</strong> will be blocked from
+                signing in to the portal. Everything they have recorded stays. You can reactivate
+                them at any time.
+              </>
+            ) : (
+              <>
+                <strong className="text-[var(--text)]">{fullName}</strong> will be able to sign in
+                to the portal again.
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="mt-2">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant={deactivating ? "destructive" : "default"}
+            onClick={handleConfirm}
+            disabled={updateStaff.isPending}
+          >
+            {updateStaff.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            {deactivating ? "Deactivate" : "Reactivate"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ConfirmDeleteStaffDialog({
+  staff,
+  open,
+  onOpenChange,
+}: {
+  staff: StaffVM;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const router = useRouter();
+  const deleteStaff = useDeleteStaff();
+  const fullName = `${staff.first_name} ${staff.last_name}`;
+
+  async function handleConfirm() {
+    try {
+      await deleteStaff.mutateAsync({ id: staff.id });
+      toast.success("Staff deleted", { description: `${fullName} has been removed.` });
+      onOpenChange(false);
+      router.push("/staff");
+    } catch (err) {
+      // The common failure is the block-if-history guard; its message points at deactivation.
+      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      onOpenChange(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete staff member?</DialogTitle>
+          <DialogDescription>
+            <strong className="text-[var(--text)]">{fullName}</strong> and their portal account will
+            be permanently removed. This only works for someone with no records — anyone who has
+            marked attendance, entered scores or runs a class must be deactivated instead.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="mt-2">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={deleteStaff.isPending}
+          >
+            {deleteStaff.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            Delete Staff
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

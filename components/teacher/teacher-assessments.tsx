@@ -6,6 +6,7 @@ import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
+import { AssessmentRowActions } from "@/components/assessments/assessment-row-actions";
 import { useTeacherAssessments } from "@/lib/queries/assessments";
 import type { AssessmentListItemVM } from "@/lib/validators/assessments";
 import { formatDate } from "@/lib/format";
@@ -53,6 +54,12 @@ export function TeacherAssessments({ teacherId }: { teacherId: string }) {
           {r.is_submitted && <StatusPill label="Submitted" tone="success" />}
         </span>
       ),
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (r) => <AssessmentRowActions assessment={r} />,
     },
   ];
 

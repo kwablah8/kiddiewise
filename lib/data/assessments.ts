@@ -11,7 +11,7 @@ import type {
 import type { GradeBandVM } from "@/lib/validators/grading";
 
 const SELECT = `
-  id, title, class_id, subject_id, term_id, max_score, date,
+  id, title, class_id, subject_id, term_id, assessment_type_id, max_score, date,
   classes(name), subjects(name), terms(name, academic_year_id), assessment_types(name),
   results(is_submitted)
 `;
@@ -22,6 +22,7 @@ interface AssessmentRow {
   class_id: string;
   subject_id: string;
   term_id: string;
+  assessment_type_id: string;
   max_score: number;
   date: string | null;
   classes: { name: string } | null;
@@ -47,6 +48,7 @@ function toListItemVM(a: AssessmentRow): AssessmentListItemVM {
     subject_name: a.subjects?.name ?? "",
     term_id: a.term_id,
     term_name: a.terms?.name ?? "",
+    assessment_type_id: a.assessment_type_id,
     type_name: a.assessment_types?.name ?? "",
     max_score: Number(a.max_score),
     date: a.date,

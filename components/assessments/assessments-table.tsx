@@ -10,6 +10,7 @@ import { ErrorState } from "@/components/states/error-state";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { AssessmentRowActions } from "./assessment-row-actions";
 import { useAssessments } from "@/lib/queries/assessments";
 import { useActiveContext, useClasses, useSubjects, useTerms } from "@/lib/queries/academics";
 import type { AssessmentListItemVM } from "@/lib/validators/assessments";
@@ -67,6 +68,12 @@ export function AssessmentsTable() {
           {r.is_submitted && <StatusPill label="Submitted" tone="success" />}
         </span>
       ),
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (r) => <AssessmentRowActions assessment={r} />,
     },
   ];
 

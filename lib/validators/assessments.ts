@@ -9,6 +9,7 @@ export const assessmentListItemVM = z.object({
   subject_name: z.string(),
   term_id: z.string(),
   term_name: z.string(),
+  assessment_type_id: z.string(),
   type_name: z.string(),
   max_score: z.number(),
   date: z.string().nullable(),
