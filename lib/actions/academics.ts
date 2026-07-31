@@ -1,14 +1,17 @@
 "use server";
 
-import { attempt, type ActionResult } from "./result";
+import { attempt, UserFacingError, type ActionResult } from "./result";
 
 import {
   tenant,
   assertWrite,
   assertOk,
+  assertAdmin,
   provisionUser,
   rollbackProvisionedUser,
   markTempCredential,
+  setSignInBlocked,
+  deleteAuthUser,
 } from "./_server";
 import {
   generateTempPassword,
@@ -17,7 +20,9 @@ import {
 } from "@/lib/temp-password";
 import {
   academicYearCreateSchema,
+  academicYearUpdateSchema,
   termCreateSchema,
+  termUpdateSchema,
   classCreateSchema,
   classUpdateSchema,
   subjectCreateSchema,
@@ -27,7 +32,9 @@ import {
   assignSubjectSchema,
   setReopeningDateSchema,
   type AcademicYearCreateInput,
+  type AcademicYearUpdateInput,
   type TermCreateInput,
+  type TermUpdateInput,
   type ClassCreateInput,
   type ClassUpdateInput,
   type SubjectCreateInput,
@@ -80,6 +87,92 @@ export async function createTerm(input: TermCreateInput): Promise<ActionResult<{
       "term",
     );
     return { id: row.id };
+  });
+}
+
+export async function updateYear(input: AcademicYearUpdateInput): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const { id, ...patch } = academicYearUpdateSchema.parse(input);
+    const ctx = await tenant();
+
+    const row = assertWrite(
+      await ctx.db.from("academic_years").update(patch).eq("id", id).select("id").single(),
+      "academic year",
+      "An academic year with that name already exists.",
+    );
+    return { id: row.id };
+  });
+}
+
+/**
+ * Delete a year that was created by mistake.
+ *
+ * Two guards implement block-if-history (spec 2026-07-31): the ACTIVE year is refused outright —
+ * deleting it would leave every year-scoped read with nothing to scope by — and a year whose terms
+ * hold data is refused by the terms' own restrict FKs (attendance, assessments, reports, fees), or
+ * by the year's (enrollments, invoices), surfacing here as 23503. Empty terms cascade away with the
+ * year, which is what "delete the mistake" means for a year mistyped along with its three terms.
+ */
+export async function deleteYear(input: { id: string }): Promise<ActionResult<{ ok: true }>> {
+  return attempt(async () => {
+    const { id } = z.object({ id: z.string().min(1) }).parse(input);
+    const ctx = await tenant();
+
+    const { data: year } = await ctx.db
+      .from("academic_years")
+      .select("is_active")
+      .eq("id", id)
+      .maybeSingle();
+    if (!year) throw new UserFacingError("That academic year no longer exists.");
+    if (year.is_active) {
+      throw new UserFacingError(
+        "This is the active academic year. Set another year active before deleting it.",
+      );
+    }
+
+    assertOk(
+      await ctx.db.from("academic_years").delete().eq("id", id),
+      "academic year",
+      "This year has enrolments, results or fee records behind it — that history would be lost. Keep the year instead.",
+    );
+    return { ok: true };
+  });
+}
+
+export async function updateTerm(input: TermUpdateInput): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const { id, ...patch } = termUpdateSchema.parse(input);
+    const ctx = await tenant();
+
+    const row = assertWrite(
+      await ctx.db.from("terms").update(patch).eq("id", id).select("id").single(),
+      "term",
+    );
+    return { id: row.id };
+  });
+}
+
+/** Same guards as deleteYear: never the active term, never one with history (restrict FKs → 23503). */
+export async function deleteTerm(input: { id: string }): Promise<ActionResult<{ ok: true }>> {
+  return attempt(async () => {
+    const { id } = z.object({ id: z.string().min(1) }).parse(input);
+    const ctx = await tenant();
+
+    const { data: term } = await ctx.db.from("terms").select("is_active").eq("id", id).maybeSingle();
+    if (!term) throw new UserFacingError("That term no longer exists.");
+    if (term.is_active) {
+      throw new UserFacingError("This is the active term. Set another term active before deleting it.");
+    }
+
+    // No fee pre-check is needed: fee_items scope terms via the fee_term ENUM (migration 0017),
+    // not a term FK, and every remaining dependent (attendance, assessments, reports, invoices)
+    // is ON DELETE RESTRICT — history surfaces as 23503 below.
+    assertOk(
+      await ctx.db.from("terms").delete().eq("id", id),
+      "term",
+      "This term has attendance, assessments, reports or fee records behind it — that history would be lost. Keep the term instead.",
+    );
+    return { ok: true };
   });
 }
 
@@ -340,6 +433,12 @@ export async function updateStaff(
     const data = staffUpdateSchema.parse(input);
     const ctx = await tenant();
 
+    // Deactivating yourself would ban the session you're standing in — the same lockout
+    // reissueTempPassword guards against, and equally unrecoverable from inside the app.
+    if (data.is_active === false && data.id === ctx.profile.id) {
+      throw new UserFacingError("You can't deactivate your own account.");
+    }
+
     const patch: TablesUpdate<"profiles"> = {
       phone: data.phone,
       position: data.position,
@@ -352,12 +451,86 @@ export async function updateStaff(
     if (data.first_name !== undefined) patch.first_name = data.first_name;
     if (data.last_name !== undefined) patch.last_name = data.last_name;
     if (data.email !== undefined) patch.email = data.email;
+    if (data.is_active !== undefined) patch.is_active = data.is_active;
 
     const row = assertWrite(
       await ctx.db.from("profiles").update(patch).eq("id", data.id).select("id").single(),
       "staff member",
     );
+
+    // The profile update above ran under RLS, so reaching this line proves the caller may manage
+    // this person. The ban itself needs the service role; status is a security state — an inactive
+    // staff member cannot sign in (spec decision 2).
+    if (data.is_active !== undefined) {
+      await setSignInBlocked(data.id, !data.is_active);
+    }
+
     return { id: row.id };
+  });
+}
+
+/**
+ * Remove a staff member who should never have existed — wrong email, duplicate entry, test row.
+ * Anyone the school has actually worked with is blocked and pointed at deactivation, which keeps
+ * their name on everything they authored while revoking access.
+ */
+export async function deleteStaff(input: { id: string }): Promise<ActionResult<{ ok: true }>> {
+  return attempt(async () => {
+    const { id } = z.object({ id: z.string().min(1) }).parse(input);
+    const ctx = await tenant();
+    assertAdmin(ctx);
+
+    if (id === ctx.profile.id) {
+      throw new UserFacingError("You can't delete your own account while signed in with it.");
+    }
+
+    // Read through the caller's client: RLS confines this to their own school, which is what makes
+    // the service-role delete below safe to perform.
+    const { data: target } = await ctx.db
+      .from("profiles")
+      .select("id, role")
+      .eq("id", id)
+      .maybeSingle();
+    if (!target) throw new UserFacingError("That staff member is not in your school.");
+    if (target.role !== "teacher" && target.role !== "school_admin") {
+      throw new UserFacingError("Only staff accounts can be deleted here.");
+    }
+
+    // What blocks the deletion. The database SET NULLs all of these references on delete, so a
+    // delete would silently strip authorship off registers, mark sheets and receipts — these
+    // checks, not an FK, are the block-if-history boundary here. activity_log is deliberately
+    // absent: audit lines keep their text, and losing the actor link is what any audit trail does
+    // when an account goes away.
+    const head = { count: "exact", head: true } as const;
+    const [classes, assignments, attendance, assessments, results, payments, announcements, events] =
+      await Promise.all([
+        ctx.db.from("classes").select("id", head).eq("class_teacher_id", id),
+        ctx.db.from("class_subjects").select("id", head).eq("teacher_id", id),
+        ctx.db.from("attendance").select("id", head).eq("marked_by", id),
+        ctx.db.from("assessments").select("id", head).eq("created_by", id),
+        ctx.db.from("results").select("id", head).eq("entered_by", id),
+        ctx.db.from("payments").select("id", head).eq("recorded_by", id),
+        ctx.db.from("announcements").select("id", head).eq("created_by", id),
+        ctx.db.from("events").select("id", head).eq("created_by", id),
+      ]);
+    const blocking = [
+      { count: classes.count, what: "is a class teacher" },
+      { count: assignments.count, what: "has subject assignments" },
+      { count: attendance.count, what: "has marked attendance" },
+      { count: assessments.count, what: "has created assessments" },
+      { count: results.count, what: "has entered scores" },
+      { count: payments.count, what: "has recorded payments" },
+      { count: announcements.count, what: "has published announcements" },
+      { count: events.count, what: "has published events" },
+    ].find((b) => (b.count ?? 0) > 0);
+    if (blocking) {
+      throw new UserFacingError(
+        `This staff member ${blocking.what} — deleting them would strip their name off that history. Deactivate them instead.`,
+      );
+    }
+
+    await deleteAuthUser(id); // profile row cascades with the auth account
+    return { ok: true };
   });
 }
 

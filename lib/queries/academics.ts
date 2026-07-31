@@ -12,7 +12,12 @@ import * as actions from "@/lib/actions/academics";
 // `void`, so every `onSuccess(_result, variables)` below becomes an error. Binding first gives the
 // property a concrete function type and inference works as it did before. Do not inline these.
 const createYear = mutate(actions.createYear);
+const updateYear = mutate(actions.updateYear);
+const deleteYear = mutate(actions.deleteYear);
 const createTerm = mutate(actions.createTerm);
+const updateTerm = mutate(actions.updateTerm);
+const deleteTerm = mutate(actions.deleteTerm);
+const deleteStaff = mutate(actions.deleteStaff);
 const setReopeningDate = mutate(actions.setReopeningDate);
 const setActiveYear = mutate(actions.setActiveYear);
 const setActiveTerm = mutate(actions.setActiveTerm);
@@ -87,6 +92,52 @@ export const useCreateTerm = () => {
       // every per-year-filtered variant already cached) plus years, since term_count changed.
       qc.invalidateQueries({ queryKey: ["academics", "terms"] });
       qc.invalidateQueries({ queryKey: queryKeys.academics.years });
+    },
+  });
+};
+
+export const useUpdateYear = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: updateYear,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.academics.years });
+      qc.invalidateQueries({ queryKey: queryKeys.academics.activeContext });
+    },
+  });
+};
+
+// Year/term deletions also touch the dashboard (class counts read through the active year) —
+// cheap to refetch, wrong to leave stale.
+export const useDeleteYear = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteYear,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["academics"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+};
+
+export const useUpdateTerm = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: updateTerm,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["academics", "terms"] });
+      qc.invalidateQueries({ queryKey: queryKeys.academics.activeContext });
+    },
+  });
+};
+
+export const useDeleteTerm = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteTerm,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["academics"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 };
@@ -190,6 +241,18 @@ export const useUpdateStaff = () => {
     onSuccess: (_result, variables) => {
       qc.invalidateQueries({ queryKey: queryKeys.academics.staff });
       qc.invalidateQueries({ queryKey: queryKeys.academics.staffMember(variables.id) });
+    },
+  });
+};
+
+export const useDeleteStaff = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteStaff,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.academics.staff });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: queryKeys.sidebar.counts });
     },
   });
 };

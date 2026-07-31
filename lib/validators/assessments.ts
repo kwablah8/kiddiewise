@@ -99,3 +99,11 @@ export const assessmentCreateSchema = z.object({
   date: z.preprocess((v) => (v === "" || v === undefined ? null : v), z.string().nullable()),
 });
 export type AssessmentCreateInput = z.infer<typeof assessmentCreateSchema>;
+
+// Class, subject and term are not editable — results already recorded against the assessment
+// would silently move with it. Recreate instead.
+export const assessmentUpdateSchema = assessmentCreateSchema
+  .omit({ class_id: true, subject_id: true, term_id: true })
+  .partial()
+  .extend({ id: z.string().min(1) });
+export type AssessmentUpdateInput = z.infer<typeof assessmentUpdateSchema>;

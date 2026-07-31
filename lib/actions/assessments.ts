@@ -1,9 +1,15 @@
 "use server";
 
-import { attempt, type ActionResult } from "./result";
+import { z } from "zod";
+import { attempt, UserFacingError, type ActionResult } from "./result";
 
-import { tenant, assertWrite } from "./_server";
-import { assessmentCreateSchema, type AssessmentCreateInput } from "@/lib/validators/assessments";
+import { tenant, assertWrite, assertOk } from "./_server";
+import {
+  assessmentCreateSchema,
+  assessmentUpdateSchema,
+  type AssessmentCreateInput,
+  type AssessmentUpdateInput,
+} from "@/lib/validators/assessments";
 
 /**
  * Create an assessment.
@@ -41,5 +47,66 @@ export async function createAssessment(input: AssessmentCreateInput): Promise<Ac
     );
 
     return { id: row.id };
+  });
+}
+
+/**
+ * Edit an assessment's descriptive fields. RLS (asm_teacher_update / asm_admin) decides who may;
+ * the one app-level rule is that `max_score` freezes once ANY score has been recorded against it —
+ * every stored score is a fraction of that total, so changing it would silently re-grade the class.
+ */
+export async function updateAssessment(
+  input: AssessmentUpdateInput,
+): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const { id, ...patch } = assessmentUpdateSchema.parse(input);
+    const ctx = await tenant();
+
+    if (patch.max_score !== undefined) {
+      const { count } = await ctx.db
+        .from("results")
+        .select("id", { count: "exact", head: true })
+        .eq("assessment_id", id);
+      if ((count ?? 0) > 0) {
+        throw new UserFacingError(
+          "Scores have already been entered against this total. The maximum score can't change now — the title, type and date still can.",
+        );
+      }
+    }
+
+    const row = assertWrite(
+      await ctx.db.from("assessments").update(patch).eq("id", id).select("id").single(),
+      "assessment",
+    );
+    return { id: row.id };
+  });
+}
+
+/**
+ * Delete an assessment that hasn't entered the record.
+ *
+ * Submitted results are what parents and terminal reports read — block-if-history applies and the
+ * delete is refused. Unsubmitted rows are the teacher's own drafts and cascade away with the
+ * assessment (results FK, migration 0008). RLS: teachers may only delete within their own
+ * class-subject pairs (asm_teacher_delete, migration 0025).
+ */
+export async function deleteAssessment(input: { id: string }): Promise<ActionResult<{ ok: true }>> {
+  return attempt(async () => {
+    const { id } = z.object({ id: z.string().min(1) }).parse(input);
+    const ctx = await tenant();
+
+    const { count } = await ctx.db
+      .from("results")
+      .select("id", { count: "exact", head: true })
+      .eq("assessment_id", id)
+      .eq("is_submitted", true);
+    if ((count ?? 0) > 0) {
+      throw new UserFacingError(
+        "Scores from this assessment have been submitted — they're part of the record now. It can't be deleted.",
+      );
+    }
+
+    assertOk(await ctx.db.from("assessments").delete().eq("id", id), "assessment");
+    return { ok: true };
   });
 }

@@ -117,10 +117,37 @@ export function assertOk(
   assertWrite({ data: res.error ? null : ({} as unknown), error: res.error }, context, friendly);
 }
 
-function assertAdmin(ctx: TenantContext): void {
+export function assertAdmin(ctx: TenantContext): void {
   if (ctx.profile.role !== "school_admin" && ctx.profile.role !== "super_admin") {
     throw new UserFacingError("Only an administrator can add staff or parents or send portal invitations.");
   }
+}
+
+/**
+ * Block or restore a user's ability to sign in.
+ *
+ * Deactivating staff must actually revoke access (spec 2026-07-31 decision 2) — a departed teacher
+ * with a working password could still read student data, so `is_active` cannot be display-only.
+ * GoTrue has no permanent flag, only a duration, hence ten years; "none" lifts it. Bans also cut
+ * refresh-token renewal, so a live session dies within the access token's lifetime.
+ */
+export async function setSignInBlocked(userId: string, blocked: boolean): Promise<void> {
+  const { error } = await createServiceClient().auth.admin.updateUserById(userId, {
+    ban_duration: blocked ? "87600h" : "none",
+  });
+  if (error) {
+    throw new Error(`Could not ${blocked ? "block" : "restore"} sign-in: ${error.message}`);
+  }
+}
+
+/**
+ * Permanently remove an auth account (and, via the profiles FK cascade, its profile row).
+ * Callers are responsible for the block-if-history checks — by the time this runs, the decision
+ * that nothing depends on the person has already been made.
+ */
+export async function deleteAuthUser(userId: string): Promise<void> {
+  const { error } = await createServiceClient().auth.admin.deleteUser(userId);
+  if (error) throw new Error(`Could not delete that account: ${error.message}`);
 }
 
 /** Where an invited user is sent to choose their password. */

@@ -100,6 +100,15 @@ export const termCreateSchema = z.object({
 });
 export type TermCreateInput = z.infer<typeof termCreateSchema>;
 
+export const academicYearUpdateSchema = academicYearCreateSchema.partial().extend({ id: z.string().min(1) });
+export type AcademicYearUpdateInput = z.infer<typeof academicYearUpdateSchema>;
+// A term cannot move to another year — that would drag its attendance and assessments with it.
+export const termUpdateSchema = termCreateSchema
+  .omit({ academic_year_id: true })
+  .partial()
+  .extend({ id: z.string().min(1) });
+export type TermUpdateInput = z.infer<typeof termUpdateSchema>;
+
 export const classCreateSchema = z.object({
   name: z.string().min(1, "Required"), level: z.string().min(1, "Required"),
   capacity: z.coerce.number().int().positive().nullable().default(null),
@@ -118,6 +127,8 @@ export const subjectCreateSchema = z.object({
 export type SubjectCreateInput = z.infer<typeof subjectCreateSchema>;
 export const subjectUpdateSchema = subjectCreateSchema.partial().extend({ id: z.string() });
 
+// `is_active` is a security state, not a display flag: flipping it false also bans the auth
+// account (lib/actions/academics.ts), so a departed staff member cannot sign in.
 export const staffCreateSchema = z.object({
   first_name: z.string().min(1, "Required"), last_name: z.string().min(1, "Required"),
   email: z.string().email("Enter a valid email"),
@@ -131,7 +142,9 @@ export const staffCreateSchema = z.object({
   qualification: z.string().nullable().default(null),
 });
 export type StaffCreateInput = z.infer<typeof staffCreateSchema>;
-export const staffUpdateSchema = staffCreateSchema.partial().extend({ id: z.string() });
+export const staffUpdateSchema = staffCreateSchema
+  .partial()
+  .extend({ id: z.string(), is_active: z.boolean().optional() });
 
 export const assignSubjectSchema = z.object({
   class_id: z.string().min(1), subject_id: z.string().min(1),
