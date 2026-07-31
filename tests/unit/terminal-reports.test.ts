@@ -4,6 +4,8 @@ import {
   assignPositions,
   overallGrade,
   attendanceTotals,
+  computeSubjectComponents,
+  type ComponentResultInput,
 } from "@/lib/terminal-reports";
 import type { GradeBandVM } from "@/lib/validators/grading";
 import type { SubjectResultVM } from "@/lib/validators/parent";
@@ -123,5 +125,88 @@ describe("attendanceTotals", () => {
 
   it("is 0/0 with no records, not a divide-by-zero", () => {
     expect(attendanceTotals([])).toEqual({ present: 0, total: 0 });
+  });
+});
+
+describe("computeSubjectComponents", () => {
+  const r = (
+    subject: string | null,
+    score: number,
+    max: number,
+    isExam: boolean,
+  ): ComponentResultInput => ({ subject, score, max_score: max, is_exam: isExam });
+
+  it("splits a subject into CA and exam components at 50/50", () => {
+    const rows = computeSubjectComponents(
+      [r("Maths", 8, 10, false), r("Maths", 6, 10, false), r("Maths", 60, 100, true)],
+      50,
+    );
+    // CA mean = (80 + 60) / 2 = 70% → 35.0 of 50; exam = 60% → 30.0 of 50.
+    expect(rows).toEqual([
+      { subject_name: "Maths", class_score: 35, exam_score: 30, total: 65 },
+    ]);
+  });
+
+  it("leaves a missing component blank, never zero, and totals what exists", () => {
+    const caOnly = computeSubjectComponents([r("English", 90, 100, false)], 50);
+    expect(caOnly[0]).toEqual({
+      subject_name: "English",
+      class_score: 45,
+      exam_score: null,
+      total: 45,
+    });
+
+    const examOnly = computeSubjectComponents([r("Science", 40, 50, true)], 50);
+    expect(examOnly[0]).toEqual({
+      subject_name: "Science",
+      class_score: null,
+      exam_score: 40,
+      total: 40,
+    });
+  });
+
+  it("respects a non-even school weighting (30% CA / 70% exam)", () => {
+    const rows = computeSubjectComponents(
+      [r("Maths", 100, 100, false), r("Maths", 50, 100, true)],
+      30,
+    );
+    expect(rows[0]).toEqual({
+      subject_name: "Maths",
+      class_score: 30,
+      exam_score: 35,
+      total: 65,
+    });
+  });
+
+  it("rounds each component and the total to one decimal place", () => {
+    const rows = computeSubjectComponents(
+      [r("RME", 1, 3, false), r("RME", 2, 3, true)],
+      50,
+    );
+    // CA: 33.333…% → 16.7 of 50; exam: 66.666…% → 33.3 of 50.
+    expect(rows[0]).toEqual({
+      subject_name: "RME",
+      class_score: 16.7,
+      exam_score: 33.3,
+      total: 50,
+    });
+  });
+
+  it("drops results with no subject or a non-positive max score, sorts by subject", () => {
+    const rows = computeSubjectComponents(
+      [
+        r("Computing", 5, 10, false),
+        r(null, 9, 10, false),
+        r("Art", 5, 0, false),
+        r("Art", 7, 10, false),
+      ],
+      50,
+    );
+    expect(rows.map((x) => x.subject_name)).toEqual(["Art", "Computing"]);
+    expect(rows[0]!.class_score).toBe(35);
+  });
+
+  it("returns nothing for no results", () => {
+    expect(computeSubjectComponents([], 50)).toEqual([]);
   });
 });

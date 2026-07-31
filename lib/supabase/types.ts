@@ -226,18 +226,21 @@ export type Database = {
       assessment_types: {
         Row: {
           id: string
+          is_exam: boolean
           name: string
           school_id: string
           weight: number
         }
         Insert: {
           id?: string
+          is_exam?: boolean
           name: string
           school_id: string
           weight?: number
         }
         Update: {
           id?: string
+          is_exam?: boolean
           name?: string
           school_id?: string
           weight?: number
@@ -1370,6 +1373,7 @@ export type Database = {
           active_academic_year_id: string | null
           active_term_id: string | null
           address: string | null
+          ca_weight: number
           created_at: string
           email: string | null
           id: string
@@ -1382,6 +1386,7 @@ export type Database = {
           active_academic_year_id?: string | null
           active_term_id?: string | null
           address?: string | null
+          ca_weight?: number
           created_at?: string
           email?: string | null
           id?: string
@@ -1394,6 +1399,7 @@ export type Database = {
           active_academic_year_id?: string | null
           active_term_id?: string | null
           address?: string | null
+          ca_weight?: number
           created_at?: string
           email?: string | null
           id?: string
@@ -1609,20 +1615,96 @@ export type Database = {
           },
         ]
       }
+      terminal_report_subjects: {
+        Row: {
+          class_score: number | null
+          exam_score: number | null
+          id: string
+          position: number | null
+          remark: string | null
+          report_id: string
+          school_id: string
+          student_id: string
+          subject_id: string | null
+          subject_name: string
+          total: number | null
+        }
+        Insert: {
+          class_score?: number | null
+          exam_score?: number | null
+          id?: string
+          position?: number | null
+          remark?: string | null
+          report_id: string
+          school_id: string
+          student_id: string
+          subject_id?: string | null
+          subject_name: string
+          total?: number | null
+        }
+        Update: {
+          class_score?: number | null
+          exam_score?: number | null
+          id?: string
+          position?: number | null
+          remark?: string | null
+          report_id?: string
+          school_id?: string
+          student_id?: string
+          subject_id?: string | null
+          subject_name?: string
+          total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terminal_report_subjects_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "terminal_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "terminal_report_subjects_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "terminal_report_subjects_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "terminal_report_subjects_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       terminal_reports: {
         Row: {
           academic_year_id: string
           attendance_present: number
           attendance_total: number
+          attitude: string | null
           average_score: number | null
           class_id: string
           class_teacher_comment: string | null
+          conduct: string | null
+          enrolled_count: number | null
           generated_at: string
           head_teacher_comment: string | null
           id: string
+          interest: string | null
           is_published: boolean
           pdf_url: string | null
           position: number | null
+          promoted_to: string | null
           school_id: string
           student_id: string
           term_id: string
@@ -1632,15 +1714,20 @@ export type Database = {
           academic_year_id: string
           attendance_present?: number
           attendance_total?: number
+          attitude?: string | null
           average_score?: number | null
           class_id: string
           class_teacher_comment?: string | null
+          conduct?: string | null
+          enrolled_count?: number | null
           generated_at?: string
           head_teacher_comment?: string | null
           id?: string
+          interest?: string | null
           is_published?: boolean
           pdf_url?: string | null
           position?: number | null
+          promoted_to?: string | null
           school_id: string
           student_id: string
           term_id: string
@@ -1650,15 +1737,20 @@ export type Database = {
           academic_year_id?: string
           attendance_present?: number
           attendance_total?: number
+          attitude?: string | null
           average_score?: number | null
           class_id?: string
           class_teacher_comment?: string | null
+          conduct?: string | null
+          enrolled_count?: number | null
           generated_at?: string
           head_teacher_comment?: string | null
           id?: string
+          interest?: string | null
           is_published?: boolean
           pdf_url?: string | null
           position?: number | null
+          promoted_to?: string | null
           school_id?: string
           student_id?: string
           term_id?: string

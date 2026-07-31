@@ -88,6 +88,62 @@ export function overallGrade(
   return scoreToGrade(average, 100, bands);
 }
 
+export interface ComponentResultInput {
+  subject: string | null;
+  score: number;
+  max_score: number;
+  /** From the result's assessment type — the GES split's dividing line. */
+  is_exam: boolean;
+}
+
+export interface SubjectComponents {
+  subject_name: string;
+  class_score: number | null;
+  exam_score: number | null;
+  total: number | null;
+}
+
+const round1 = (n: number): number => Math.round(n * 10) / 10;
+
+/**
+ * The GES report-card split: per subject, continuous assessment (every non-exam result) scaled to
+ * the school's CA weight, the end-of-term examination scaled to the remainder, summed into the
+ * Total column (spec 2026-07-31 §1).
+ *
+ * A missing component is NULL, never zero — a child whose exam sheet hasn't been marked yet has a
+ * blank cell, not half their marks confiscated. The total is whatever components exist, so a
+ * CA-only subject tops out at the CA weight, which is exactly what the paper form would show.
+ */
+export function computeSubjectComponents(
+  results: readonly ComponentResultInput[],
+  caWeight: number,
+): SubjectComponents[] {
+  const bySubject = new Map<string, { ca: number[]; exam: number[] }>();
+  for (const r of results) {
+    if (!r.subject || r.max_score <= 0) continue;
+    const bucket = bySubject.get(r.subject) ?? { ca: [], exam: [] };
+    (r.is_exam ? bucket.exam : bucket.ca).push((r.score / r.max_score) * 100);
+    bySubject.set(r.subject, bucket);
+  }
+
+  const mean = (xs: number[]): number | null =>
+    xs.length === 0 ? null : xs.reduce((a, b) => a + b, 0) / xs.length;
+
+  return [...bySubject.entries()]
+    .map(([subject_name, { ca, exam }]): SubjectComponents => {
+      const caMean = mean(ca);
+      const examMean = mean(exam);
+      const class_score = caMean === null ? null : round1((caMean * caWeight) / 100);
+      const exam_score = examMean === null ? null : round1((examMean * (100 - caWeight)) / 100);
+      const total =
+        class_score === null && exam_score === null
+          ? null
+          : round1((class_score ?? 0) + (exam_score ?? 0));
+      return { subject_name, class_score, exam_score, total };
+    })
+    .sort((a, b) => a.subject_name.localeCompare(b.subject_name));
+}
+
 /**
  * Attendance as it appears on a report card.
  *
