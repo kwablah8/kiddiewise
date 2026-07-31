@@ -16,6 +16,8 @@ export interface SchoolVM {
   phone: string | null;
   address: string | null;
   logo_url: string | null;
+  /** Continuous-assessment weight on the report card; exam weight is always 100 − this. */
+  ca_weight: number;
 }
 
 interface SchoolRow {
@@ -25,6 +27,7 @@ interface SchoolRow {
   phone: string | null;
   address: string | null;
   logo_url: string | null;
+  ca_weight: number;
 }
 
 /** Initials-style short name: "SNAB Learners International School" → "SLIS". */
@@ -37,7 +40,7 @@ function shortNameFor(name: string): string {
 
 export async function getSchool(): Promise<SchoolVM | null> {
   const row = unwrapMaybe<SchoolRow>(
-    await db().from("schools").select("id, name, email, phone, address, logo_url").limit(1).maybeSingle(),
+    await db().from("schools").select("id, name, email, phone, address, logo_url, ca_weight").limit(1).maybeSingle(),
     "school",
   );
   if (!row) return null;

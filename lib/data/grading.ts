@@ -24,7 +24,7 @@ export async function listAssessmentTypes(): Promise<AssessmentTypeVM[]> {
   const rows = unwrapList(
     await db()
       .from("assessment_types")
-      .select("id, name, weight")
+      .select("id, name, weight, is_exam")
       .order("weight", { ascending: false }),
     "assessment types",
   );

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   useCreateAssessmentType, useUpdateAssessmentType, useDeleteAssessmentType,
 } from "@/lib/queries/grading";
@@ -34,11 +35,14 @@ export function AssessmentTypeFormDialog({ mode, type, open, onOpenChange }: Ass
   const deleteType = useDeleteAssessmentType();
 
   const {
-    register, handleSubmit, setError,
+    register, handleSubmit, setError, control,
     formState: { errors, isSubmitting },
   } = useForm<TypeFormInput, unknown, z.output<typeof assessmentTypeCreateSchema>>({
     resolver: zodResolver(assessmentTypeCreateSchema),
-    defaultValues: mode === "edit" && type ? { name: type.name, weight: type.weight } : { name: "", weight: 0 },
+    defaultValues:
+      mode === "edit" && type
+        ? { name: type.name, weight: type.weight, is_exam: type.is_exam }
+        : { name: "", weight: 0, is_exam: false },
   });
 
   async function onSubmit(values: z.output<typeof assessmentTypeCreateSchema>) {
@@ -90,6 +94,26 @@ export function AssessmentTypeFormDialog({ mode, type, open, onOpenChange }: Ass
               <Input id="type_weight" type="number" inputMode="numeric" aria-invalid={!!errors.weight} {...register("weight")} />
               {errors.weight && <p className="text-xs text-[var(--danger)]">{errors.weight.message}</p>}
             </div>
+            <Controller
+              control={control}
+              name="is_exam"
+              render={({ field }) => (
+                <label className="flex items-start gap-2 text-sm text-[var(--text)]">
+                  <Checkbox
+                    checked={field.value ?? false}
+                    onCheckedChange={(v) => field.onChange(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    Counts as exam
+                    <span className="block text-xs text-[var(--muted-foreground)]">
+                      Feeds the report card&apos;s Exams Score column; everything else is continuous
+                      assessment (Class Score).
+                    </span>
+                  </span>
+                </label>
+              )}
+            />
             {submitError && <p className="text-sm text-[var(--danger)]">{submitError}</p>}
           </div>
 

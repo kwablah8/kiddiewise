@@ -67,6 +67,7 @@ const TEACHER_NAV_ITEMS: NavItem[] = [
   { label: "Assessment", href: "/teacher/assessment", icon: ClipboardList },
   { label: "Attendance", href: "/teacher/attendance", icon: CalendarCheck },
   { label: "Daily Report", href: "/teacher/daily-report", icon: NotebookPen },
+  { label: "Terminal Reports", href: "/teacher/terminal-reports", icon: FileBarChart2 },
 ];
 
 // Nav list by role. Admin/teacher live here; the M6 parent slice adds its `parent` entry. An unmapped

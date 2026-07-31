@@ -31,12 +31,16 @@ export const assessmentTypeVM = z.object({
   id: z.string(),
   name: z.string(),
   weight: z.number(),
+  // The GES split's dividing line: results of an exam type feed the report card's Exams Score
+  // column, everything else is continuous assessment (migration 0028).
+  is_exam: z.boolean(),
 });
 export type AssessmentTypeVM = z.infer<typeof assessmentTypeVM>;
 
 export const assessmentTypeCreateSchema = z.object({
   name: z.string().min(1, "Required"),
   weight: z.coerce.number().min(0, "0–100").max(100, "0–100"),
+  is_exam: z.boolean().default(false),
 });
 export type AssessmentTypeCreateInput = z.infer<typeof assessmentTypeCreateSchema>;
 export const assessmentTypeUpdateSchema = assessmentTypeCreateSchema.extend({ id: z.string() });

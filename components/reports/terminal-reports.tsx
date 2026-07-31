@@ -18,13 +18,13 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { cardShellClass } from "@/lib/ui";
-import { useClasses, useTerms } from "@/lib/queries/academics";
+import { useAcademicYears, useClasses, useTerms } from "@/lib/queries/academics";
 import {
   useReportSheet,
   useGenerateReports,
   useSetReportsPublished,
 } from "@/lib/queries/reports";
-import { ReportCommentsDialog } from "./report-comments-dialog";
+import { ReportCommentsDialog, type ReportCardContext } from "./report-comments-dialog";
 import { ReopeningDateBanner } from "./reopening-date-banner";
 import type { TerminalReportRowVM } from "@/lib/validators/reports";
 
@@ -34,19 +34,39 @@ import type { TerminalReportRowVM } from "@/lib/validators/reports";
  * Three distinct steps, deliberately not one button: generate the snapshot, review and comment on it,
  * then publish it to parents. Collapsing them would mean a mid-term regeneration silently pushes
  * half-marked results onto report cards parents are already reading.
+ *
+ * With `teacherId` set this is the TEACHER portal's compile view: the class list narrows to the
+ * classes where they are the class teacher (spec decision 1 — the homeroom teacher compiles), and
+ * the dialog hides the head teacher's remark. Generation and publishing stay available — spec
+ * decision 2, backed by tr_class_teacher_* RLS rather than this prop.
  */
-export function TerminalReports() {
-  const { data: classes, isLoading: classesLoading } = useClasses();
+export function TerminalReports({ teacherId }: { teacherId?: string }) {
+  const { data: allClasses, isLoading: classesLoading } = useClasses();
   const { data: terms, isLoading: termsLoading } = useTerms();
+  const { data: years } = useAcademicYears();
   const [classId, setClassId] = useState<string | null>(null);
   const [termId, setTermId] = useState<string | null>(null);
   const [commenting, setCommenting] = useState<TerminalReportRowVM | null>(null);
+
+  const classes = teacherId
+    ? (allClasses ?? []).filter((c) => c.class_teacher_id === teacherId)
+    : (allClasses ?? []);
 
   const { data: sheet, isLoading, isError, refetch } = useReportSheet(classId, termId);
   const generate = useGenerateReports();
   const publish = useSetReportsPublished();
 
   const selectedTerm = (terms ?? []).find((t) => t.id === termId) ?? null;
+  const selectedClass = classes.find((c) => c.id === classId) ?? null;
+  const dialogContext: ReportCardContext = {
+    class_name: selectedClass?.name ?? sheet?.class_name ?? "",
+    term_name: selectedTerm?.name ?? sheet?.term_name ?? "",
+    year_name:
+      (years ?? []).find((y) => y.id === selectedTerm?.academic_year_id)?.name ?? null,
+    reopening_date: selectedTerm?.reopening_date ?? null,
+    class_teacher_name: selectedClass?.class_teacher_name ?? null,
+    role: teacherId ? "teacher" : "admin",
+  };
   const rows = sheet?.rows ?? [];
   const allPublished = rows.length > 0 && sheet?.published_count === sheet?.generated_count && (sheet?.generated_count ?? 0) > 0;
 
@@ -173,6 +193,19 @@ export function TerminalReports() {
     },
   ];
 
+  // A teacher who is nobody's class teacher has nothing to compile — their input is score entry.
+  if (teacherId && !classesLoading && classes.length === 0) {
+    return (
+      <div className={cardShellClass}>
+        <EmptyState
+          icon={FileText}
+          title="No class assigned to you"
+          description="Terminal reports are compiled by each class's class teacher. You'll see your class here once an administrator makes you a class teacher."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Above the selectors, mirroring the reference build: it is a property of the term, not of
@@ -284,7 +317,11 @@ export function TerminalReports() {
         )}
       </div>
 
-      <ReportCommentsDialog row={commenting} onClose={() => setCommenting(null)} />
+      <ReportCommentsDialog
+        row={commenting}
+        context={dialogContext}
+        onClose={() => setCommenting(null)}
+      />
     </div>
   );
 }
