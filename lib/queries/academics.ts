@@ -114,8 +114,10 @@ export const useSetActiveYear = () => {
   return useMutation({
     mutationFn: setActiveYear,
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.academics.years });
-      qc.invalidateQueries({ queryKey: queryKeys.academics.activeContext });
+      // No key list: the active year scopes "current class" everywhere — student lists, rosters,
+      // class counts, the dashboard, the parent portal — so switching it re-scopes nearly every
+      // read in the app. Refetch everything rather than maintain a list that WILL go stale.
+      qc.invalidateQueries();
     },
   });
 };
@@ -125,10 +127,9 @@ export const useSetActiveTerm = () => {
   return useMutation({
     mutationFn: setActiveTerm,
     onSuccess: () => {
-      // Every listTerms(yearId) entry (and the unfiltered listTerms()) can have its is_active
-      // flag change, so invalidate the whole "academics","terms",* prefix rather than one id.
-      qc.invalidateQueries({ queryKey: ["academics", "terms"] });
-      qc.invalidateQueries({ queryKey: queryKeys.academics.activeContext });
+      // Same reasoning as the year switch: attendance rates, results and report views all hang
+      // off the active term, so a term switch re-scopes far more than the terms list.
+      qc.invalidateQueries();
     },
   });
 };

@@ -12,7 +12,7 @@ import type { GradeBandVM } from "@/lib/validators/grading";
 
 const SELECT = `
   id, title, class_id, subject_id, term_id, max_score, date,
-  classes(name), subjects(name), terms(name), assessment_types(name),
+  classes(name), subjects(name), terms(name, academic_year_id), assessment_types(name),
   results(is_submitted)
 `;
 
@@ -26,7 +26,7 @@ interface AssessmentRow {
   date: string | null;
   classes: { name: string } | null;
   subjects: { name: string } | null;
-  terms: { name: string } | null;
+  terms: { name: string; academic_year_id: string } | null;
   assessment_types: { name: string } | null;
   results: { is_submitted: boolean }[];
 }
@@ -154,12 +154,19 @@ export async function getScoreSheet(assessmentId: string): Promise<ScoreSheetVM 
   );
   if (!assessment) return null;
 
+  // The roster is scoped to the year the assessment's own term belongs to — NOT the active year —
+  // so last year's mark sheet keeps showing last year's cohort after a promotion rollover.
+  let rosterQuery = db()
+    .from("enrollments")
+    .select("students!inner(id, first_name, last_name, admission_no)")
+    .eq("class_id", assessment.class_id)
+    .eq("status", "active");
+  if (assessment.terms) {
+    rosterQuery = rosterQuery.eq("academic_year_id", assessment.terms.academic_year_id);
+  }
+
   const [rosterRes, existingRes] = await Promise.all([
-    db()
-      .from("enrollments")
-      .select("students!inner(id, first_name, last_name, admission_no)")
-      .eq("class_id", assessment.class_id)
-      .eq("status", "active"),
+    rosterQuery,
     db()
       .from("results")
       .select("student_id, score, teacher_comment, is_submitted")

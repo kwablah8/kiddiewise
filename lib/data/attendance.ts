@@ -1,4 +1,4 @@
-import { db, unwrapList } from "./_client";
+import { activeYearId, db, unwrapList } from "./_client";
 import { buildRoster } from "@/lib/attendance";
 import type { AttendanceRosterVM } from "@/lib/validators/attendance";
 
@@ -9,14 +9,21 @@ import type { AttendanceRosterVM } from "@/lib/validators/attendance";
  * The two reads are independent, so they run concurrently. Filtering attendance by class AND date
  * (not date alone) matters because a student who changed class mid-term could otherwise pick up a
  * status recorded against their old class.
+ *
+ * The roster is the ACTIVE year's enrollments: a register is always taken "now", and last year's
+ * placements (which promotion leaves untouched) must not surface students who have moved up.
  */
 export async function getRoster(classId: string, date: string): Promise<AttendanceRosterVM> {
+  const yearId = await activeYearId();
+  let rosterQuery = db()
+    .from("enrollments")
+    .select("students!inner(id, first_name, last_name, admission_no)")
+    .eq("class_id", classId)
+    .eq("status", "active");
+  if (yearId) rosterQuery = rosterQuery.eq("academic_year_id", yearId);
+
   const [studentsRes, existingRes] = await Promise.all([
-    db()
-      .from("enrollments")
-      .select("students!inner(id, first_name, last_name, admission_no)")
-      .eq("class_id", classId)
-      .eq("status", "active"),
+    rosterQuery,
     db()
       .from("attendance")
       .select("student_id, status")

@@ -1,4 +1,4 @@
-import { db, unwrapList, unwrapMaybe } from "./_client";
+import { activeYearId, db, unwrapList, unwrapMaybe } from "./_client";
 import { deriveTeacherDashboard, teacherClassIds } from "@/lib/teacher";
 import type { TeacherDashboardVM } from "@/lib/validators/teacher";
 
@@ -11,7 +11,7 @@ import type { TeacherDashboardVM } from "@/lib/validators/teacher";
  * boundary for the sensitive rows, the derivation is what makes the page personal.
  */
 export async function getTeacherDashboard(teacherId: string): Promise<TeacherDashboardVM> {
-  const [classesRes, assignmentsRes, subjectsRes, termRes] = await Promise.all([
+  const [classesRes, assignmentsRes, subjectsRes, termRes, yearId] = await Promise.all([
     db().from("classes").select("id, name, level, class_teacher_id"),
     db().from("class_subjects").select("class_id, subject_id, teacher_id"),
     db().from("subjects").select("id, name"),
@@ -20,6 +20,7 @@ export async function getTeacherDashboard(teacherId: string): Promise<TeacherDas
       .select("id, academic_year_id, name, ordinal, start_date, end_date, is_active, reopening_date")
       .eq("is_active", true)
       .maybeSingle(),
+    activeYearId(),
   ]);
 
   const classes = unwrapList(classesRes, "classes");
@@ -32,10 +33,17 @@ export async function getTeacherDashboard(teacherId: string): Promise<TeacherDas
   // Only fetch the dependent rows once we know which classes are the teacher's — an empty set means
   // a newly hired teacher with no assignments, and there is nothing to ask for.
   const classIdList = [...myClassIds];
+
+  // Class sizes count the ACTIVE year's enrollments — promotion leaves last year's rows in place,
+  // and without the year scope every promoted-out student would still be counted here.
+  const rosterQuery = () => {
+    let q = db().from("enrollments").select("class_id").eq("status", "active").in("class_id", classIdList);
+    if (yearId) q = q.eq("academic_year_id", yearId);
+    return q;
+  };
+
   const [enrollmentsRes, attendanceRes, activityRes] = await Promise.all([
-    classIdList.length
-      ? db().from("enrollments").select("class_id").eq("status", "active").in("class_id", classIdList)
-      : Promise.resolve({ data: [], error: null }),
+    classIdList.length ? rosterQuery() : Promise.resolve({ data: [], error: null }),
     classIdList.length && activeTerm
       ? db().from("attendance").select("status").eq("term_id", activeTerm.id).in("class_id", classIdList)
       : Promise.resolve({ data: [], error: null }),

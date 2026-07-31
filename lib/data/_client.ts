@@ -14,6 +14,19 @@ import { createClient } from "@/lib/supabase/client";
  */
 export const db = () => createClient();
 
+/**
+ * The active academic year's id, or null while none is active (mid-rollover, or a tenant not yet
+ * configured). Every "current class" read scopes its enrollments to this year: promotion appends
+ * one enrollment per year and never rewrites history (docs/05-USER-FLOWS.md §7), so without the
+ * year filter a promoted student resolves to whichever of their years PostgREST returns first.
+ * Callers treat null as "don't filter" — the single-year behaviour — rather than blanking every
+ * roster in a tenant that has no active year to scope by.
+ */
+export async function activeYearId(): Promise<string | null> {
+  const res = await db().from("academic_years").select("id").eq("is_active", true).maybeSingle();
+  return unwrapMaybe<{ id: string }>(res, "active year")?.id ?? null;
+}
+
 interface PostgrestResult<T> {
   data: T | null;
   // `code` is optional here so the same shape accepts both PostgrestError (which always has one)

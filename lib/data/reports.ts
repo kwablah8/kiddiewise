@@ -22,15 +22,23 @@ export async function getReportSheet(
   classId: string,
   termId: string,
 ): Promise<TerminalReportSheetVM | null> {
-  const [classRes, termRes, bandsRes, enrolledRes, reportsRes] = await Promise.all([
+  // The term resolves first because the roster is scoped to the year that term belongs to — NOT
+  // the active year — so last term's sheet keeps showing that year's cohort after a rollover.
+  const term = unwrapMaybe<{ id: string; name: string; academic_year_id: string }>(
+    await db().from("terms").select("id, name, academic_year_id").eq("id", termId).maybeSingle(),
+    "term",
+  );
+  if (!term) return null;
+
+  const [classRes, bandsRes, enrolledRes, reportsRes] = await Promise.all([
     db().from("classes").select("id, name").eq("id", classId).maybeSingle(),
-    db().from("terms").select("id, name").eq("id", termId).maybeSingle(),
     db().from("grade_bands").select("id, min_score, max_score, grade, remark"),
     db()
       .from("enrollments")
       .select("students!inner(id, first_name, last_name, admission_no)")
       .eq("class_id", classId)
-      .eq("status", "active"),
+      .eq("status", "active")
+      .eq("academic_year_id", term.academic_year_id),
     db()
       .from("terminal_reports")
       .select(
@@ -41,8 +49,7 @@ export async function getReportSheet(
   ]);
 
   const klass = unwrapMaybe<{ id: string; name: string }>(classRes, "class");
-  const term = unwrapMaybe<{ id: string; name: string }>(termRes, "term");
-  if (!klass || !term) return null;
+  if (!klass) return null;
 
   const bands: GradeBandVM[] = unwrapList(bandsRes, "grade bands").map((b) => ({
     ...b,

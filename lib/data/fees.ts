@@ -1,4 +1,4 @@
-import { db, unwrapList } from "./_client";
+import { activeYearId, db, unwrapList } from "./_client";
 import { summarizeFees } from "@/lib/fees/summary";
 import {
   SCHOLARSHIP_LABEL,
@@ -187,18 +187,22 @@ export async function listFeeStructures(filter: FeesFilter = {}): Promise<FeeStr
 
 /** The payments ledger, newest first. Covers both class fees and extra fees. */
 export async function listPayments(filter: FeesFilter = {}): Promise<PaymentVM[]> {
-  const rows = unwrapList(
-    await db()
-      .from("payments")
-      .select(
-        `id, student_id, amount, method, reference, paid_at,
-         students(first_name, last_name, enrollments(status, class_id, classes(name))),
-         invoices(fee_term),
-         extra_fee_assignments(extra_fee_items(name))`,
-      )
-      .order("paid_at", { ascending: false }),
-    "payments",
-  );
+  // The class column shows where the student is NOW, so the embed is scoped to the active year —
+  // a promoted student carries one enrollment per year and the unscoped embed would pick last
+  // year's class.
+  const yearId = await activeYearId();
+  let q = db()
+    .from("payments")
+    .select(
+      `id, student_id, amount, method, reference, paid_at,
+       students(first_name, last_name, enrollments(status, class_id, classes(name))),
+       invoices(fee_term),
+       extra_fee_assignments(extra_fee_items(name))`,
+    )
+    .order("paid_at", { ascending: false });
+  if (yearId) q = q.eq("students.enrollments.academic_year_id", yearId);
+
+  const rows = unwrapList(await q, "payments");
 
   // Class filtered before mapping: the class comes from the student's embedded enrollment, which
   // PostgREST can't filter on without turning the join inner and dropping unenrolled students.

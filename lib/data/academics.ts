@@ -1,4 +1,4 @@
-import { db, unwrapList, unwrapMaybe } from "./_client";
+import { activeYearId, db, unwrapList, unwrapMaybe } from "./_client";
 import { derivePortalStatus } from "@/lib/temp-password";
 import type {
   AcademicYearVM,
@@ -109,16 +109,21 @@ const toClassVM = (c: ClassRow): ClassVM => ({
   subject_count: c.class_subjects[0]?.count ?? 0,
 });
 
+// The student count is the ACTIVE year's active enrollments. Promotion leaves last year's rows
+// untouched, so an unscoped count would keep counting every student the class has ever held.
 export async function listClasses(): Promise<ClassVM[]> {
-  const rows = unwrapList(await db().from("classes").select(CLASS_SELECT).order("name"), "classes");
+  const yearId = await activeYearId();
+  let q = db().from("classes").select(CLASS_SELECT).order("name").eq("enrollments.status", "active");
+  if (yearId) q = q.eq("enrollments.academic_year_id", yearId);
+  const rows = unwrapList(await q, "classes");
   return rows.map(toClassVM);
 }
 
 export async function getClass(id: string): Promise<ClassVM | null> {
-  const row = unwrapMaybe(
-    await db().from("classes").select(CLASS_SELECT).eq("id", id).single(),
-    "class",
-  );
+  const yearId = await activeYearId();
+  let q = db().from("classes").select(CLASS_SELECT).eq("id", id).eq("enrollments.status", "active");
+  if (yearId) q = q.eq("enrollments.academic_year_id", yearId);
+  const row = unwrapMaybe(await q.single(), "class");
   return row ? toClassVM(row) : null;
 }
 

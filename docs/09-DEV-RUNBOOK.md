@@ -295,7 +295,9 @@ invitation** also exists and needs SMTP; locally those emails land in Mailpit (�
 | Teacher: attendance · score entry | ✅ Writes and propagates to the parent portal |
 | Admin: terminal reports (generate → remark → publish) | ✅ |
 | Test suites (93 unit · 13 RLS · 16 integration) | ✅ Green |
-| Promotion, announcements/events authoring, school settings, Storage | ⏳ See `docs/08-ROADMAP.md` §Remaining work |
+| Promotion (decisions → next-year enrollments → year switch re-scopes every read) | ✅ `tests/rls/promotion-rollover.test.ts` |
+| Announcements/events authoring | ✅ |
+| School settings, Storage | ⏳ See `docs/08-ROADMAP.md` §Remaining work |
 
-`/promotion` is linked in the sidebar but **has no page**. The full breakdown of what is left, grouped
+The full breakdown of what is left, grouped
 by whether it blocks a usable MVP, is in `docs/08-ROADMAP.md` §"Remaining work".

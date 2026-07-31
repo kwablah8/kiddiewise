@@ -1,4 +1,4 @@
-import { db, unwrapList, unwrapMaybe } from "./_client";
+import { activeYearId, db, unwrapList, unwrapMaybe } from "./_client";
 import { scoreToGrade } from "@/lib/grading";
 import { aggregateSubjectResults, overallAverage } from "@/lib/results";
 import { summarizeAttendance } from "@/lib/parent/attendance";
@@ -85,14 +85,20 @@ async function gradeBands(): Promise<GradeBandVM[]> {
 export async function getParentChildren(parentId: string): Promise<ChildSummaryVM[]> {
   void parentId; // RLS resolves "my children" from auth.uid(); the arg only keys the query cache.
 
+  // The year first: a child's class is their enrollment in the ACTIVE year, and a promoted child
+  // has one enrollment per year — unscoped, the embed would surface last year's class.
+  const yearId = await activeYearId();
+  let childrenQuery = db()
+    .from("students")
+    .select(
+      `id, first_name, last_name, photo_url,
+       enrollments(status, classes(name))`,
+    )
+    .order("first_name");
+  if (yearId) childrenQuery = childrenQuery.eq("enrollments.academic_year_id", yearId);
+
   const [childrenRes, term, bands] = await Promise.all([
-    db()
-      .from("students")
-      .select(
-        `id, first_name, last_name, photo_url,
-         enrollments(status, classes(name))`,
-      )
-      .order("first_name"),
+    childrenQuery,
     activeTerm(),
     gradeBands(),
   ]);
@@ -178,10 +184,11 @@ export async function getChildProfile(
 ): Promise<ChildProfileVM | null> {
   void parentId;
 
-  const student = unwrapMaybe<ChildProfileRow>(
-    await db().from("students").select(CHILD_PROFILE_SELECT).eq("id", childId).single(),
-    "child profile",
-  );
+  // Scoped to the active year for the same reason as getParentChildren above.
+  const yearId = await activeYearId();
+  let q = db().from("students").select(CHILD_PROFILE_SELECT).eq("id", childId);
+  if (yearId) q = q.eq("enrollments.academic_year_id", yearId);
+  const student = unwrapMaybe<ChildProfileRow>(await q.single(), "child profile");
   // Null here is both "no such student" and "not your child" — RLS makes them indistinguishable
   // from the client, which is exactly right: existence itself shouldn't leak.
   if (!student) return null;

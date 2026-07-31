@@ -1,4 +1,4 @@
-import { db, unwrapList, unwrapMaybe } from "./_client";
+import { activeYearId, db, unwrapList, unwrapMaybe } from "./_client";
 import { computeStudentStats } from "@/lib/students";
 import { scoreToGrade } from "@/lib/grading";
 import { aggregateSubjectResults } from "@/lib/results";
@@ -77,7 +77,11 @@ interface StudentDetailRow extends StudentListRow {
   initial_term_id: string | null;
 }
 
-/** The student's current class, from their active enrollment. */
+/**
+ * The student's current class, from their active enrollment. The embed is already scoped to the
+ * active academic year (at most one row, `unique(student_id, academic_year_id)`), so this only has
+ * to skip a row closed off as graduated/withdrawn.
+ */
 function activeEnrollment(s: StudentListRow) {
   return s.enrollments.find((e) => e.status === "active") ?? null;
 }
@@ -155,7 +159,10 @@ export async function listStudents(
 ): Promise<StudentListItemVM[]> {
   const { search = "", status, gender, class_id } = params;
 
+  // A promoted student has one enrollment PER YEAR; only the active year's row is their class.
+  const yearId = await activeYearId();
   let q = db().from("students").select(LIST_SELECT).order("first_name");
+  if (yearId) q = q.eq("enrollments.academic_year_id", yearId);
   const statusFilter = asStatus(status);
   const genderFilter = asGender(gender);
   if (statusFilter) q = q.eq("enrollment_status", statusFilter);
@@ -185,10 +192,10 @@ export async function getStudentStats(): Promise<StudentStatsVM> {
 }
 
 export async function getStudent(id: string): Promise<StudentDetailVM | null> {
-  const row = unwrapMaybe(
-    await db().from("students").select(DETAIL_SELECT).eq("id", id).single(),
-    "student",
-  );
+  const yearId = await activeYearId();
+  let q = db().from("students").select(DETAIL_SELECT).eq("id", id);
+  if (yearId) q = q.eq("enrollments.academic_year_id", yearId);
+  const row = unwrapMaybe(await q.single(), "student");
   return row ? toDetailVM(row) : null;
 }
 
