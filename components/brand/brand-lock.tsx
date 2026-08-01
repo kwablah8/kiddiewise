@@ -16,9 +16,11 @@ interface BrandLockProps {
    *
    * "full" spells the school out and drops the descriptor, because "Learners International" is a
    * fragment of "SNAB Learners International School" and printing both says the same words twice.
-   * Opt-in rather than the default: six surfaces render this lock, and only the public site has the
-   * room. A visitor who has never heard of the school needs the whole name; a signed-in
-   * administrator already knows where they are.
+   * The split is by audience, not surface: anywhere a parent or visitor can arrive cold — the
+   * marketing header, the auth screens, the parent shell — spells the name out, because they may
+   * never have seen "SLIS" written down. Staff chrome (the portal sidebar, the admin mobile bar)
+   * keeps the short lock: an administrator already knows where they are, and the sidebar does not
+   * have the room anyway.
    */
   name?: "short" | "full";
 }

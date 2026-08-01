@@ -80,8 +80,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             gradient do double duty as the text's backing. */}
         <div className="relative">
           {/* The FULL name, not the initialism: this is the front door, and a parent arriving from
-              a WhatsApp link may never have seen "SLIS" written down. Signed-in chrome (sidebar,
-              parent shell) keeps the short lock — see BrandLock's own note. */}
+              a WhatsApp link may never have seen "SLIS" written down. The parent shell spells it
+              out for the same reason; staff chrome (sidebar, admin mobile bar) keeps the short
+              lock — see BrandLock's own note. */}
           <BrandLock tone="light" name="full" crestClassName="size-11 rounded-xl" />
         </div>
 
