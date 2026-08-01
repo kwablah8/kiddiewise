@@ -79,7 +79,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             to land. Anchoring the words to the foot keeps the subject clear and lets the bottom
             gradient do double duty as the text's backing. */}
         <div className="relative">
-          <BrandLock tone="light" crestClassName="size-11 rounded-xl" />
+          {/* The FULL name, not the initialism: this is the front door, and a parent arriving from
+              a WhatsApp link may never have seen "SLIS" written down. Signed-in chrome (sidebar,
+              parent shell) keeps the short lock — see BrandLock's own note. */}
+          <BrandLock tone="light" name="full" crestClassName="size-11 rounded-xl" />
         </div>
 
         <div className="relative max-w-sm">
