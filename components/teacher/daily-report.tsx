@@ -26,6 +26,7 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { ParentSectionSummary } from "@/components/daily-reports/section-views";
+import { ChoicePills, ToggleChips } from "@/components/daily-reports/choice-pills";
 import { cardShellClass } from "@/lib/ui";
 import { useTeacherClasses } from "@/lib/queries/teacher";
 import {
@@ -236,8 +237,6 @@ const EMPTY_TEACHER_FORM: TeacherFormState = {
   teacher_comments: null,
 };
 
-const NONE = "__none__";
-
 /**
  * Controlled state rather than RHF, deliberately: every field is nullable (a half-filled day
  * sheet is a valid state), the toileting log is a dynamic list, and there is nothing for a
@@ -382,47 +381,27 @@ function TeacherDayForm({
       {/* Activities */}
       <div className="space-y-2">
         <Label>Today&apos;s activities</Label>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-          {dailyActivity.options.map((a) => (
-            <label key={a} className="flex items-center gap-2 text-sm text-[var(--text)]">
-              <Checkbox
-                checked={form.activities.includes(a)}
-                onCheckedChange={(v) =>
-                  set(
-                    "activities",
-                    v === true ? [...form.activities, a] : form.activities.filter((x) => x !== a),
-                  )
-                }
-              />
-              {DAILY_ACTIVITY_LABEL[a]}
-            </label>
-          ))}
-        </div>
+        <ToggleChips
+          ariaLabel="Today's activities"
+          values={form.activities}
+          onChange={(v) => set("activities", v)}
+          options={dailyActivity.options.map((a) => ({ value: a, label: DAILY_ACTIVITY_LABEL[a] }))}
+        />
       </div>
 
       {/* Nutrition */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="space-y-3">
         {(["breakfast", "lunch", "snack"] as const).map((meal) => (
-          <div key={meal} className="space-y-1.5">
+          <div key={meal} className="flex flex-wrap items-center justify-between gap-2">
             <Label className="capitalize">{meal} ate</Label>
-            <Select
-              value={form[meal] ?? NONE}
-              onValueChange={(v) => set(meal, !v || v === NONE ? null : (v as TeacherFormState["breakfast"]))}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue>
-                  {(v: string) => (v === NONE ? "—" : DAILY_PORTION_LABEL[v as keyof typeof DAILY_PORTION_LABEL])}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE}>—</SelectItem>
-                {Object.entries(DAILY_PORTION_LABEL).map(([v, label]) => (
-                  <SelectItem key={v} value={v}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ChoicePills
+              ariaLabel={`${meal} ate`}
+              value={form[meal]}
+              onChange={(v) => set(meal, v)}
+              options={(
+                Object.entries(DAILY_PORTION_LABEL) as [NonNullable<TeacherFormState["breakfast"]>, string][]
+              ).map(([value, label]) => ({ value, label }))}
+            />
           </div>
         ))}
       </div>
@@ -439,52 +418,28 @@ function TeacherDayForm({
       </div>
 
       {/* Mood */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
+      <div className="space-y-4">
+        <div className="space-y-2">
           <Label>During lessons the child was</Label>
-          <Select
-            value={form.mood_lessons ?? NONE}
-            onValueChange={(v) => set("mood_lessons", !v || v === NONE ? null : (v as TeacherFormState["mood_lessons"]))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue>
-                {(v: string) =>
-                  v === NONE ? "—" : DAILY_LESSON_MOOD_LABEL[v as keyof typeof DAILY_LESSON_MOOD_LABEL]
-                }
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NONE}>—</SelectItem>
-              {Object.entries(DAILY_LESSON_MOOD_LABEL).map(([v, label]) => (
-                <SelectItem key={v} value={v}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ChoicePills
+            ariaLabel="During lessons the child was"
+            value={form.mood_lessons}
+            onChange={(v) => set("mood_lessons", v)}
+            options={(
+              Object.entries(DAILY_LESSON_MOOD_LABEL) as [NonNullable<TeacherFormState["mood_lessons"]>, string][]
+            ).map(([value, label]) => ({ value, label }))}
+          />
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label>At play the child</Label>
-          <Select
-            value={form.mood_play ?? NONE}
-            onValueChange={(v) => set("mood_play", !v || v === NONE ? null : (v as TeacherFormState["mood_play"]))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue>
-                {(v: string) =>
-                  v === NONE ? "—" : DAILY_PLAY_MOOD_LABEL[v as keyof typeof DAILY_PLAY_MOOD_LABEL]
-                }
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NONE}>—</SelectItem>
-              {Object.entries(DAILY_PLAY_MOOD_LABEL).map(([v, label]) => (
-                <SelectItem key={v} value={v}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ChoicePills
+            ariaLabel="At play the child"
+            value={form.mood_play}
+            onChange={(v) => set("mood_play", v)}
+            options={(
+              Object.entries(DAILY_PLAY_MOOD_LABEL) as [NonNullable<TeacherFormState["mood_play"]>, string][]
+            ).map(([value, label]) => ({ value, label }))}
+          />
         </div>
       </div>
 
