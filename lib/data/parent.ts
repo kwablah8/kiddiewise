@@ -35,7 +35,10 @@ const CHILD_PROFILE_SELECT: string = `
 `;
 
 const CHILD_REPORT_SELECT: string =
-  "id, class_teacher_comment, average_score, is_published, term_id, terms(name, reopening_date), " +
+  "id, class_teacher_comment, average_score, position, attendance_present, attendance_total, " +
+  "conduct, attitude, interest, promoted_to, enrolled_count, is_published, term_id, " +
+  "terms(name, reopening_date, academic_years(name)), " +
+  "classes(name, class_teacher:profiles!classes_class_teacher_id_fkey(first_name, last_name)), " +
   "terminal_report_subjects(subject_name, class_score, exam_score, total, position, remark)";
 
 interface ChildProfileRow {
@@ -54,9 +57,25 @@ interface ChildReportRow {
   id: string;
   class_teacher_comment: string | null;
   average_score: number | null;
+  position: number | null;
+  attendance_present: number;
+  attendance_total: number;
+  conduct: string | null;
+  attitude: string | null;
+  interest: string | null;
+  promoted_to: string | null;
+  enrolled_count: number | null;
   is_published: boolean;
   term_id: string;
-  terms: { name: string; reopening_date: string | null } | null;
+  terms: {
+    name: string;
+    reopening_date: string | null;
+    academic_years: { name: string } | null;
+  } | null;
+  classes: {
+    name: string;
+    class_teacher: { first_name: string; last_name: string } | null;
+  } | null;
   terminal_report_subjects: {
     subject_name: string;
     class_score: number | string | null;
@@ -339,6 +358,19 @@ export async function getChildReport(
     overall_average: average,
     overall_grade: average !== null ? (scoreToGrade(average, 100, bands)?.grade ?? null) : null,
     class_teacher_remark: report.class_teacher_comment ?? "",
+    class_name: report.classes?.name ?? null,
+    class_teacher_name: report.classes?.class_teacher
+      ? `${report.classes.class_teacher.first_name} ${report.classes.class_teacher.last_name}`
+      : null,
+    year_name: report.terms?.academic_years?.name ?? null,
+    position: report.position,
+    enrolled_count: report.enrolled_count,
+    attendance_present: report.attendance_present,
+    attendance_total: report.attendance_total,
+    conduct: report.conduct,
+    attitude: report.attitude,
+    interest: report.interest,
+    promoted_to: report.promoted_to,
     // RLS (trs_parent_read) already confines these to published reports of the parent's own child.
     subjects: (report.terminal_report_subjects ?? [])
       .map((s) => ({

@@ -101,6 +101,19 @@ export const terminalReportVM = z.object({
   class_teacher_remark: z.string(),
   /** The GES subject table. Empty for reports generated before the subject snapshot existed. */
   subjects: z.array(childReportSubjectVM),
+  // Everything else the printed card carries (spec 2026-07-31): the header block, attendance,
+  // and the class teacher's per-child paragraphs.
+  class_name: z.string().nullable(),
+  class_teacher_name: z.string().nullable(),
+  year_name: z.string().nullable(),
+  position: z.number().nullable(),
+  enrolled_count: z.number().nullable(),
+  attendance_present: z.number(),
+  attendance_total: z.number(),
+  conduct: z.string().nullable(),
+  attitude: z.string().nullable(),
+  interest: z.string().nullable(),
+  promoted_to: z.string().nullable(),
   // When school reopens after this term, if the school has set it. The line parents look for first
   // after the grades — they plan childcare, travel and fees around it.
   reopening_date: z.string().nullable(),
