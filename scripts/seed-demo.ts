@@ -414,12 +414,14 @@ async function main(): Promise<void> {
 
   const typeIds: Record<string, string> = {};
   for (const t of [
-    { name: "Class Test", weight: 20 },
-    { name: "Mid-Term Exam", weight: 30 },
-    { name: "End-of-Term Exam", weight: 50 },
+    { name: "Class Test", weight: 20, is_exam: false },
+    { name: "Mid-Term Exam", weight: 30, is_exam: false },
+    // The GES split's dividing line (migration 0028): this type feeds the report card's
+    // Exams Score column; the other two are continuous assessment.
+    { name: "End-of-Term Exam", weight: 50, is_exam: true },
   ]) {
     const { data, error } = await db.from("assessment_types")
-      .insert({ school_id: SCHOOL_ID, name: t.name, weight: t.weight })
+      .insert({ school_id: SCHOOL_ID, name: t.name, weight: t.weight, is_exam: t.is_exam })
       .select("id").single();
     if (error) throw new Error(`assessment_types: ${error.message}`);
     typeIds[t.name] = data.id;
