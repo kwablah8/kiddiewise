@@ -1,5 +1,6 @@
 import { Section } from "@/components/marketing/section";
 import { SITE } from "@/lib/marketing/site";
+import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
 /**
  * The values band — honest, non-numeric content drawn straight from the school's motto. It
@@ -13,7 +14,9 @@ const VALUES: readonly { name: string; blurb: string }[] = [
   { name: "Excellence", blurb: "A high, honest standard held at every stage." },
 ];
 
-export function HomeStatsBand() {
+export async function HomeStatsBand() {
+  const { admissionsNote } = await getMarketingSettings();
+
   return (
     <Section tone="brand" aria-labelledby="values-title" className="overflow-hidden">
       <div className="relative">
@@ -48,7 +51,7 @@ export function HomeStatsBand() {
         </dl>
 
         <p className="reveal mt-12 font-mono text-[11px] uppercase tracking-[0.18em] text-white">
-          Creche → JHS · {SITE.admissionsNote}
+          Creche → JHS · {admissionsNote}
         </p>
       </div>
     </Section>

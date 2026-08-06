@@ -13,7 +13,9 @@ import { MEDIA } from "@/lib/marketing/media";
  *
  *  - `MEDIA.flyer.alt` describes what the flyer *says*, not that it is a flyer.
  *  - The facts that do the conversion work — the year and the discount — are also published as real
- *    text in the copy beside every placement (`SITE.admissionsNote`, `SITE.earlyBird`).
+ *    text in the copy beside every placement (`admissionsNote`, `earlyBird` from
+ *    `getMarketingSettings()` — the school edits those two in the Studio, while this image stays a
+ *    committed asset, so check they still agree when next year's artwork lands).
  *
  * The width cap is load-bearing, not styling: the source is 1023px wide, so 28rem (448px) is about
  * as large as the poster can go and still have a 2× screen render from real pixels rather than

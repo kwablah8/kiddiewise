@@ -4,24 +4,30 @@ import { useState } from "react";
 import Image from "next/image";
 import { ZoomIn } from "lucide-react";
 
-import { MEDIA } from "@/lib/marketing/media";
+import type { MediaAsset } from "@/lib/marketing/media";
 import { Lightbox } from "@/components/marketing/gallery/lightbox";
 
-// SEAM: additional licensed photos from the photographer drop into MEDIA.gallery.
-const PHOTOS = MEDIA.gallery;
+interface GalleryGridProps {
+  /**
+   * Photos to show, already resolved. Comes from `getGalleryPhotos()` — the school's Studio uploads
+   * when there are any, otherwise the committed set in `MEDIA.gallery`. Passed as a prop rather than
+   * imported because this is a client component and the read is server-side.
+   */
+  photos: readonly MediaAsset[];
+}
 
 /**
  * A CSS-columns masonry grid: each photo keeps its real, mixed aspect ratio (landscape campus
  * shots beside portrait classroom shots) instead of being cropped into uniform tiles. Clicking
  * (or pressing Enter/Space on) any photo opens it in the `Lightbox`.
  */
-export function GalleryGrid() {
+export function GalleryGrid({ photos }: GalleryGridProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
     <>
       <div className="columns-1 gap-5 sm:columns-2 lg:columns-3">
-        {PHOTOS.map((photo, i) => (
+        {photos.map((photo, i) => (
           <button
             key={photo.src}
             type="button"
@@ -34,6 +40,10 @@ export function GalleryGrid() {
               alt={photo.alt}
               width={photo.width ?? 1920}
               height={photo.height ?? 1440}
+              // Sanity uploads carry an LQIP; the committed files do not and get Next's build-time
+              // placeholder instead, so this switch is per-photo rather than per-gallery.
+              placeholder={photo.blurDataURL ? "blur" : "empty"}
+              blurDataURL={photo.blurDataURL}
               sizes="(min-width: 1024px) 32vw, (min-width: 640px) 46vw, 92vw"
               className="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
             />
@@ -48,7 +58,7 @@ export function GalleryGrid() {
 
       {openIndex !== null ? (
         <Lightbox
-          photos={PHOTOS}
+          photos={photos}
           index={openIndex}
           onClose={() => setOpenIndex(null)}
           onNavigate={(next) => setOpenIndex(next)}

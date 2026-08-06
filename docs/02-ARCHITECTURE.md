@@ -203,11 +203,105 @@ Supabase Storage buckets:
 |---|---|---|
 | `avatars` | Student/staff/parent profile photos | Read: same school; write: admins (and self where allowed) |
 | `school-logos` | School branding | Read: public (marketing); write: school_admin |
-| `gallery` | Marketing gallery images | Read: public; write: school_admin |
+| `gallery` | ~~Marketing gallery images~~ **SUPERSEDED — see §7a** | Read: public; write: school_admin |
 | `reports` | Generated terminal report PDFs | Read: linked parent + school staff; write: service role |
 
 Bucket policies mirror the RLS tenancy model. Store the object path in the relevant table;
 never expose service-role signed URLs to the client beyond their needed lifetime.
+
+The `gallery` bucket is **provisioned but will not be wired.** Gallery photos are Sanity assets now
+(§7a). The bucket stays in `supabase/migrations/0012_storage.sql` because migrations are immutable
+history, not because anything is coming — do not build an upload path against it.
+
+---
+
+## 7a. Sanity — the marketing site's CMS
+
+The platform has **two content stores**, with a hard boundary between them.
+
+| | Supabase | Sanity |
+|---|---|---|
+| Owns | Operational, tenant-scoped, RLS-governed data — students, enrollments, attendance, results, fees, and the admin-authored `announcements`/`events` that render **inside the portals** | Public editorial content — news posts, gallery photos, and the handful of marketing facts the school revises on its own schedule |
+| Audience | Signed-in admins, teachers, parents | Anyone on the public site |
+| Security | RLS is the boundary | Published-only, public dataset; no secrets involved |
+
+**This does not violate golden rule 9.** No fact lives in both stores. A news post is not an
+announcement: different audience, different voice, no sync between them. If a fact is tenant-scoped or
+RLS-governed it is Supabase's, always.
+
+**What Sanity owns, and the test used to decide.** *Sanity owns what changes on the school's calendar,
+or what we simply do not know yet. Code keeps everything whose change is a design decision.* So: news,
+gallery photos, contact email/phones, office hours, the admissions year and the early-bird sentence, and
+the About page's founding story. Not: the school's name/motto/crest (`lib/brand.ts` — shared with the
+portal and the generated PDFs, so a Sanity edit could make the two surfaces disagree), the campus
+address (rendered by a client component and by the sign-in screen), the tagline, the programs, the
+admission flyer artwork, the promo video, or any section prose.
+
+**Sanity is additive and optional.** `lib/marketing/cms/env.ts` returns `null` when
+`NEXT_PUBLIC_SANITY_PROJECT_ID` is unset, and every reader in `lib/marketing/cms/read.ts` then falls
+back to the values compiled into `lib/marketing/site.ts` / `media.ts`. CI builds this way on purpose.
+Unsetting that one variable is the entire rollback.
+
+**Caching — two mechanisms, both needed.** Plain `client.fetch`, tagged, with
+`next: { revalidate: 300, tags: [...] }`. No `defineLive`, no `<SanityLive>` — live content is what
+caused next-sanity's documented 4–7× request overage on Next 16, and this site has no use for
+sub-second updates.
+
+1. **Tags are the fast path.** Publishing fires a Sanity webhook at `POST /api/revalidate-sanity`,
+   which expires the matching tag with **`revalidateTag(tag, { expire: 0 })`**. That argument is the
+   whole trick: the recommended `"max"` profile is stale-while-revalidate, so the editor who publishes
+   and refreshes is served their OLD page while a fresh one builds behind it. Next's docs single out
+   `{ expire: 0 }` for "webhooks or third-party services that need immediate expiration" — the next
+   request blocks for fresh data instead. `updateTag` is the other route to read-your-own-writes but
+   is Server-Action-only and cannot be called from a Route Handler.
+2. **Time-based revalidation is the backstop**, at 5 minutes, for a webhook that is never configured,
+   whose secret rotates, or that Sanity cannot reach. A broken webhook should be an annoyance, not a
+   permanently frozen site with nothing on screen to explain it.
+
+These are not mutually exclusive. `next.tags` and `next.revalidate` are independent `fetch` options
+(the only documented conflict is `revalidate` with `cache: "no-store"`). The belief that tags disable
+time-based revalidation comes from next-sanity's own `sanityFetch` helper, which internally sets
+`revalidate: tags.length ? false : revalidate`; we call `fetch` directly and get both.
+
+**`useCdn: false`** follows from the above. Sanity's CDN would be a second cache whose timing we do
+not control, and that actively breaks the fast path: the webhook fires, we re-fetch immediately, and
+if the edge has not caught up we cache the OLD content for another full window. We only reach Sanity
+when a cache entry is expired — a handful of requests per publish, not per visitor — so the origin
+is affordable.
+
+**The webhook is unauthenticated by necessity** (Sanity's servers hold no session with us) and
+protected by an HMAC signature over `SANITY_REVALIDATE_SECRET`, verified by `parseBody`. Two
+consequences that are easy to get wrong: `/api/revalidate-sanity` must be in the `isPublicPath`
+allowlist or the middleware redirects Sanity's POST to `/login` and publishing silently stops
+reaching the site; and the signature check must be written `isValidSignature !== true`, because
+`parseBody` returns `null` — not `false` — when the header is absent.
+
+**Where the code lives.** Studio-side config and schema in root `sanity/` (mirroring root `supabase/` —
+external-system schema plus CLI config, no app logic). App-side reads in `lib/marketing/cms/`, NOT
+`lib/data/` (which means "browser-side, RLS-scoped Supabase reads" in this codebase) and NOT
+`lib/queries/` (there is no client cache to manage; Next's data cache is the cache). Zod contracts in
+`lib/validators/marketing.ts` per rule 10.
+
+**Dependency justification** (required by `docs/07-ENGINEERING-STANDARDS.md` §6):
+
+| Package | Why it is not avoidable |
+|---|---|
+| `next-sanity` | The official Next.js integration — client, `NextStudio`, Portable Text. **v13 specifically:** v12 on Next 16 caused the request overage above |
+| `sanity` | The Studio itself, required to embed it at `/studio` |
+| `@sanity/vision` | GROQ playground inside the Studio; the alternative is debugging queries blind |
+| `@sanity/image-url` | Resolves the editor's dragged focal point plus crop into `?rect=&fp-x=&fp-y=`. That is real geometry, not the "few lines" §6 asks us to hand-write — and hotspot is a feature the school will use, cropping portrait photos into landscape news cards |
+| `@sanity/client` | A declared **peer dependency of `next-sanity`** — pnpm was auto-installing it, so it worked, but a peer the app depends on belongs in `package.json`. Imported directly by `scripts/seed-cms-gallery.ts`, which pnpm's strict resolution would otherwise refuse |
+| `styled-components` | A **peer requirement of `sanity`**, not a choice. Studio-only; no app code imports it |
+
+Sanity's own typegen is deliberately **not** used: with three document types, Zod already gives us types
+via `z.infer` *and* validates at runtime, which typegen does not. The tradeoff is that a GROQ typo
+surfaces as a logged validation failure rather than a typecheck error — which is why every fallback in
+`read.ts` logs loudly. Revisit if the schema grows.
+
+**Free-plan consequence to know:** the dataset is public, so an *unpublished* draft is fetchable by
+anyone who knows the project id (and the project id ships in the client bundle). Our pages can never
+render one — the client pins `perspective: "published"` — but the school should be told not to draft
+anything they would not publish.
 
 ---
 
@@ -274,3 +368,6 @@ callback — an Edge Function is the right home for it. Nothing so far qualifies
 | A9 | One source of truth per fact; portals are derived, RLS-scoped views — never copies | Cross-portal consistency for free; a single write reflects everywhere |
 | A10 | Cross-cutting numbers derived on read (DB view/RPC or pure `lib/` helper), never stored twice | Aggregates can't drift from their rows |
 | A11 | Writes propagate to other portals via React Query key invalidation (+ selective Realtime) | Decoupled portals; no cross-wiring between surfaces |
+| A12 | Sanity for public editorial content; Supabase for everything operational (§7a) | Lets the school publish news and photos without a developer, without putting a second copy of any tenant fact outside RLS |
+| A13 | Sanity is optional at runtime — no project id means fall back to compiled content | CI and a fresh clone build with no credentials, and rollback is unsetting one env var rather than reverting code |
+| A14 | Tagged reads + a publish webhook using `revalidateTag(tag, {expire: 0})`, with 5-minute time-based revalidation as a backstop | The school needs an edit to appear when they publish, not on a timer. `{expire: 0}` is the documented webhook escape hatch from stale-while-revalidate, which would otherwise show the editor their own previous content on first refresh. Tags and `revalidate` coexist, so a broken webhook degrades to 5 minutes rather than to a frozen site |

@@ -3,14 +3,23 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SITE } from "@/lib/marketing/site";
+import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
-export const metadata: Metadata = {
-  title: {
-    default: `${SITE.name} (${SITE.shortName}) — ${SITE.tagline}`,
-    template: `%s · ${SITE.shortName}`,
-  },
-  description: `${SITE.motto} ${SITE.name} offers Creche through JHS in ${SITE.location.lines[0]}, ${SITE.location.area}. ${SITE.admissionsNote}.`,
-};
+/**
+ * `generateMetadata` rather than a static `metadata` export because the description names the
+ * admissions year, which the school edits in the Studio. A static export would freeze it at build
+ * time, so the year in Google's snippet would drift from the year on the page.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const { admissionsNote } = await getMarketingSettings();
+  return {
+    title: {
+      default: `${SITE.name} (${SITE.shortName}) — ${SITE.tagline}`,
+      template: `%s · ${SITE.shortName}`,
+    },
+    description: `${SITE.motto} ${SITE.name} offers Creche through JHS in ${SITE.location.lines[0]}, ${SITE.location.area}. ${admissionsNote}.`,
+  };
+}
 
 /**
  * Public marketing shell (docs/06-UI §8) — its OWN layout: header + footer, no auth guard, no

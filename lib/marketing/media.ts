@@ -15,6 +15,13 @@ export interface MediaAsset {
   alt: string;
   width?: number;
   height?: number;
+  /**
+   * A tiny base64 preview to show while the real image loads, passed to `next/image` as
+   * `placeholder="blur"`. Only ever set on assets that came from Sanity, which extracts one (an
+   * "LQIP") for every upload. The committed files under `public/slis/` leave this `undefined` — Next
+   * generates their blur placeholder at build time from the local file, so they need nothing here.
+   */
+  blurDataURL?: string;
 }
 
 /** A `MediaAsset` whose intrinsic size is known — for `next/image` without `fill`. */

@@ -57,5 +57,7 @@ export const SITE = {
   email: SLIS.contact.email,
 } as const;
 
-/** SEAM: real social handles are unknown — empty until the school confirms them (lib/marketing/site.ts `socials`). */
-export const SOCIAL_LINKS: readonly NavItem[] = [];
+// REMOVED: `SOCIAL_LINKS`. It was an empty array imported by nothing — the footer has never rendered a
+// social row. It is deliberately NOT replaced by a Sanity field: shipping the school an editable
+// "social links" box that produces nothing visible on the site teaches them the CMS is broken. Build
+// the footer row and the schema field together, in one change, when the real handles exist.

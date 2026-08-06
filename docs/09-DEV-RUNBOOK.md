@@ -115,12 +115,122 @@ Re-print them any time with `npx supabase status`.
 | `pnpm test:unit` | Pure business-logic tests. No DB needed |
 | `pnpm test:rls` | Tenant isolation + role scoping. Needs Supabase running |
 | `pnpm test:integration` | Per-role reads against the seeded demo tenant. **Needs `pnpm db:seed` first** |
+| `pnpm cms:seed:gallery` | One-off: load the committed gallery photos into Sanity. Needs `SANITY_WRITE_TOKEN` |
 
 ### Before you commit
 
 ```bash
 pnpm typecheck && pnpm lint && pnpm test:unit && pnpm test:rls && pnpm test:integration
 ```
+
+---
+
+## 6a. Sanity CMS (the marketing site's content editor)
+
+The public site's news, gallery, and a few contact/admissions details live in Sanity. The Studio is
+**embedded in this app at `/studio`** — same domain, same deploy, no second URL for the school to learn.
+`docs/02-ARCHITECTURE.md` §7a explains the boundary against Supabase and why each field is or is not
+editable.
+
+### It is optional — this is the most important thing to know
+
+Leave the env vars unset and everything still works: the public site renders the content compiled into
+`lib/marketing/site.ts` / `media.ts` exactly as it did before Sanity existed, and `/studio` shows a short
+"not configured" note instead of crashing. CI builds this way on purpose. Verify it any time with:
+
+```bash
+env -u NEXT_PUBLIC_SANITY_PROJECT_ID pnpm build
+```
+
+Unsetting `NEXT_PUBLIC_SANITY_PROJECT_ID` in Vercel is also the entire rollback if Sanity ever
+misbehaves. No code revert, no migration.
+
+### One-time setup
+
+1. Create a project at sanity.io. Keep the dataset named `production`.
+2. **CORS — this is the step everyone forgets.** manage.sanity.io → your project → API → CORS origins.
+   Add `http://localhost:3000`, the production domain, and the Vercel preview wildcard, each with
+   **"Allow credentials" ON**. A Studio that loads to a blank white screen is almost always this toggle.
+3. Set `NEXT_PUBLIC_SANITY_PROJECT_ID` and `NEXT_PUBLIC_SANITY_DATASET=production` in `.env.local` and in
+   Vercel (all environments). **No API token is needed** — free-plan datasets are public, so published
+   content reads without one, and that is what keeps CI credential-free.
+4. Invite the school's editor to the project.
+
+### Decide before handing the Studio to the school
+
+The Sanity **free plan has only Administrator and Viewer roles** — there is no "Editor" below the Growth
+plan (~$15/seat/month). To let school staff publish, they must be an Administrator, which also lets them
+delete content and invite people. Sanity keeps full document history, so mistakes are recoverable.
+Starting free and upgrading only if it becomes a problem is reasonable; just make it a conscious call.
+
+Also tell the school: **the dataset is public, so drafts are technically fetchable by anyone with the
+project id.** Our pages can never render one (the client pins `perspective: "published"`), but they
+should not draft anything they would not publish.
+
+### How content reaches the site
+
+Publish in the Studio → Sanity POSTs `/api/revalidate-sanity` → the tag is expired with `expire: 0` →
+**the next page load is fresh.** No waiting, and no "refresh twice": `expire: 0` is what avoids
+stale-while-revalidate serving the editor their own previous content (`docs/02-ARCHITECTURE.md` §7a).
+
+If the webhook is not configured, or its secret does not match, the site still updates — just on the
+**5-minute** time-based backstop instead. That is the symptom to recognise: "my edits appear, but only
+after a few minutes" means the webhook is not arriving, not that caching is broken.
+
+**Configure the webhook once** (manage.sanity.io → API → **Webhooks** → Create):
+
+| Field | Value |
+|---|---|
+| URL | `https://<your-domain>/api/revalidate-sanity` |
+| Dataset | `production` |
+| Trigger on | Create, Update, Delete |
+| Filter | `_type in ["newsPost","galleryImage","siteSettings"]` |
+| Projection | `{_type, "slug": slug.current}` |
+| HTTP method | `POST` |
+| API version | `v2026-08-01` |
+| Secret | the same value as `SANITY_REVALIDATE_SECRET` |
+
+The projection matters — `lib/marketing/cms/revalidate.ts` reads exactly `_type` and `slug`, and the
+per-post tag (`newsPost:<slug>`) cannot be built without the slug.
+
+Sanity cannot reach `localhost`, so **the webhook only works on a deployed URL.** Locally, `pnpm dev`
+refetches on every request anyway, so edits appear on refresh regardless. To test the endpoint itself
+without Sanity, POST a correctly-signed request with
+`encodeSignatureHeader(body, Date.now(), secret)` from `@sanity/webhook`.
+
+### Seeding the gallery (do this before the school adds its first photo)
+
+`getGalleryPhotos()` swaps the gallery as a **whole list**: while Sanity has zero photos the site
+serves the 13 committed files, and the moment it has one it serves exactly that one. So the school's
+first upload would appear to delete the gallery. Avoid the cliff by loading the committed set in first:
+
+```bash
+# Needs a token with Editor permission: manage.sanity.io -> API -> Tokens
+SANITY_WRITE_TOKEN=<token> pnpm cms:seed:gallery
+```
+
+It carries each photo's existing descriptive alt text across verbatim, so nothing regresses on
+accessibility, and it is idempotent (deterministic document ids + `createOrReplace`). One caveat: re-running
+resets `position`, so it would undo manual reordering done in the Studio.
+
+The files stay in `public/slis/photos/` afterwards — they are the fallback for a build with no Sanity
+env, so deleting them breaks `pnpm build` in CI.
+
+### What the school can and cannot edit
+
+**Can:** news posts, gallery photos, contact email, phone numbers, office hours, the admissions year,
+the early-bird sentence, and the About page's founding story.
+
+**Cannot** (by design — each has a reason in `sanity/schema/site-settings.ts`): the school's name, motto
+or crest (shared with the portal and the generated report cards), the campus address, the tagline, the
+programs and their age ranges, the admission flyer artwork, the promo video, and all section prose.
+Those are code changes.
+
+### If content stops appearing
+
+Every fallback logs why, prefixed `[marketing/cms]`, in the server logs — a failed query, or a payload
+that did not match its contract in `lib/validators/marketing.ts`. That log is the first place to look,
+because the page itself degrades silently to the built-in content rather than showing an error.
 
 ---
 

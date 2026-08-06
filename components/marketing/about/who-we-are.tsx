@@ -3,14 +3,22 @@ import Image from "next/image";
 import { Section } from "@/components/marketing/section";
 import { SITE } from "@/lib/marketing/site";
 import { MEDIA } from "@/lib/marketing/media";
+import { getMarketingSettings } from "@/lib/marketing/cms/read";
+import { PostBody } from "@/components/marketing/news/post-body";
 
 /**
  * "Who we are" — the real, safe facts only: one campus, Creche through JHS, in Oyarifa, a
  * community that gathers in person (as the community photos show). No founding date, enrollment
- * figure or named history is asserted; a clearly-marked, dashed-border callout invites the school
- * to add its own founding story later, rather than inventing one (M4 honesty guard).
+ * figure or named history is asserted (M4 honesty guard).
+ *
+ * The founding story is the one place on this site where the code deliberately had nothing to say: a
+ * dashed callout asked the school to supply it. That callout is now the EMPTY STATE of a real field —
+ * once someone writes "Our story" in the Studio, the invitation is replaced by their words. Until then
+ * it still reads exactly as before, so nothing is invented in the meantime.
  */
-export function AboutWhoWeAre() {
+export async function AboutWhoWeAre() {
+  const { foundingStory } = await getMarketingSettings();
+
   return (
     <Section tone="warm" aria-labelledby="who-we-are-title">
       <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
@@ -37,16 +45,27 @@ export function AboutWhoWeAre() {
             </p>
           </div>
 
-          <div className="mt-8 rounded-2xl border border-dashed border-[color-mix(in_srgb,var(--m-brand),white_40%)] bg-[var(--m-canvas)] p-5">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--m-brand)]">
-              Editable — school to confirm
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--muted-foreground)]">
-              This is a good place for {SITE.shortName}&apos;s own founding story, in the
-              school&apos;s own words — how it began, and what it set out to do. Add that story
-              here once confirmed; nothing is invented in its place.
-            </p>
-          </div>
+          {foundingStory ? (
+            <div className="mt-8 border-l-2 border-[var(--m-accent)] pl-6">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--m-brand)]">
+                Our story
+              </p>
+              <div className="mt-3 text-[var(--muted-foreground)]">
+                <PostBody value={foundingStory} />
+              </div>
+            </div>
+          ) : (
+            <div className="mt-8 rounded-2xl border border-dashed border-[color-mix(in_srgb,var(--m-brand),white_40%)] bg-[var(--m-canvas)] p-5">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--m-brand)]">
+                Editable — school to confirm
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted-foreground)]">
+                This is a good place for {SITE.shortName}&apos;s own founding story, in the
+                school&apos;s own words — how it began, and what it set out to do. Add that story
+                under &ldquo;Our story&rdquo; in Site settings; nothing is invented in its place.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="reveal d1 grid gap-4 sm:grid-cols-2">

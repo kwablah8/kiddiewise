@@ -12,6 +12,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint
+      # The unit suite is pure logic with no DB and no network, so it belongs in the fast job. It was
+      # missing here, which meant nothing in CI ran `tests/unit/**` at all.
+      - run: pnpm test:unit
+      # Deliberately NO Sanity env: this asserts the marketing site still builds and renders its
+      # compiled content when the CMS is absent, which is the integration's fallback contract and its
+      # rollback story. See `lib/marketing/cms/env.ts`.
       - run: pnpm build
         env:
           NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321

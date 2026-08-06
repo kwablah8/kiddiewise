@@ -3,7 +3,7 @@ import { Tag } from "lucide-react";
 import { Section } from "@/components/marketing/section";
 import { CtaButton } from "@/components/marketing/cta-button";
 import { FlyerPoster } from "@/components/marketing/flyer-poster";
-import { SITE } from "@/lib/marketing/site";
+import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
 /**
  * The admission flyer on `/admissions`, placed immediately before the inquiry form — the page's
@@ -11,8 +11,14 @@ import { SITE } from "@/lib/marketing/site";
  *
  * `tone="brand"` does two jobs: it keeps the page's band rhythm alternating (warm → brand → white
  * into the form) and puts the flyer's navy-and-gold artwork on the one background that flatters it.
+ *
+ * Note the split: the flyer IMAGE is still a committed asset (`MEDIA.flyer`, swapped by a developer
+ * once a year), while the copy beside it — the year and the early-bird sentence — is school-editable.
+ * Whoever replaces next year's artwork should check that the two still agree.
  */
-export function AdmissionsFlyer() {
+export async function AdmissionsFlyer() {
+  const { admissionsNote, admissionsYear, earlyBird } = await getMarketingSettings();
+
   return (
     <Section tone="brand" aria-labelledby="flyer-title" className="overflow-hidden">
       <div className="grid items-center gap-14 lg:grid-cols-[28rem_1fr] lg:gap-20">
@@ -23,7 +29,7 @@ export function AdmissionsFlyer() {
 
         <div className="reveal d1 order-1 mx-auto max-w-xl lg:order-2 lg:mx-0">
           <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--m-accent)]">
-            {SITE.admissionsNote}
+            {admissionsNote}
           </span>
           <h2
             id="flyer-title"
@@ -32,14 +38,14 @@ export function AdmissionsFlyer() {
             Everything on one page.
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-white">
-            Our {SITE.admissionsYear} admission flyer lists every level we admit, what the campus
+            Our {admissionsYear} admission flyer lists every level we admit, what the campus
             offers, and the numbers to call. Save it, print it for the noticeboard, or send it on to
             a family still looking for a school.
           </p>
 
           <p className="mt-7 flex items-start gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--m-accent),transparent_70%)] bg-white/[0.06] px-4 py-3.5 leading-relaxed text-white">
             <Tag className="mt-0.5 size-5 shrink-0 text-[var(--m-accent)]" aria-hidden="true" />
-            {SITE.earlyBird}
+            {earlyBird}
           </p>
 
           <div className="mt-9">

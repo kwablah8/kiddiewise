@@ -71,8 +71,11 @@ Public presence + inbound funnel into the platform.
 
 Exit criteria: a visitor can learn about the school and submit an inquiry that lands in Admin.
 
-**Status: ✅ done** for the funnel — enquiries land in the admin inbox. News is still a placeholder page
-and the gallery serves static files rather than Storage.
+**Status: ✅ done.** Enquiries land in the admin inbox. News is a real, school-authored section
+(`/news` + `/news/[slug]`), and the gallery is school-managed — both via Sanity, not Storage
+(`docs/02-ARCHITECTURE.md` §7a). The Studio is embedded at `/studio`, and the school also edits its
+contact email, phone numbers, office hours, admissions year, early-bird sentence and founding story
+there. Everything else on the public site is still code-owned by design.
 
 ---
 
@@ -127,16 +130,25 @@ Grouped by what blocks a usable MVP. Verified against the code, not from memory.
 | School settings | `getSchool()` + `schools_admin_update` policy exist | No page to edit name, logo, address, contact |
 | Parent fee balance | `pay_parent_read` permits it | No screen |
 
-### Storage — four buckets provisioned, none wired
+### Storage — three buckets to wire (the fourth is superseded)
 
-`avatars` (student/staff photos — the form makes a local preview only), `school-logos`, `gallery`
-(page serves `/public` files), `reports` (`terminal_reports.pdf_url` written nowhere). Best done as
-one batch: it is one upload helper reused four times.
+`avatars` (student/staff photos — the form makes a local preview only), `school-logos`, `reports`
+(`terminal_reports.pdf_url` written nowhere). Best done as one batch: it is one upload helper reused
+three times.
+
+`gallery` is **no longer work.** Gallery photos are Sanity assets; the bucket stays in migration 0012
+as immutable history and should not be wired (`docs/02-ARCHITECTURE.md` §7).
 
 ### Nice-to-have
 
 Students PDF/CSV export (buttons toast "coming soon") · terminal report PDF (needs `reports`) ·
-marketing News page · contact map embed · social handles.
+contact map embed · **social handles — needs BOTH a footer social row and the matching Sanity field, in
+one change**; the dead empty `SOCIAL_LINKS` export was removed rather than replaced by a Studio field
+that would produce nothing visible · Sanity draft/preview mode (Presentation tool).
+
+The publish webhook is **built** (`app/api/revalidate-sanity/route.ts`) — a published edit is live on
+the next request. It needs the one-time dashboard setup in `docs/09-DEV-RUNBOOK.md` §6a and only works
+against a deployed URL, since Sanity cannot reach localhost.
 
 ### Not code
 

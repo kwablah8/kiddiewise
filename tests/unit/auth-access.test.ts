@@ -26,10 +26,30 @@ describe("isPublicPath", () => {
     }
   });
 
+  it("lets the embedded Sanity Studio through this app's session guard", () => {
+    // "Public" here means our middleware does not gate it — Sanity authenticates it instead. Without
+    // this, an unauthenticated editor is bounced to /login and a signed-in teacher is bounced to their
+    // own portal by the role check, which sits AFTER this call in lib/supabase/middleware.ts.
+    expect(isPublicPath("/studio")).toBe(true);
+    // The Studio routes internally into deep, punctuation-heavy paths of its own.
+    expect(isPublicPath("/studio/structure/newsPost")).toBe(true);
+    expect(isPublicPath("/studio/structure/newsPost;abc123")).toBe(true);
+    expect(isPublicPath("/studio/vision")).toBe(true);
+  });
+
+  it("lets Sanity's publish webhook through the session guard", () => {
+    // Sanity's servers have no session with us; the route verifies an HMAC signature instead. Without
+    // this the middleware redirects the POST to /login and publishing stops reaching the site.
+    expect(isPublicPath("/api/revalidate-sanity")).toBe(true);
+    // Nothing else under /api is opened up by that entry.
+    expect(isPublicPath("/api/other")).toBe(false);
+  });
+
   it("does not leak protection via a prefix collision", () => {
     // /newsletter is not /news/…, and /admissions-inbox is not /admissions.
     expect(isPublicPath("/newsletter")).toBe(false);
     expect(isPublicPath("/admissions-inbox")).toBe(false);
+    expect(isPublicPath("/studios")).toBe(false);
   });
 
   it("protects an unknown path by default", () => {

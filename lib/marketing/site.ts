@@ -8,6 +8,16 @@
  * SOURCE: the school's crest logo + admission flyer (`SNAB-Assets/`). Facts not present in that
  * source (e.g. a founding year, precise enrollment figures, social handles) are intentionally
  * left out rather than invented — see `socials` below and the M4 rebrand plan's "honesty guard".
+ *
+ * SANITY: six of these fields are now EDITABLE by the school in the Studio at /studio, which makes the
+ * values here their FALLBACK rather than the last word — `contact`, `hours`, `admissionsYear`,
+ * `admissionsNote` (derived) and `earlyBird`. Anything rendering one of those must read
+ * `getMarketingSettings()` from `lib/marketing/cms/read.ts`, not this constant, or it will show stale
+ * copy while the page beside it shows the edited copy. Each field is marked below. Everything unmarked
+ * — the name, motto, tagline, address, programs, offerings — is code-owned and safe to import directly.
+ *
+ * This module must stay importable from CLIENT components (`site-header.tsx` and
+ * `app/(auth)/layout.tsx` both import it), so it must never gain `import "server-only"`.
  */
 
 import { BRAND } from "@/lib/brand";
@@ -18,6 +28,18 @@ import { BRAND } from "@/lib/brand";
  * reference its own fields, so the alternative is writing the year twice.
  */
 const ADMISSIONS_YEAR = "2026/2027";
+
+/**
+ * The admissions banner sentence, derived from the year rather than authored beside it.
+ *
+ * Exported because Sanity lets the school edit `admissionsYear` and this sentence renders in eight
+ * places including the site's `<meta description>`. If the note were a second editable field, bumping
+ * the year and forgetting the note would put one wrong fact on all eight surfaces. One function, one
+ * fact (golden rule 9).
+ */
+export function admissionsNoteFor(year: string): string {
+  return `Admission open for ${year}`;
+}
 
 export interface ProgramLevel {
   /** Stable identifier, e.g. for `MEDIA.programs` lookups. */
@@ -76,13 +98,19 @@ export interface SiteConfig {
   motto: string;
   tagline: string;
   location: SiteLocation;
+  /** SANITY-EDITABLE — read via `getMarketingSettings()`, not `SITE`. */
   contact: SiteContact;
-  /** The school year admissions are open for, e.g. "2026/2027" — for copy that names it inline. */
+  /** The school year admissions are open for, e.g. "2026/2027" — for copy that names it inline.
+   *  SANITY-EDITABLE — read via `getMarketingSettings()`, not `SITE`. */
   admissionsYear: string;
+  /** DERIVED from `admissionsYear` by `admissionsNoteFor()`, never authored on its own.
+   *  SANITY-EDITABLE (indirectly) — read via `getMarketingSettings()`, not `SITE`. */
   admissionsNote: string;
   /** The early-bird offer as one standalone sentence. The flyer advertises that a discount exists
-   * but states neither an amount nor a deadline, so this says exactly that and no more. */
+   * but states neither an amount nor a deadline, so this says exactly that and no more.
+   * SANITY-EDITABLE — read via `getMarketingSettings()`, not `SITE`. */
   earlyBird: string;
+  /** SANITY-EDITABLE — read via `getMarketingSettings()`, not `SITE`. */
   hours: OfficeHours;
   programs: readonly ProgramLevel[];
   /** Co-curricular life beyond the academic ladder (shown in the "What we offer" home section). */
@@ -107,7 +135,7 @@ export const SITE: SiteConfig = {
     phones: ["0256855366", "0244210139"],
   },
   admissionsYear: ADMISSIONS_YEAR,
-  admissionsNote: `Admission open for ${ADMISSIONS_YEAR}`,
+  admissionsNote: admissionsNoteFor(ADMISSIONS_YEAR),
   earlyBird: "An early-bird discount applies to families who register early.",
   hours: {
     entries: [

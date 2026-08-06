@@ -7,6 +7,7 @@ import { AdmissionsRequirements } from "@/components/marketing/admissions/requir
 import { AdmissionsFlyer } from "@/components/marketing/admissions/flyer";
 import { InquiryForm } from "@/components/marketing/admissions/inquiry-form";
 import { SITE } from "@/lib/marketing/site";
+import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
 export const metadata: Metadata = { title: "Admissions" };
 
@@ -20,7 +21,9 @@ export const metadata: Metadata = { title: "Admissions" };
  * screen, and Home and About both still carry the section — so listing them a third time here only
  * delayed the form. Cut, leaving the flyer as this page's level listing.
  */
-export default function AdmissionsPage() {
+export default async function AdmissionsPage() {
+  const { contact, admissionsNote } = await getMarketingSettings();
+
   return (
     <>
       <Section
@@ -31,7 +34,7 @@ export default function AdmissionsPage() {
         <div className="relative max-w-2xl reveal">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-white">
             <span className="size-1.5 rounded-full bg-[var(--m-accent)]" aria-hidden="true" />
-            {SITE.admissionsNote}
+            {admissionsNote}
           </span>
           <h1
             id="admissions-hero-title"
@@ -78,12 +81,12 @@ export default function AdmissionsPage() {
             <p className="mt-8 text-sm text-[var(--muted-foreground)]">
               Prefer to talk first?{" "}
               <a
-                href={`mailto:${SITE.contact.email}`}
+                href={`mailto:${contact.email}`}
                 className="rounded-md font-medium text-[var(--m-brand)] outline-none transition-colors hover:text-[var(--m-brand-deep)] focus-visible:ring-2 focus-visible:ring-[var(--m-brand)] focus-visible:ring-offset-2"
               >
-                {SITE.contact.email}
+                {contact.email}
               </a>{" "}
-              or {SITE.contact.phones.join(" / ")}.
+              or {contact.phones.join(" / ")}.
             </p>
           </div>
 

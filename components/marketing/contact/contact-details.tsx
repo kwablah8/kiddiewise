@@ -2,23 +2,37 @@ import { Clock, Mail, MapPin, Phone } from "lucide-react";
 
 import { PhotoSlot } from "@/components/marketing/photo-slot";
 import { SITE } from "@/lib/marketing/site";
+import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
+// The address stays at module scope: `SITE.location` is code-owned and cannot change at runtime.
 const fullAddress = `${SITE.location.lines.join(", ")}, ${SITE.location.area}`;
-const phoneDisplay = SITE.contact.phones.join(" / ");
 
-const ROWS = [
-  { icon: MapPin, label: "Address", value: fullAddress, href: undefined },
-  { icon: Phone, label: "Phone", value: phoneDisplay, href: `tel:${SITE.contact.phones[0]}` },
-  {
-    icon: Mail,
-    label: "Email",
-    value: SITE.contact.email,
-    href: `mailto:${SITE.contact.email}`,
-  },
-] as const;
+/**
+ * Contact details card: address/phone/email/hours + a map placeholder (01-REQ "Contact").
+ *
+ * Phone, email and hours are editable by the school, so `ROWS` is built per render rather than once at
+ * module load — a module-scope constant would freeze whatever the values were when the process started
+ * and never pick up an edit.
+ */
+export async function ContactDetails() {
+  const { contact, hours } = await getMarketingSettings();
 
-/** Contact details card: address/phone/email/hours + a map placeholder (01-REQ "Contact"). */
-export function ContactDetails() {
+  const ROWS = [
+    { icon: MapPin, label: "Address", value: fullAddress, href: undefined },
+    {
+      icon: Phone,
+      label: "Phone",
+      value: contact.phones.join(" / "),
+      href: `tel:${contact.phones[0]}`,
+    },
+    {
+      icon: Mail,
+      label: "Email",
+      value: contact.email,
+      href: `mailto:${contact.email}`,
+    },
+  ] as const;
+
   return (
     <div className="reveal space-y-8">
       <dl className="space-y-5">
@@ -59,15 +73,15 @@ export function ContactDetails() {
               Office hours
             </dt>
             <dd className="mt-1 space-y-0.5">
-              {SITE.hours.entries.map((entry) => (
+              {hours.entries.map((entry) => (
                 <p key={entry.days} className="text-base text-[var(--text)]">
                   <span className="font-medium">{entry.days}</span>
                   <span className="text-[var(--muted-foreground)]"> · {entry.time}</span>
                 </p>
               ))}
-              {SITE.hours.note ? (
+              {hours.note ? (
                 <p className="mt-1.5 text-sm leading-relaxed text-[var(--muted-foreground)]">
-                  {SITE.hours.note}
+                  {hours.note}
                 </p>
               ) : null}
             </dd>

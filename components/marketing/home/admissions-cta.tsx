@@ -3,7 +3,7 @@ import { Mail, Phone } from "lucide-react";
 import { Section } from "@/components/marketing/section";
 import { CtaButton } from "@/components/marketing/cta-button";
 import { FlyerPoster } from "@/components/marketing/flyer-poster";
-import { SITE } from "@/lib/marketing/site";
+import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
 /**
  * The homepage's closing action band — and the flyer's home on this page.
@@ -14,7 +14,9 @@ import { SITE } from "@/lib/marketing/site";
  * blue, so the flyer's navy-and-gold artwork reads as intentional against it, and folding the poster
  * in means the homepage gains no extra section.
  */
-export function HomeAdmissionsCta() {
+export async function HomeAdmissionsCta() {
+  const { contact, admissionsNote, admissionsYear, earlyBird } = await getMarketingSettings();
+
   return (
     <Section tone="brand" aria-labelledby="admissions-cta-title" className="overflow-hidden">
       <div className="relative grid items-center gap-14 lg:grid-cols-[28rem_1fr] lg:gap-20">
@@ -27,7 +29,7 @@ export function HomeAdmissionsCta() {
 
         <div className="reveal order-1 mx-auto max-w-2xl text-center lg:order-2 lg:mx-0 lg:text-left">
           <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[var(--m-accent)]">
-            {SITE.admissionsNote}
+            {admissionsNote}
           </span>
           <h2
             id="admissions-cta-title"
@@ -36,7 +38,7 @@ export function HomeAdmissionsCta() {
             Start your child&apos;s journey with us.
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-white">
-            Registration for {SITE.admissionsYear} is open across every level. {SITE.earlyBird} Apply
+            Registration for {admissionsYear} is open across every level. {earlyBird} Apply
             online, or book a visit to see our Oyarifa campus for yourself — we would love to meet
             your family.
           </p>
@@ -52,7 +54,7 @@ export function HomeAdmissionsCta() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-white lg:justify-start">
             <span className="flex items-center gap-2.5">
               <Phone className="size-4 shrink-0 text-[var(--m-accent)]" aria-hidden="true" />
-              {SITE.contact.phones.map((phone, i) => (
+              {contact.phones.map((phone, i) => (
                 <span key={phone}>
                   {i > 0 ? <span className="text-white"> / </span> : null}
                   <a
@@ -65,11 +67,11 @@ export function HomeAdmissionsCta() {
               ))}
             </span>
             <a
-              href={`mailto:${SITE.contact.email}`}
+              href={`mailto:${contact.email}`}
               className="flex items-center gap-2.5 rounded-md break-all outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
             >
               <Mail className="size-4 shrink-0 text-[var(--m-accent)]" aria-hidden="true" />
-              {SITE.contact.email}
+              {contact.email}
             </a>
           </div>
         </div>

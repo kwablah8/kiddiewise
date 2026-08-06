@@ -4,14 +4,21 @@ import { Section } from "@/components/marketing/section";
 import { CtaButton } from "@/components/marketing/cta-button";
 import { GalleryGrid } from "@/components/marketing/gallery/gallery-grid";
 import { SITE } from "@/lib/marketing/site";
+import { getGalleryPhotos, getMarketingSettings } from "@/lib/marketing/cms/read";
 
 export const metadata: Metadata = { title: "Gallery" };
 
 /**
- * Gallery — real photos of the campus, classrooms and community from `MEDIA.gallery` (01-REQ
- * "Marketing website": Gallery). A masonry grid opens each photo in a focus-trapped lightbox.
+ * Gallery — real photos of the campus, classrooms and community (01-REQ "Marketing website": Gallery).
+ * A masonry grid opens each photo in a focus-trapped lightbox.
+ *
+ * Photos come from the school's own uploads in the Studio, falling back to the committed set in
+ * `MEDIA.gallery` when there are none. `SITE.location` is read directly because the campus address is
+ * code-owned; the admissions line is not, so it comes from the settings reader.
  */
-export default function GalleryPage() {
+export default async function GalleryPage() {
+  const [photos, settings] = await Promise.all([getGalleryPhotos(), getMarketingSettings()]);
+
   return (
     <>
       <Section
@@ -40,7 +47,7 @@ export default function GalleryPage() {
         <h2 id="gallery-grid-title" className="sr-only">
           Photo gallery
         </h2>
-        <GalleryGrid />
+        <GalleryGrid photos={photos} />
       </Section>
 
       <Section tone="brand" aria-labelledby="gallery-cta-title" className="overflow-hidden">
@@ -53,7 +60,7 @@ export default function GalleryPage() {
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-white">
             Book a visit to tour the campus yourself, or start an inquiry today —{" "}
-            {SITE.admissionsNote}.
+            {settings.admissionsNote}.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <CtaButton href="/admissions" variant="gold" size="lg" withArrow>

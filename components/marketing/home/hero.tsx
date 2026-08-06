@@ -1,6 +1,7 @@
 import { CtaButton } from "@/components/marketing/cta-button";
 import { HeroParallaxImage } from "@/components/marketing/home/hero-parallax-image";
 import { SITE } from "@/lib/marketing/site";
+import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
 /**
  * Home hero — a real SLIS community photo (staff & families in the school's blue-and-gold polos)
@@ -12,7 +13,9 @@ import { SITE } from "@/lib/marketing/site";
  * reduced-motion-safe); `.accent-pulse` gives the "admission open" dot a slow, quiet pulse.
  * The foreground text/CTAs are never transformed, so they stay crisp.
  */
-export function HomeHero() {
+export async function HomeHero() {
+  const { admissionsNote } = await getMarketingSettings();
+
   return (
     <section
       aria-labelledby="hero-title"
@@ -58,7 +61,7 @@ export function HomeHero() {
               className="accent-pulse size-2 rounded-full bg-[var(--m-accent)]"
               aria-hidden="true"
             />
-            {SITE.admissionsNote}
+            {admissionsNote}
           </p>
         </div>
       </div>

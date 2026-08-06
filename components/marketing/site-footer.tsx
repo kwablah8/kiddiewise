@@ -4,11 +4,13 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { NAV_ITEMS } from "@/components/marketing/nav-config";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { SITE } from "@/lib/marketing/site";
+import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
 const focusRing =
   "rounded-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const { contact, admissionsNote } = await getMarketingSettings();
   const year = new Date().getFullYear();
 
   return (
@@ -24,7 +26,7 @@ export function SiteFooter() {
               {SITE.location.lines[0]}, {SITE.location.area}.
             </p>
             <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--m-accent)] px-3.5 py-1.5 text-[13px] font-semibold text-[var(--m-accent-ink)]">
-              {SITE.admissionsNote}
+              {admissionsNote}
             </p>
           </div>
 
@@ -56,7 +58,7 @@ export function SiteFooter() {
             <div className="flex items-start gap-2.5 text-sm text-white">
               <Phone className="mt-0.5 size-4 shrink-0 text-[var(--m-accent)]" aria-hidden="true" />
               <span className="flex flex-col gap-1">
-                {SITE.contact.phones.map((phone) => (
+                {contact.phones.map((phone) => (
                   <a
                     key={phone}
                     href={`tel:${phone}`}
@@ -68,11 +70,11 @@ export function SiteFooter() {
               </span>
             </div>
             <a
-              href={`mailto:${SITE.contact.email}`}
+              href={`mailto:${contact.email}`}
               className={`flex items-center gap-2.5 text-sm break-all text-white hover:underline ${focusRing}`}
             >
               <Mail className="size-4 shrink-0 text-[var(--m-accent)]" aria-hidden="true" />
-              {SITE.contact.email}
+              {contact.email}
             </a>
           </div>
         </div>
