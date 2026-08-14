@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BRAND } from "@/lib/brand";
-import { buildReceipt, receiptFilename, receiptNumber } from "@/lib/receipt";
+import { amountInWords, buildReceipt, receiptFilename, receiptNumber } from "@/lib/receipt";
 import type { PaymentVM } from "@/lib/validators/fees";
 
 const payment: PaymentVM = {
@@ -31,6 +31,40 @@ describe("receiptNumber", () => {
   });
 });
 
+describe("amountInWords", () => {
+  it("spells a plain cedi amount the way the receipt book does", () => {
+    expect(amountInWords(450)).toBe("Four hundred and fifty Ghana cedis only");
+  });
+
+  it("carries pesewas when the amount is not whole", () => {
+    expect(amountInWords(1250.5)).toBe(
+      "One thousand two hundred and fifty Ghana cedis and fifty pesewas only",
+    );
+  });
+
+  it("puts 'and' before a remainder under a hundred", () => {
+    expect(amountInWords(2_450_075)).toBe(
+      "Two million four hundred and fifty thousand and seventy-five Ghana cedis only",
+    );
+  });
+
+  it("hyphenates compound tens", () => {
+    expect(amountInWords(76)).toBe("Seventy-six Ghana cedis only");
+  });
+
+  it("keeps the singular for one cedi and one pesewa", () => {
+    expect(amountInWords(1.01)).toBe("One Ghana cedi and one pesewa only");
+  });
+
+  it("rounds to the pesewa rather than spelling a fraction of one", () => {
+    expect(amountInWords(19.999)).toBe("Twenty Ghana cedis only");
+  });
+
+  it("spells a part-cedi payment without pretending it is nothing", () => {
+    expect(amountInWords(0.5)).toBe("Zero Ghana cedis and fifty pesewas only");
+  });
+});
+
 describe("buildReceipt", () => {
   const data = buildReceipt({
     payment,
@@ -51,6 +85,12 @@ describe("buildReceipt", () => {
       reference: "MP2607.1432.A1",
       issuedBy: "Ama Mensah",
     });
+  });
+
+  // The label prints; the raw method is what decides which of the form's three boxes is ticked, so
+  // the receipt has to carry both.
+  it("carries the raw method alongside its label, for the tick box", () => {
+    expect(data.methodKey).toBe("mobile_money");
   });
 
   it("keeps a missing reference as null rather than inventing one", () => {

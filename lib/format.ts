@@ -21,9 +21,18 @@ const ghsCompactFormatter = new Intl.NumberFormat("en-GH", {
   maximumFractionDigits: 1,
 });
 
+/**
+ * `12,500.00` — the bare figure, for the rare surface that prints its own currency mark. The
+ * school's receipt form has a pre-printed "GHc" field, so a second "GHS" on the line would read as
+ * a correction of it.
+ */
+export function formatAmount(value: number): string {
+  return ghsFormatter.format(value);
+}
+
 /** `GHS 12,500.00` */
 export function formatGHS(value: number): string {
-  return `GHS ${ghsFormatter.format(value)}`;
+  return `GHS ${formatAmount(value)}`;
 }
 
 /** `21 Jul 2026` */
