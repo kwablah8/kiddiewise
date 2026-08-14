@@ -98,8 +98,8 @@ export type ClassOptionVM = z.infer<typeof classOptionVM>;
 
 // Write inputs (final Server Action contracts).
 export const studentCreateSchema = z.object({
-  first_name: z.string().min(1, "Required"),
-  last_name: z.string().min(1, "Required"),
+  first_name: z.string().trim().min(1, "Required").max(80, "That name is too long"),
+  last_name: z.string().trim().min(1, "Required").max(80, "That name is too long"),
   date_of_birth: z.string().min(1, "Required"), // ISO date
   gender: z.enum(["male", "female", "other"]),
   admission_no: z.string().default(""), // "" → auto-generated in the action
@@ -112,15 +112,15 @@ export const studentCreateSchema = z.object({
   other_names: z.string().nullable().default(null),
   blood_group: bloodGroup.nullable().default(null),
   enrollment_date: z.string().nullable().default(null),
-  medical_conditions: z.string().nullable().default(null),
-  allergies: z.string().nullable().default(null),
+  medical_conditions: z.string().trim().max(1000, "Keep this under 1000 characters").nullable().default(null),
+  allergies: z.string().trim().max(1000, "Keep this under 1000 characters").nullable().default(null),
   prev_school_name: z.string().nullable().default(null),
   prev_class_ended: z.string().nullable().default(null),
   prev_average_score: z.string().nullable().default(null),
   prev_year_attended: z.string().nullable().default(null),
   email: z.string().nullable().default(null),
   phone: z.string().nullable().default(null),
-  address: z.string().nullable().default(null),
+  address: z.string().trim().max(300, "Keep this under 300 characters").nullable().default(null),
   city: z.string().nullable().default(null),
   town: z.string().nullable().default(null),
   initial_academic_year_id: z.string().nullable().default(null),
@@ -132,11 +132,11 @@ export const studentUpdateSchema = studentCreateSchema.partial().extend({ id: z.
 export type StudentUpdateInput = z.infer<typeof studentUpdateSchema>;
 
 export const parentCreateSchema = z.object({
-  first_name: z.string().min(1, "Required"),
-  last_name: z.string().min(1, "Required"),
+  first_name: z.string().trim().min(1, "Required").max(80, "That name is too long"),
+  last_name: z.string().trim().min(1, "Required").max(80, "That name is too long"),
   email: z.string().email("Enter a valid email"),
   phone: z.string().nullable(),
-  occupation: z.string().nullable().default(null),
+  occupation: z.string().trim().max(120, "Keep this under 120 characters").nullable().default(null),
 });
 export type ParentCreateInput = z.infer<typeof parentCreateSchema>;
 

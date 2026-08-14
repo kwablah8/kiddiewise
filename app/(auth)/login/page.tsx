@@ -16,6 +16,25 @@ import { createClient } from "@/lib/supabase/client";
 import { isTempPasswordExpired } from "@/lib/temp-password";
 import { homePathForRole, isPathAllowedForRole } from "@/lib/auth/access";
 
+/**
+ * Is `next` a path that stays inside this app?
+ *
+ * `isPathAllowedForRole` only checks which SUBTREE a path belongs to — it answers "may an admin open
+ * this?", not "is this even a local path?", so `//evil.com` sails through it (it is not under /teacher
+ * or /parent, so an admin is "allowed") and `router.replace("//evil.com")` would hard-navigate a just-
+ * authenticated user off-site to a phishing clone. Require a single-slash absolute path and reject
+ * anything that could resolve to another origin: protocol-relative `//`, backslash tricks, or a value
+ * that parses to a different origin. Belt-and-braces with the role check that still follows.
+ */
+function isSafeNext(next: string): boolean {
+  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return false;
+  try {
+    return new URL(next, window.location.origin).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 export default function LoginPage() {
   const router = useAppRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -95,7 +114,9 @@ export default function LoginPage() {
     // needed here, inside a submit handler, where `window` is guaranteed to exist.
     const next = new URLSearchParams(window.location.search).get("next");
     const destination =
-      next && isPathAllowedForRole(profile.role, next) ? next : homePathForRole(profile.role);
+      next && isSafeNext(next) && isPathAllowedForRole(profile.role, next)
+        ? next
+        : homePathForRole(profile.role);
 
     // refresh() so the server re-renders with the new auth cookie; push() alone can leave the RSC
     // payload cached from the signed-out request.

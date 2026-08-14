@@ -78,18 +78,44 @@ const EMPTY_OVERVIEW: FeesOverviewVM = {
   total_records: 0,
 };
 
-async function fetchPositions(filter: FeesFilter): Promise<PositionRow[]> {
-  let q = db()
-    .from("student_fee_positions")
-    .select(
-      `id, student_id, student_name, class_id, class_name, academic_year_id, fee_term,
-       expected, discount, arrears, scholarship_type, paid, balance, status`,
-    );
-  if (filter.class_id) q = q.eq("class_id", filter.class_id);
-  if (filter.academic_year_id) q = q.eq("academic_year_id", filter.academic_year_id);
-  if (filter.term) q = q.eq("fee_term", filter.term);
+// Read EVERY matching row, not just PostgREST's first page (default 1000). getFeesOverview sums these
+// client-side across the whole school, so a truncated read would silently understate the expected /
+// collected / outstanding totals a school reconciles its cash against — money is wrong with nothing on
+// screen to say so. Page until a short read. (A SQL aggregate RPC would be leaner for a very large
+// school; correctness first, and the same paged read also keeps the Class Fees table complete.)
+async function readAllPaged<T>(
+  make: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  label: string,
+  pageSize = 1000,
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await make(from, from + pageSize - 1);
+    if (error) throw new Error(`${label}: ${error.message}`);
+    const rows = data ?? [];
+    all.push(...rows);
+    if (rows.length < pageSize) return all;
+  }
+}
 
-  return unwrapList(await q, "student fee positions").flatMap((r) =>
+async function fetchPositions(filter: FeesFilter): Promise<PositionRow[]> {
+  const rows = await readAllPaged(
+    (from, to) => {
+      let q = db()
+        .from("student_fee_positions")
+        .select(
+          `id, student_id, student_name, class_id, class_name, academic_year_id, fee_term,
+           expected, discount, arrears, scholarship_type, paid, balance, status`,
+        );
+      if (filter.class_id) q = q.eq("class_id", filter.class_id);
+      if (filter.academic_year_id) q = q.eq("academic_year_id", filter.academic_year_id);
+      if (filter.term) q = q.eq("fee_term", filter.term);
+      return q.range(from, to);
+    },
+    "student fee positions",
+  );
+
+  return rows.flatMap((r) =>
     r.id === null || r.student_id === null
       ? []
       : [
@@ -114,13 +140,19 @@ async function fetchPositions(filter: FeesFilter): Promise<PositionRow[]> {
 }
 
 async function fetchExtraPositions(filter: FeesFilter): Promise<ExtraPositionRow[]> {
-  // Extra fees are scoped by class only — they carry no year/term of their own.
-  let q = db()
-    .from("extra_fee_positions")
-    .select("id, student_name, class_id, class_name, fee_name, amount, paid, balance, status");
-  if (filter.class_id) q = q.eq("class_id", filter.class_id);
+  const rows = await readAllPaged(
+    (from, to) => {
+      // Extra fees are scoped by class only — they carry no year/term of their own.
+      let q = db()
+        .from("extra_fee_positions")
+        .select("id, student_name, class_id, class_name, fee_name, amount, paid, balance, status");
+      if (filter.class_id) q = q.eq("class_id", filter.class_id);
+      return q.range(from, to);
+    },
+    "extra fee positions",
+  );
 
-  return unwrapList(await q, "extra fee positions").flatMap((r) =>
+  return rows.flatMap((r) =>
     r.id === null
       ? []
       : [
@@ -242,6 +274,7 @@ export async function listClassFees(filter: FeesFilter = {}): Promise<StudentFee
         student_id: r.student_id,
         student_name: r.student_name,
         class_name: r.class_name ?? "—",
+        fee_term: r.fee_term,
         expected: r.expected,
         discount: r.discount,
         // The column holds the enum; the table shows the human label. 'none' reads as no

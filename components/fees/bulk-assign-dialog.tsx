@@ -72,9 +72,13 @@ export function BulkAssignDialog({
   async function onSubmit(values: BulkAssignFeesInput) {
     setSubmitError(null);
     try {
-      const { count } = await bulkAssign.mutateAsync(values);
+      const { count, skipped } = await bulkAssign.mutateAsync(values);
       toast.success("Fees assigned", {
-        description: `Assigned to ${count} student${count === 1 ? "" : "s"} in ${className}.`,
+        description:
+          `Assigned to ${count} student${count === 1 ? "" : "s"} in ${className}.` +
+          (skipped > 0
+            ? ` ${skipped} with a scholarship ${skipped === 1 ? "was" : "were"} left unchanged.`
+            : ""),
       });
       onOpenChange(false);
     } catch (err) {

@@ -4,10 +4,14 @@ import { attempt, UserFacingError, type ActionResult } from "./result";
 
 import { revalidatePath } from "next/cache";
 import { tenant, assertWrite, assertOk, logActivity } from "./_server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   assignPositions,
   attendanceTotals,
   computeSubjectComponents,
+  countPasses,
+  round1,
+  spreadStats,
   type ComponentResultInput,
   type SubjectComponents,
 } from "@/lib/terminal-reports";
@@ -22,6 +26,30 @@ import {
 } from "@/lib/validators/reports";
 import type { GradeBandVM } from "@/lib/validators/grading";
 import type { TablesUpdate } from "@/lib/supabase/types";
+
+/**
+ * Read EVERY row a filtered query matches, not just PostgREST's first page.
+ *
+ * PostgREST caps a response at a server-side maximum (1000 rows by default) and returns a short page
+ * with NO error when there are more. For most screens that is a paginated table and fine. Here it is a
+ * silent-corruption trap: these figures are FROZEN into official, printed report cards, and a class of
+ * 40 with a few years of history has far more than 1000 result rows, and one term of attendance for
+ * that class (≈40 × 60 school days) already exceeds it. A truncated read would freeze wrong totals,
+ * class averages and positions with nothing on screen to say so. So page until a short read.
+ */
+async function fetchAllPaged<T>(
+  makeQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  pageSize = 1000,
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await makeQuery(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    const rows = data ?? [];
+    all.push(...rows);
+    if (rows.length < pageSize) return all;
+  }
+}
 
 /**
  * Generate (or regenerate) terminal reports for a class and term.
@@ -51,7 +79,22 @@ export async function generateReports(
     if (termError) throw new Error(`Could not load that term: ${termError.message}`);
     if (!term) throw new UserFacingError("That term no longer exists.");
 
-    const [enrolledRes, bandsRes, existingRes, schoolRes] = await Promise.all([
+    // Who may compile this class's reports: an admin, or the class's own homeroom teacher (the write
+    // policies tr_class_teacher_write / trs_class_teacher_all mirror exactly this). We check it here
+    // because the marks below are read with the SERVICE ROLE, and this is the authorization that
+    // replaces the RLS those reads bypass.
+    const { data: klass } = await ctx.db
+      .from("classes")
+      .select("class_teacher_id, level")
+      .eq("id", class_id)
+      .maybeSingle();
+    if (!klass) throw new UserFacingError("That class no longer exists.");
+    const isAdmin = ctx.profile.role === "school_admin" || ctx.profile.role === "super_admin";
+    if (!isAdmin && klass.class_teacher_id !== ctx.profile.id) {
+      throw new UserFacingError("Only this class's teacher or an administrator can generate its reports.");
+    }
+
+    const [enrolledRes, bandsRes, existingRes, schoolRes, rosterRes] = await Promise.all([
       ctx.db
         .from("enrollments")
         .select("student_id")
@@ -69,7 +112,9 @@ export async function generateReports(
         )
         .eq("class_id", class_id)
         .eq("term_id", term_id),
-      ctx.db.from("schools").select("ca_weight").eq("id", ctx.schoolId).single(),
+      ctx.db.from("schools").select("ca_weight, pass_mark").eq("id", ctx.schoolId).single(),
+      // The class's timetable — what the card lists, marked or not (see computeSubjectComponents).
+      ctx.db.from("class_subjects").select("subjects(name, code)").eq("class_id", class_id),
     ]);
 
     if (enrolledRes.error) throw new Error(`Could not load the class: ${enrolledRes.error.message}`);
@@ -85,25 +130,47 @@ export async function generateReports(
     }));
     const existing = new Map((existingRes.data ?? []).map((r) => [r.student_id, r]));
     const caWeight = Number(schoolRes.data?.ca_weight ?? 50);
+    const passMark = Number(schoolRes.data?.pass_mark ?? 50);
+    const roster = (rosterRes.data ?? [])
+      .map((cs) => cs.subjects)
+      .filter((s): s is NonNullable<typeof s> => s !== null)
+      .map((s) => ({ name: s.name, code: s.code }));
 
-    const [resultsRes, attendanceRes] = await Promise.all([
-      ctx.db
-        .from("results")
-        .select(
-          "student_id, score, assessments!inner(max_score, term_id, subjects(name), assessment_types(is_exam))",
-        )
-        // Only submitted marks reach a report — a teacher's draft must never become an official record.
-        .eq("is_submitted", true)
-        .in("student_id", studentIds),
-      ctx.db
-        .from("attendance")
-        .select("student_id, status")
-        .eq("term_id", term_id)
-        .in("student_id", studentIds),
+    // Read the marks and attendance with the SERVICE ROLE, not the caller's client.
+    //
+    // A report card lists EVERY subject on the class's timetable, but res_teacher_rw scopes a teacher
+    // to results for the subjects THEY personally teach (teacher_teaches checks class_subjects, with no
+    // homeroom clause). So a class teacher compiling the card under their own RLS would silently get
+    // zero rows for every colleague-taught subject and freeze null totals and a wrong class rank onto
+    // an official document. The caller was authorized as this class's teacher (or an admin) above, and
+    // every read below is pinned to this school and this class's roster, so elevating just these reads
+    // is safe and is what lets the card be complete. Writes stay on ctx.db — RLS still confines the
+    // teacher to their own class.
+    const svc = createServiceClient();
+    const [allResults, allAttendance] = await Promise.all([
+      fetchAllPaged((from, to) =>
+        svc
+          .from("results")
+          .select(
+            "student_id, score, assessments!inner(max_score, term_id, subjects(name), assessment_types(is_exam))",
+          )
+          .eq("school_id", ctx.schoolId)
+          // Only submitted marks reach a report — a teacher's draft must never become an official record.
+          .eq("is_submitted", true)
+          .eq("assessments.term_id", term_id)
+          .in("student_id", studentIds)
+          .range(from, to),
+      ),
+      fetchAllPaged((from, to) =>
+        svc
+          .from("attendance")
+          .select("student_id, status")
+          .eq("school_id", ctx.schoolId)
+          .eq("term_id", term_id)
+          .in("student_id", studentIds)
+          .range(from, to),
+      ),
     ]);
-
-    const allResults = resultsRes.data ?? [];
-    const allAttendance = attendanceRes.data ?? [];
 
     // Per student: the GES split per subject, then overall totals from the subject totals.
     const draft = studentIds.map((studentId) => {
@@ -115,7 +182,7 @@ export async function generateReports(
           max_score: Number(r.assessments?.max_score ?? 0),
           is_exam: r.assessments?.assessment_types?.is_exam ?? false,
         }));
-      const subjects = computeSubjectComponents(componentInputs, caWeight);
+      const subjects = computeSubjectComponents(componentInputs, caWeight, roster);
       const totals = subjects.map((s) => s.total).filter((t): t is number => t !== null);
       const attendance = attendanceTotals(allAttendance.filter((a) => a.student_id === studentId));
 
@@ -123,11 +190,12 @@ export async function generateReports(
         student_id: studentId,
         subjects,
         subject_count: totals.length,
-        total_score: totals.length === 0 ? null : Math.round(totals.reduce((a, b) => a + b, 0)),
+        // One decimal, like the paper card: 877.7 and 87.8, not 878 and 88. Rounding the total to a
+        // whole number and the average separately would let the two disagree on the page.
+        total_score: totals.length === 0 ? null : round1(totals.reduce((a, b) => a + b, 0)),
         average_score:
-          totals.length === 0
-            ? null
-            : Math.round(totals.reduce((a, b) => a + b, 0) / totals.length),
+          totals.length === 0 ? null : round1(totals.reduce((a, b) => a + b, 0) / totals.length),
+        passes: countPasses(subjects, passMark),
         ...attendance,
       };
     });
@@ -136,16 +204,30 @@ export async function generateReports(
     // Overall position ranks the averages; each SUBJECT is ranked separately over its totals.
     const positioned = assignPositions(draft);
     const subjectPosition = new Map<string, number | null>();
+    const subjectSpread = new Map<string, ReturnType<typeof spreadStats>>();
     const subjectNames = [...new Set(draft.flatMap((d) => d.subjects.map((s) => s.subject_name)))];
     for (const name of subjectNames) {
+      const totals = draft.map((d) => d.subjects.find((s) => s.subject_name === name)?.total ?? null);
+      subjectSpread.set(name, spreadStats(totals));
       const ranked = assignPositions(
-        draft.map((d) => ({
-          student_id: d.student_id,
-          average_score: d.subjects.find((s) => s.subject_name === name)?.total ?? null,
-        })),
+        draft.map((d, i) => ({ student_id: d.student_id, average_score: totals[i]! })),
       );
       for (const r of ranked) subjectPosition.set(`${r.student_id}:${name}`, r.position);
     }
+
+    // The class's own spread — the card's "Class Average / Lowest Class Ave. / Highest Class Ave."
+    const classSpread = spreadStats(draft.map((d) => d.average_score));
+
+    // "Position in <level>": the same rank taken across every class at this level. The sister
+    // classes' figures come from their STORED reports, so a level whose other classes have not been
+    // generated yet ranks against a partial cohort — generate the whole level before publishing.
+    const levelRank = await rankAcrossLevel(svc, {
+      schoolId: ctx.schoolId,
+      classId: class_id,
+      level: klass.level,
+      termId: term_id,
+      cohort: draft.map((d) => ({ student_id: d.student_id, average_score: d.average_score })),
+    });
 
     // Published reports are refreshed like the rest (comments and figures preserved/recomputed the
     // same way), but their SUBJECT rows are also rewritten — figures and rows must never disagree.
@@ -160,6 +242,12 @@ export async function generateReports(
         total_score: r.total_score,
         average_score: r.average_score,
         position: r.position,
+        passes: r.passes,
+        class_average: classSpread.average,
+        class_lowest_average: classSpread.lowest,
+        class_highest_average: classSpread.highest,
+        level_position: levelRank.positionByStudent.get(r.student_id) ?? null,
+        level_size: levelRank.size,
         attendance_present: r.present,
         attendance_total: r.total,
         enrolled_count: studentIds.length,
@@ -187,17 +275,26 @@ export async function generateReports(
     // Snapshot the subject rows: replace wholesale so subjects dropped from the class disappear.
     const reportIdByStudent = new Map(saved.map((s) => [s.student_id, s.id]));
     const subjectRows = positioned.flatMap((r) =>
-      r.subjects.map((s: SubjectComponents) => ({
-        school_id: ctx.schoolId,
-        report_id: reportIdByStudent.get(r.student_id)!,
-        student_id: r.student_id,
-        subject_name: s.subject_name,
-        class_score: s.class_score,
-        exam_score: s.exam_score,
-        total: s.total,
-        position: subjectPosition.get(`${r.student_id}:${s.subject_name}`) ?? null,
-        remark: s.total === null ? null : (scoreToGrade(s.total, 100, bands)?.remark ?? null),
-      })),
+      r.subjects.map((s: SubjectComponents) => {
+        const band = s.total === null ? null : scoreToGrade(s.total, 100, bands);
+        const spread = subjectSpread.get(s.subject_name);
+        return {
+          school_id: ctx.schoolId,
+          report_id: reportIdByStudent.get(r.student_id)!,
+          student_id: r.student_id,
+          subject_name: s.subject_name,
+          short_code: s.short_code,
+          class_score: s.class_score,
+          exam_score: s.exam_score,
+          total: s.total,
+          class_average: spread?.average ?? null,
+          class_lowest: spread?.lowest ?? null,
+          class_highest: spread?.highest ?? null,
+          grade: band?.grade ?? null,
+          position: subjectPosition.get(`${r.student_id}:${s.subject_name}`) ?? null,
+          remark: band?.remark ?? null,
+        };
+      }),
     );
     assertOk(
       await ctx.db
@@ -219,6 +316,58 @@ export async function generateReports(
       skipped: rows.filter((r) => r.average_score === null).length,
     };
   });
+}
+
+/**
+ * The card's second position line — where the child stands among everyone at their level, not just
+ * in their class ("Position in J.H.S. 2: 1/16" on the school's template).
+ *
+ * The cohort is the class being generated (whose averages are still in memory, not yet written)
+ * plus every OTHER class at the same level that already has stored reports for this term. Sister
+ * classes contribute their stored averages rather than being recomputed: those are the figures
+ * their own cards were printed from, and ranking against anything else would put two children in
+ * the same position.
+ */
+async function rankAcrossLevel(
+  svc: ReturnType<typeof createServiceClient>,
+  args: {
+    schoolId: string;
+    classId: string;
+    level: string | null;
+    termId: string;
+    cohort: readonly { student_id: string; average_score: number | null }[];
+  },
+): Promise<{ positionByStudent: Map<string, number | null>; size: number }> {
+  const empty = { positionByStudent: new Map<string, number | null>(), size: args.cohort.length };
+  if (!args.level) return empty;
+
+  // Read the sibling classes' stored reports with the service role: under a class teacher's own RLS
+  // (tr_teacher_read) only their OWN class's reports are visible, which would silently size the level
+  // rank against a single class ("1/16" when the level holds 48). Scoped to this school and level.
+  const { data: siblings, error } = await svc
+    .from("terminal_reports")
+    .select("student_id, average_score, classes!inner(level)")
+    .eq("school_id", args.schoolId)
+    .eq("term_id", args.termId)
+    .eq("classes.level", args.level)
+    .neq("class_id", args.classId);
+  // A level rank is a nicety on the card, not the record itself — a failed read leaves it blank
+  // rather than aborting a generation the school is waiting on.
+  if (error) return empty;
+
+  const cohort = [
+    ...args.cohort,
+    ...(siblings ?? []).map((s) => ({
+      student_id: s.student_id,
+      average_score: s.average_score === null ? null : Number(s.average_score),
+    })),
+  ];
+  const ranked = assignPositions(cohort);
+  return {
+    positionByStudent: new Map(ranked.map((r) => [r.student_id, r.position])),
+    // Sized by the whole level, so "3/48" reads against the cohort the rank was taken over.
+    size: cohort.length,
+  };
 }
 
 /**

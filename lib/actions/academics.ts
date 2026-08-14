@@ -204,6 +204,18 @@ export async function setActiveYear(input: { id: string }): Promise<ActionResult
         .single(),
       "academic year",
     );
+    // Keep the school's cached active-year pointer in step. activeContext() (which stamps the year on
+    // every fee, payment and attendance write) and getActivePeriod() read schools.active_academic_year_id,
+    // NOT academic_years.is_active — so without this, switching the year here left every subsequent write
+    // recorded against the OLD year until a reseed. The active term now belongs to a different year, so
+    // clear it; the admin picks the new year's term next.
+    assertOk(
+      await ctx.db
+        .from("schools")
+        .update({ active_academic_year_id: id, active_term_id: null })
+        .eq("id", ctx.schoolId),
+      "school",
+    );
     return { id: row.id };
   });
 }
@@ -218,6 +230,12 @@ export async function setActiveTerm(input: { id: string }): Promise<ActionResult
     const row = assertWrite(
       await ctx.db.from("terms").update({ is_active: true }).eq("id", id).select("id").single(),
       "term",
+    );
+    // Sync the school's cached active-term pointer, for the same reason as the year above: activeContext()
+    // stamps schools.active_term_id (not terms.is_active) onto attendance and other term-scoped writes.
+    assertOk(
+      await ctx.db.from("schools").update({ active_term_id: id }).eq("id", ctx.schoolId),
+      "school",
     );
     return { id: row.id };
   });

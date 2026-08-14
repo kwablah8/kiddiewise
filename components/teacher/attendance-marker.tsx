@@ -156,6 +156,7 @@ export function AttendanceMarker({ teacherId }: { teacherId: string }) {
                 <StatusControl
                   value={statusOf(e.student_id, e.status)}
                   onChange={(s) => setStatus(e.student_id, s)}
+                  label={`${e.first_name} ${e.last_name}`}
                 />
               </li>
             ))}

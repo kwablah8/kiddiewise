@@ -4,6 +4,27 @@ import { z } from "zod";
 export const feeTerm = z.enum(["full_year", "first", "second", "third"]);
 export type FeeTerm = z.infer<typeof feeTerm>;
 
+// GHS 10,000,000 — orders of magnitude above any real termly fee, but a hard ceiling that turns a
+// fat-fingered or hostile amount (and Infinity, which `.positive()` alone lets through) into a
+// validation error instead of a corrupt ledger row.
+const MAX_AMOUNT = 10_000_000;
+
+// A money field: a finite, two-decimal (pesewa-precision) number under the ceiling. `min: "nonneg"`
+// allows 0 (late fees, optional charges); the default requires a positive amount. Every fee/payment
+// amount goes through this so no screen can write NaN, Infinity, a negative, a sub-pesewa fraction,
+// or an absurd figure straight past Zod.
+function amount(min: "positive" | "nonneg" = "positive") {
+  return z.coerce
+    .number()
+    .refine((v) => Number.isFinite(v), "Enter a valid amount")
+    .refine((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6, "Use at most two decimal places")
+    .refine((v) => v <= MAX_AMOUNT, "That amount is too large")
+    .refine(
+      (v) => (min === "nonneg" ? v >= 0 : v > 0),
+      min === "nonneg" ? "Can't be negative" : "Enter an amount",
+    );
+}
+
 export const FEE_TERM_LABEL: Record<FeeTerm, string> = {
   full_year: "Full Year",
   first: "First Term",
@@ -76,9 +97,9 @@ export const feeStructureCreateSchema = z.object({
   class_id: z.string().min(1, "Required"),
   academic_year_id: z.string().min(1, "Required"),
   term: feeTerm.default("full_year"),
-  amount: z.coerce.number().positive("Enter an amount"),
+  amount: amount(),
   due_date: z.string().nullable().default(null),
-  late_fee: z.coerce.number().nonnegative().nullable().default(null),
+  late_fee: amount("nonneg").nullable().default(null),
   description: z.string().nullable().default(null),
   is_mandatory: z.boolean().default(true),
 });
@@ -128,6 +149,9 @@ export const studentFeeVM = z.object({
   student_id: z.string(),
   student_name: z.string(),
   class_name: z.string(),
+  // The invoice's scope, carried so the Record Payment dialog can settle THIS invoice rather than
+  // guessing the student's full-year one.
+  fee_term: feeTerm,
   expected: z.number(),
   discount: z.number(),
   scholarship_type: z.string().nullable(),
@@ -140,7 +164,7 @@ export type StudentFeeVM = z.infer<typeof studentFeeVM>;
 
 export const bulkAssignFeesSchema = z.object({
   class_id: z.string().min(1, "Select a class"),
-  amount: z.coerce.number().positive("Enter an amount"),
+  amount: amount(),
   term: feeTerm.default("full_year"),
   due_date: z.string().nullable().default(null),
   scholarship_type: scholarshipType.default("none"),
@@ -188,7 +212,7 @@ export type ExtraFeeAssignmentVM = z.infer<typeof extraFeeAssignmentVM>;
 
 export const extraFeeStructureCreateSchema = z.object({
   name: z.string().min(1, "Required"),
-  amount: z.coerce.number().positive("Enter an amount"),
+  amount: amount(),
   frequency: extraFeeFrequency.default("one_time"),
   description: z.string().nullable().default(null),
 });
@@ -197,7 +221,13 @@ export type ExtraFeeStructureCreateInput = z.infer<typeof extraFeeStructureCreat
 // ---- Record Payment ----
 export const recordPaymentSchema = z.object({
   student_id: z.string().min(1, "Required"),
-  amount: z.coerce.number().positive("Enter an amount"),
+  // Which of the student's invoices this payment settles. A student can hold a full-year invoice AND
+  // per-term invoices at once, so the scope of the row the admin clicked must travel with the payment
+  // — otherwise the action cannot tell them apart. The Class Fees row (StudentFeeVM) already carries
+  // `fee_term`; the action re-resolves the invoice under the caller's RLS from student + active year +
+  // this scope, so nothing here is trusted beyond the enum. Defaults to full_year for older callers.
+  fee_term: feeTerm.default("full_year"),
+  amount: amount(),
   method: paymentMethod.default("cash"),
   reference: z.string().nullable().default(null),
   paid_at: z.string().min(1, "Required"),

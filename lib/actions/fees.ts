@@ -11,6 +11,7 @@ import {
   assignIndividualFeeSchema,
   extraFeeStructureCreateSchema,
   recordPaymentSchema,
+  FEE_TERM_LABEL,
   type FeeStructureCreateInput,
   type FeeStructureUpdateInput,
   type FeeStructureDeleteInput,
@@ -190,8 +191,11 @@ export async function deleteFeeStructure(
   });
 }
 
-/** Raise an invoice for every actively-enrolled student in a class. */
-export async function bulkAssignFees(input: BulkAssignFeesInput): Promise<ActionResult<{ count: number }>> {
+/** Raise an invoice for every actively-enrolled student in a class (skipping those with an existing
+ *  scholarship, whose individualized invoice must not be overwritten). */
+export async function bulkAssignFees(
+  input: BulkAssignFeesInput,
+): Promise<ActionResult<{ count: number; skipped: number }>> {
   return attempt(async () => {
     const data = bulkAssignFeesSchema.parse(input);
     const ctx = await tenant();
@@ -209,9 +213,33 @@ export async function bulkAssignFees(input: BulkAssignFeesInput): Promise<Action
       .eq("status", "active");
 
     const students = enrolled ?? [];
-    if (students.length === 0) return { count: 0 };
+    if (students.length === 0) return { count: 0, skipped: 0 };
 
+    // A class-wide assignment upserts on (student, year, fee_term), so it OVERWRITES any invoice a
+    // student already has for that scope. For students carrying an individually-granted award
+    // (scholarship_type != 'none'), that would silently wipe the bursary and reset their discount to
+    // the class default — a real money-loss with no trace. Leave those invoices untouched; the admin
+    // set them deliberately and can still adjust one from the Class Fees row. Everyone else is
+    // created or corrected as before.
+    const { data: existing } = await ctx.db
+      .from("invoices")
+      .select("student_id, scholarship_type")
+      .eq("academic_year_id", academicYearId)
+      .eq("fee_term", data.term)
+      .in(
+        "student_id",
+        students.map((s) => s.student_id),
+      );
+
+    const protectedStudents = new Set(
+      (existing ?? [])
+        .filter((i) => i.scholarship_type && i.scholarship_type !== "none")
+        .map((i) => i.student_id),
+    );
+
+    let count = 0;
     for (const s of students) {
+      if (protectedStudents.has(s.student_id)) continue;
       await upsertInvoice(ctx, {
         studentId: s.student_id,
         academicYearId,
@@ -222,9 +250,10 @@ export async function bulkAssignFees(input: BulkAssignFeesInput): Promise<Action
         scholarship: data.scholarship_type,
         dueDate: data.due_date,
       });
+      count += 1;
     }
 
-    return { count: students.length };
+    return { count, skipped: protectedStudents.size };
   });
 }
 
@@ -273,10 +302,15 @@ export async function recordPayment(input: RecordPaymentInput): Promise<ActionRe
       throw new UserFacingError("Set an active academic year before recording payments.");
     }
 
-    const invoiceId = await findInvoice(ctx, data.student_id, academicYearId, "full_year");
+    // Settle the invoice whose scope the admin clicked, not always the full-year one — a student may
+    // hold both a full-year and per-term invoices, and hardcoding full_year here either rejected a
+    // legitimate term payment ("no fees assigned") or credited it to the wrong invoice.
+    const invoiceId = await findInvoice(ctx, data.student_id, academicYearId, data.fee_term);
     if (!invoiceId) {
+      const scope =
+        data.fee_term === "full_year" ? "the active year" : FEE_TERM_LABEL[data.fee_term].toLowerCase();
       throw new UserFacingError(
-        "This student has no fees assigned for the active year yet. Assign fees before recording a payment.",
+        `This student has no ${scope} fees assigned yet. Assign fees before recording a payment.`,
       );
     }
 

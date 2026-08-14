@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+// Bounded free text: trims, and caps DB-unbounded text columns so an authenticated user cannot
+// store multi-megabyte blobs. Nullable, since every field on this transcribed paper form is optional.
+const note = (max = 2000) => z.string().trim().max(max, `Keep this under ${max} characters`).nullable();
+
 /**
  * The pupil's daily report (SNAB "Child's Daily Report" form, migration 0026).
  *
@@ -58,7 +62,7 @@ export const toiletingEntry = z.object({
   time: z.string(),
   wet: z.boolean(),
   dry: z.boolean(),
-  description: z.string(),
+  description: z.string().trim().max(500, "Keep this under 500 characters"),
 });
 export type ToiletingEntry = z.infer<typeof toiletingEntry>;
 
@@ -69,17 +73,17 @@ export const parentDailyReportSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
   slept: dailySleep.nullable(),
   seems: dailyChildMood.nullable(),
-  comments: z.string().nullable(),
+  comments: note(),
   ate_before_school: z.boolean().nullable(),
   feeding_time: z.string().nullable(),
-  food: z.string().nullable(),
+  food: note(),
   portion: z.string().nullable(),
   had_medication: z.boolean().nullable(),
-  medication_details: z.string().nullable(),
-  medication_reason: z.string().nullable(),
-  special_requests: z.string().nullable(),
-  pickup_info: z.string().nullable(),
-  parent_comments: z.string().nullable(),
+  medication_details: note(),
+  medication_reason: note(),
+  special_requests: note(),
+  pickup_info: note(),
+  parent_comments: note(),
 });
 export type ParentDailyReportInput = z.infer<typeof parentDailyReportSchema>;
 
@@ -94,10 +98,10 @@ export const teacherDailyReportSchema = z.object({
   breakfast: dailyPortion.nullable(),
   lunch: dailyPortion.nullable(),
   snack: dailyPortion.nullable(),
-  medication_given: z.string().nullable(),
+  medication_given: note(),
   mood_lessons: dailyLessonMood.nullable(),
   mood_play: dailyPlayMood.nullable(),
-  teacher_comments: z.string().nullable(),
+  teacher_comments: note(),
 });
 export type TeacherDailyReportInput = z.infer<typeof teacherDailyReportSchema>;
 

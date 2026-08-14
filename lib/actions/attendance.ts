@@ -23,10 +23,30 @@ export async function saveAttendance(
   return attempt(async () => {
     const { class_id, date, entries } = saveAttendanceSchema.parse(input);
     const ctx = await tenant();
-    const { termId } = await activeContext(ctx);
+    const { academicYearId, termId } = await activeContext(ctx);
 
     if (!termId) {
       throw new UserFacingError("Set an active term before taking attendance.");
+    }
+
+    // RLS (att_teacher_write / teacher_teaches_class) proves the caller owns the CLASS, but not that
+    // the student_ids in the payload actually belong to it. Without this check a teacher could send
+    // another class's student_id and — because the register is upserted on (student_id, date) — silently
+    // OVERWRITE that student's real register for the day, attributed to a class they aren't in. Confirm
+    // every entry is an active enrolment of this class (in the active year) before writing.
+    const studentIds = entries.map((e) => e.student_id);
+    let roster = ctx.db
+      .from("enrollments")
+      .select("student_id")
+      .eq("class_id", class_id)
+      .eq("status", "active")
+      .in("student_id", studentIds);
+    if (academicYearId) roster = roster.eq("academic_year_id", academicYearId);
+    const { data: enrolled, error: rosterError } = await roster;
+    if (rosterError) throw new Error(`Could not verify the class roster: ${rosterError.message}`);
+    const allowed = new Set((enrolled ?? []).map((e) => e.student_id));
+    if (studentIds.some((id) => !allowed.has(id))) {
+      throw new UserFacingError("Some of those students aren't in this class.");
     }
 
     const rows = entries.map((e) => ({

@@ -29,7 +29,7 @@ export async function saveResults(
     // server-side, which means it holds even for a request that never went through the form.
     const { data: assessment, error } = await ctx.db
       .from("assessments")
-      .select("max_score, title, classes(name)")
+      .select("max_score, title, class_id, terms(academic_year_id), classes(name)")
       .eq("id", assessment_id)
       .maybeSingle();
 
@@ -52,6 +52,25 @@ export async function saveResults(
 
     if (marked.length === 0) {
       return { saved: 0, skipped, submitted: false };
+    }
+
+    // RLS proves the caller teaches this assessment's class+subject, but not that the students being
+    // marked are actually IN that class. Confirm each is an active enrolment of the assessment's class
+    // (for the assessment's year) so a mark cannot be planted on a student who does not sit it.
+    const studentIds = marked.map((e) => e.student_id);
+    let roster = ctx.db
+      .from("enrollments")
+      .select("student_id")
+      .eq("class_id", assessment.class_id)
+      .eq("status", "active")
+      .in("student_id", studentIds);
+    const yearId = assessment.terms?.academic_year_id;
+    if (yearId) roster = roster.eq("academic_year_id", yearId);
+    const { data: enrolled, error: rosterError } = await roster;
+    if (rosterError) throw new Error(`Could not verify the class roster: ${rosterError.message}`);
+    const allowed = new Set((enrolled ?? []).map((e) => e.student_id));
+    if (studentIds.some((id) => !allowed.has(id))) {
+      throw new UserFacingError("Some of those students aren't in this class.");
     }
 
     const now = new Date().toISOString();

@@ -35,8 +35,8 @@ export const announcementVM = z.object({
 export type AnnouncementVM = z.infer<typeof announcementVM>;
 
 export const announcementCreateSchema = z.object({
-  title: z.string().min(1, "Give the announcement a title"),
-  body: z.string().min(1, "Write what you want people to read"),
+  title: z.string().trim().min(1, "Give the announcement a title").max(200, "Keep the title under 200 characters"),
+  body: z.string().trim().min(1, "Write what you want people to read").max(10000, "That's longer than an announcement should be"),
   audience: announcementAudience.default("everyone"),
   /** Saving unpublished keeps it a draft — nobody outside the office can see it. */
   is_published: z.boolean().default(false),
@@ -60,11 +60,11 @@ export type EventVM = z.infer<typeof eventVM>;
 
 export const eventCreateSchema = z
   .object({
-    title: z.string().min(1, "Give the event a name"),
-    description: z.string().nullable().default(null),
+    title: z.string().trim().min(1, "Give the event a name").max(200, "Keep the name under 200 characters"),
+    description: z.string().trim().max(5000, "That description is too long").nullable().default(null),
     start_at: z.string().min(1, "Choose when it starts"),
     end_at: z.string().nullable().default(null),
-    location: z.string().nullable().default(null),
+    location: z.string().trim().max(200, "Keep the location under 200 characters").nullable().default(null),
   })
   .refine((e) => !e.end_at || e.end_at >= e.start_at, {
     message: "The end has to be after the start",

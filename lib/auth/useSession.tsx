@@ -1,6 +1,15 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAppRouter } from "@/lib/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/types";
@@ -35,8 +44,11 @@ interface FetchedProfile {
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const router = useAppRouter();
+  const queryClient = useQueryClient();
   const [userId, setUserId] = useState<UserId>(undefined);
   const [fetched, setFetched] = useState<FetchedProfile | null>(null);
+  // The identity the cached React Query data belongs to, so a change of account can drop it.
+  const cacheOwnerRef = useRef<UserId>(undefined);
 
   useEffect(() => {
     const supabase = createClient();
@@ -45,10 +57,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user?.id ?? null);
+      const nextId = session?.user?.id ?? null;
+
+      // React Query keys are not per-user, and its cache outlives a sign-out (the QueryClient is
+      // created once in app/providers.tsx). On a shared front-desk machine that means the next person
+      // to sign in would briefly see the previous user's children, results and fees rendered from
+      // stale cache. Drop every cached query whenever the signed-in identity actually changes —
+      // sign-out (-> null) and account switch (one id -> another) alike. clear() is synchronous, so
+      // this stays safe inside the auth callback (which must not await). The first INITIAL_SESSION
+      // (undefined -> id|null) seeds the owner without clearing an already-empty cache.
+      const owner = cacheOwnerRef.current;
+      if (owner !== undefined && owner !== nextId) {
+        queryClient.clear();
+      }
+      cacheOwnerRef.current = nextId;
+
+      setUserId(nextId);
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [queryClient]);
 
   // Only the signed-IN case needs an effect. The signed-out case is derived below instead of being
   // written to state, which keeps this effect free of a synchronous setState.
@@ -56,14 +83,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (typeof userId !== "string") return;
 
     let active = true;
-    createClient()
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single()
-      .then(({ data }) => {
-        if (active) setFetched({ forUserId: userId, profile: data ?? null });
-      });
+    (async () => {
+      const supabase = createClient();
+      // Retry a failed profile read before giving up. Previously ANY error here (a dropped request on
+      // a flaky Ghanaian school connection, a momentary Supabase blip) resolved to `data: null`, which
+      // the guard reads as "no profile" and bounces a legitimately-signed-in user to /login mid-task.
+      // Only a SUCCESSFUL read with no row is a real "not provisioned"; a transient failure keeps the
+      // last known state so the session survives the blip and the next event retries.
+      for (let attempt = 0; attempt < 3 && active; attempt++) {
+        const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+        if (!active) return;
+        if (!error) {
+          setFetched({ forUserId: userId, profile: data ?? null });
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
+      }
+      // Every attempt failed: keep any state we already had for this user rather than forcing a logout.
+      if (active) setFetched((prev) => prev ?? { forUserId: userId, profile: null });
+    })();
 
     return () => {
       active = false;
@@ -72,8 +110,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await createClient().auth.signOut();
+    // Eagerly here too, not only via the auth listener: drop the outgoing user's cached data before
+    // the /login navigation so none of it can flash on the way out.
+    queryClient.clear();
     router.push("/login");
-  }, [router]);
+  }, [router, queryClient]);
 
   // An auth user with no profile row can't be scoped to a school or a role, so there is nothing
   // safe to render — it stays null and the guard sends them to /login.

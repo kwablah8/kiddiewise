@@ -7,13 +7,18 @@ export type InquiryStatus = z.infer<typeof inquiryStatus>;
 // Write input for the marketing Admissions/Contact forms (03-DATABASE §8 `admissions_inquiries`,
 // 05-USER-FLOWS §10). Mirrors the table's writable columns; `id`/`school_id`/`status`/
 // `created_at` are assigned server-side, not collected from the visitor.
+// This is the ONE write an unauthenticated visitor can make (inq_anon_insert), so every field is
+// length-capped: without a ceiling, anyone on the internet could POST multi-megabyte strings straight
+// into the table — storage abuse and a denial-of-service on the admin's admissions inbox. Names and
+// class are short; the free-text message is generous but bounded. `.trim()` keeps whitespace-only
+// values from passing `.min(1)`.
 export const inquiryCreateSchema = z.object({
-  applicant_name: z.string().min(1, "Required"),
-  parent_name: z.string().min(1, "Required"),
-  parent_email: z.string().email("Enter a valid email"),
-  parent_phone: z.string().nullable(),
-  desired_class: z.string().nullable(),
-  message: z.string().nullable(),
+  applicant_name: z.string().trim().min(1, "Required").max(120, "Keep this under 120 characters"),
+  parent_name: z.string().trim().min(1, "Required").max(120, "Keep this under 120 characters"),
+  parent_email: z.string().trim().email("Enter a valid email").max(200, "That email is too long"),
+  parent_phone: z.string().trim().max(40, "That phone number is too long").nullable(),
+  desired_class: z.string().trim().max(80, "Keep this under 80 characters").nullable(),
+  message: z.string().trim().max(2000, "Keep your message under 2000 characters").nullable(),
 });
 export type InquiryCreateInput = z.infer<typeof inquiryCreateSchema>;
 

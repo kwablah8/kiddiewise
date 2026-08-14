@@ -18,12 +18,19 @@ const activeClass: Record<AttendanceStatus, string> = {
 export function StatusControl({
   value,
   onChange,
+  label,
 }: {
   value: AttendanceStatus | null;
   onChange: (status: AttendanceStatus) => void;
+  /** Names the toggle group so a screen reader says whose attendance it is, not just "group". */
+  label?: string;
 }) {
   return (
-    <div className="inline-flex rounded-lg border border-[var(--border)] p-0.5" role="group">
+    <div
+      className="inline-flex rounded-lg border border-[var(--border)] p-0.5"
+      role="group"
+      aria-label={label ? `Attendance for ${label}` : "Attendance status"}
+    >
       {OPTIONS.map((o) => (
         <button
           key={o.value}

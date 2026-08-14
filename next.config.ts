@@ -13,6 +13,31 @@ import type { NextConfig } from "next";
  */
 const sanityProjectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 
+/**
+ * Baseline security headers, applied to every route.
+ *
+ * Deliberately NOT a Content-Security-Policy yet: a strict CSP has to be reconciled with Next's inline
+ * runtime, the Supabase SDK, and especially the embedded Sanity Studio at /studio (which loads workers
+ * and eval), and getting it wrong ships a blank page. That is its own focused task. What is here are
+ * the headers that carry real protection with no such risk:
+ *  - HSTS pins HTTPS once seen (ignored by browsers over plain http, so it is inert in local dev).
+ *  - X-Frame-Options + frame-ancestors keep the portal out of an attacker's <iframe> (clickjacking).
+ *  - nosniff stops content-type guessing; Referrer-Policy stops leaking full portal URLs off-site.
+ *  - Permissions-Policy denies powerful features the app never uses.
+ */
+const securityHeaders = [
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "X-DNS-Prefetch-Control", value: "on" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+  },
+];
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: sanityProjectId
@@ -24,6 +49,9 @@ const nextConfig: NextConfig = {
           },
         ]
       : [],
+  },
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
   },
 };
 

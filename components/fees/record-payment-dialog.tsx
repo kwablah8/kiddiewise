@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { useRecordPayment } from "@/lib/queries/fees";
 import {
+  FEE_TERM_LABEL,
   PAYMENT_METHOD_LABEL,
   recordPaymentSchema,
   type PaymentMethod,
@@ -59,11 +60,13 @@ export function RecordPaymentDialog({
     resolver: zodResolver(recordPaymentSchema),
     defaultValues: {
       student_id: target.student_id,
+      // Settle the invoice whose row was clicked (a student may hold both full-year and term invoices).
+      fee_term: target.fee_term,
       amount: target.balance > 0 ? target.balance : undefined,
       method: "cash",
       reference: null,
       paid_at: today,
-      fee_label: "School fees",
+      fee_label: `${FEE_TERM_LABEL[target.fee_term]} school fees`,
     },
   });
 
@@ -101,7 +104,8 @@ export function RecordPaymentDialog({
                 <Input
                   id="rp_amount"
                   type="number"
-                  inputMode="numeric"
+                  inputMode="decimal"
+                  step="0.01"
                   placeholder="Enter amount"
                   aria-invalid={!!errors.amount}
                   {...register("amount", { setValueAs: (v) => (v === "" ? undefined : Number(v)) })}

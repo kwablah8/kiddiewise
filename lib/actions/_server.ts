@@ -344,7 +344,7 @@ export async function invitePortalUser(
   // action a cross-tenant invitation machine.
   const { data: target, error } = await ctx.db
     .from("profiles")
-    .select("email, is_active")
+    .select("is_active")
     .eq("id", profileId)
     .maybeSingle();
 
@@ -354,30 +354,47 @@ export async function invitePortalUser(
     throw new UserFacingError("This account is deactivated. Reactivate it before inviting them.");
   }
 
+  // Resolve the recovery address from the AUTH record, never from profiles.email.
+  //
+  // profiles.email is writable by its own owner (0015 grants `update (…, email, …)` to authenticated,
+  // and profiles_self_update lets a user rewrite their own row), and nothing keeps it in step with the
+  // account's real sign-in address. Both delivery paths below look the account up BY EMAIL — so if we
+  // trusted profiles.email, a user who set their profile's email to a victim's sign-in address could
+  // have an admin "resend their portal link" and receive a recovery link minted for the VICTIM's
+  // account. Because the lookup is purely by email it ignores school_id, so the victim could even be in
+  // another tenant. getUserById returns the address only an admin/GoTrue-confirmed flow can change,
+  // which is the identity the invite must target. (profileId is a FK to auth.users(id).)
+  const admin = createServiceClient();
+  const { data: authUser, error: authError } = await admin.auth.admin.getUserById(profileId);
+  const authEmail = authUser?.user?.email;
+  if (authError || !authEmail) {
+    throw new Error(`Could not resolve that account's sign-in email: ${authError?.message ?? "no email on file"}`);
+  }
+
   const redirectTo = passwordSetupUrl();
 
   if (delivery === "link") {
     // generateLink returns the URL WITHOUT sending anything — exactly what "copy and WhatsApp it"
     // needs.
-    const { data, error: linkError } = await createServiceClient().auth.admin.generateLink({
+    const { data, error: linkError } = await admin.auth.admin.generateLink({
       type: "recovery",
-      email: target.email,
+      email: authEmail,
       options: { redirectTo },
     });
     if (linkError || !data.properties?.action_link) {
       throw new Error(`Could not generate an invite link: ${linkError?.message ?? "unknown error"}`);
     }
-    return { link: data.properties.action_link, emailSent: false, email: target.email };
+    return { link: data.properties.action_link, emailSent: false, email: authEmail };
   }
 
   // Sent through the request-scoped anon client, which is the path that actually dispatches mail.
-  const { error: mailError } = await ctx.db.auth.resetPasswordForEmail(target.email, {
+  const { error: mailError } = await ctx.db.auth.resetPasswordForEmail(authEmail, {
     redirectTo,
   });
   if (mailError) {
     throw new Error(`Could not email that invitation: ${mailError.message}`);
   }
-  return { link: null, emailSent: true, email: target.email };
+  return { link: null, emailSent: true, email: authEmail };
 }
 
 /**

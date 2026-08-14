@@ -22,6 +22,14 @@ export function AppShell({ profile, children }: AppShellProps) {
 
   return (
     <div className="min-h-dvh bg-[var(--bg)]">
+      {/* Keyboard users land here first and can jump the whole sidebar in one Tab+Enter. Off-screen
+          until focused, then pinned top-left over everything. */}
+      <a
+        href="#main-content"
+        className="sr-only z-[110] rounded-md bg-[var(--surface)] px-4 py-2 text-sm font-medium text-[var(--text)] shadow-md ring-2 ring-[var(--primary)] focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        Skip to main content
+      </a>
       <Sidebar
         profile={profile}
         collapsed={collapsed}
@@ -63,7 +71,9 @@ export function AppShell({ profile, children }: AppShellProps) {
           <BrandLock tone="dark" compact crestClassName="size-8 rounded-lg" />
         </header>
 
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+        <main id="main-content" className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          {children}
+        </main>
       </div>
     </div>
   );
