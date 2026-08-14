@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import {
   Select,
   SelectContent,
@@ -27,7 +28,7 @@ function activeChildId(pathname: string): string | null {
 /** Top-bar child switcher. Selecting a child drills into their pages. Hidden until there are
  *  children to switch between. `className` is merged into the trigger (e.g. `w-full` on mobile). */
 export function ChildSwitcher({ className }: { className?: string }) {
-  const router = useRouter();
+  const router = useAppRouter();
   const pathname = usePathname();
   const { data } = useParentChildren();
   const children = data ?? [];

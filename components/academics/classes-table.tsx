@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import { School } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { SearchField } from "@/components/data/search-field";
@@ -58,7 +58,7 @@ interface ClassesTableProps {
 
 /** Classes list — name, level, capacity, class teacher, student/subject counts (06-UI §6). */
 export function ClassesTable({ onNewClass }: ClassesTableProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const { data, isLoading, isError, refetch } = useClasses();
   const [query, setQuery] = useState("");
   const rows = (data ?? []).filter((r) =>

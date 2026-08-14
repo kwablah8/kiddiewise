@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import { FileCheck2 } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { StatusPill } from "@/components/data/status-pill";
@@ -20,7 +20,7 @@ import { cardShellClass } from "@/lib/ui";
 const ALL = "__all__";
 
 export function AssessmentsTable() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { data: active } = useActiveContext();
   const { data: terms } = useTerms();
   const { data: classes } = useClasses();

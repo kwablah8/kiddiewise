@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import Link from "next/link";
 import { UserPlus } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
@@ -91,7 +91,7 @@ const columns: DataTableColumn<StudentListItemVM>[] = [
 
 /** Searchable, filterable students list — admission no, name w/ avatar, class, gender, status (06-UI §6). */
 export function StudentsTable() {
-  const router = useRouter();
+  const router = useAppRouter();
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState(ALL);

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import { BookOpen, Loader2, Pencil, Trash2, UserRoundCheck, UserRoundX } from "lucide-react";
 import { toast } from "@/lib/toast";
 import {
@@ -263,7 +263,7 @@ function ConfirmDeleteStaffDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const router = useRouter();
+  const router = useAppRouter();
   const deleteStaff = useDeleteStaff();
   const fullName = `${staff.first_name} ${staff.last_name}`;
 

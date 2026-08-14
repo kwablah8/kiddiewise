@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import { MoreHorizontal, Search } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
@@ -208,7 +208,7 @@ export function InquiriesTable() {
 /** Per-row triage menu. `Convert to student` routes to the prefilled New Student form (Task 5);
  *  all other targets mutate status in place. Click is stopped from bubbling to the row link. */
 function InquiryRowActions({ inquiry }: { inquiry: InquiryVM }) {
-  const router = useRouter();
+  const router = useAppRouter();
   const setStatus = useSetInquiryStatus();
   const actions = inquiryActionsFor(inquiry.status);
 

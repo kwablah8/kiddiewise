@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import { FileCheck2 } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { StatusPill } from "@/components/data/status-pill";
@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/format";
 import { cardShellClass } from "@/lib/ui";
 
 export function TeacherAssessments({ teacherId }: { teacherId: string }) {
-  const router = useRouter();
+  const router = useAppRouter();
   const { data, isLoading, isError, refetch } = useTeacherAssessments(teacherId);
   const isEmpty = !isLoading && !isError && (data?.length ?? 0) === 0;
 

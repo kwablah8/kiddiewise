@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -17,7 +17,7 @@ import { isTempPasswordExpired } from "@/lib/temp-password";
 import { homePathForRole, isPathAllowedForRole } from "@/lib/auth/access";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const router = useAppRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const {

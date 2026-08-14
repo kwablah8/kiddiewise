@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/types";
 
@@ -34,7 +34,7 @@ interface FetchedProfile {
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [userId, setUserId] = useState<UserId>(undefined);
   const [fetched, setFetched] = useState<FetchedProfile | null>(null);
 

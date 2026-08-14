@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ChangeEvent, type ComponentProps } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { Loader2 } from "lucide-react";
@@ -262,7 +262,7 @@ function StudentFormFields({
   onDone,
   variant = "page",
 }: StudentFormFieldsProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const { data: classOptions, isLoading: classesLoading } = useClassOptions();

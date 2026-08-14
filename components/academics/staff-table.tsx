@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useRouter } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import { Users } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { SearchField } from "@/components/data/search-field";
@@ -155,7 +155,7 @@ interface StaffTableProps {
 
 /** Staff list — name w/ initials, staff_no, email, department, classes/subjects, status (06-UI §6). */
 export function StaffTable({ onNewStaff }: StaffTableProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const { data, isLoading, isError, refetch } = useStaff();
   // Only to recognise the caller's own row below. Null while the session loads, which merely means
   // the row shows its buttons for a moment — the server guard is what makes pressing one safe.

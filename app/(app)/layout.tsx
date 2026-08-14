@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useAppRouter } from "@/lib/navigation";
 import { SessionProvider, useSession } from "@/lib/auth/useSession";
 import { AppShell } from "@/components/app/app-shell";
 import { ParentShell } from "@/components/parent/parent-shell";
@@ -31,7 +32,7 @@ function FullPageSkeleton() {
 }
 
 function AppGuard({ children }: { children: ReactNode }) {
-  const router = useRouter();
+  const router = useAppRouter();
   const pathname = usePathname();
   const { profile, isLoading } = useSession();
   const allowed = !!profile && isPathAllowedForRole(profile.role, pathname);
