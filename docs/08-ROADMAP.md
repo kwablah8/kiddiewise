@@ -56,8 +56,9 @@ The operational core; unblocks every other portal.
 
 Exit criteria: an admin can set up and run a school end-to-end (per `docs/05-USER-FLOWS.md §1`).
 
-**Status: 🔄 mostly done.** Outstanding: promotion (no page), announcements/events authoring, school
-settings, report PDF export. See "Remaining work" below.
+**Status: 🔄 mostly done.** Promotion, announcements/events authoring and the report card PDF have all
+since shipped. Outstanding: school settings, and storing the generated report PDF rather than only
+downloading it. See "Remaining work" below.
 
 ---
 
@@ -117,34 +118,35 @@ Grouped by what blocks a usable MVP. Verified against the code, not from memory.
 
 ### Blocking
 
-| Item | State |
-|---|---|
-| **Promotion** (`/promotion`) | Sidebar links to it; **there is no page**. End-of-year rollover writing new `enrollments` for the next year. Has real published reports and head-teacher decisions to work from |
+Nothing. Promotion — the last item here — shipped: `app/(app)/promotion/page.tsx` writes next-year
+`enrollments` from per-class decisions, and `tests/rls/promotion-rollover.test.ts` holds the rule that
+every "current class" read is scoped to the ACTIVE year.
 
 ### Read-only screens missing their write side
 
 | Item | Reads work | Missing |
 |---|---|---|
-| Announcements | Parent portal + admin dashboard render them | No admin UI to create/publish. Table + audience RLS ready |
-| Events | Dashboard "Upcoming Events" works | No admin UI to create |
 | School settings | `getSchool()` + `schools_admin_update` policy exist | No page to edit name, logo, address, contact |
-| Parent fee balance | `pay_parent_read` permits it | No screen |
+| Parent fee balance | `pay_parent_read` permits it | No screen. This is also where a parent would get their own receipt — today only an admin can issue one |
+
+Announcements and events have since gained their write side (`components/communication/*`,
+`lib/actions/communication.ts`), so they are no longer listed.
 
 ### Storage — three buckets to wire (the fourth is superseded)
 
 `avatars` (student/staff photos — the form makes a local preview only), `school-logos`, `reports`
-(`terminal_reports.pdf_url` written nowhere). Best done as one batch: it is one upload helper reused
-three times.
+(`terminal_reports.pdf_url` written nowhere — the card renders and downloads from the browser, but no
+copy is kept). Best done as one batch: it is one upload helper reused three times.
 
 `gallery` is **no longer work.** Gallery photos are Sanity assets; the bucket stays in migration 0012
 as immutable history and should not be wired (`docs/02-ARCHITECTURE.md` §7).
 
 ### Nice-to-have
 
-Students PDF/CSV export (buttons toast "coming soon") · terminal report PDF (needs `reports`) ·
-contact map embed · **social handles — needs BOTH a footer social row and the matching Sanity field, in
-one change**; the dead empty `SOCIAL_LINKS` export was removed rather than replaced by a Studio field
-that would produce nothing visible · Sanity draft/preview mode (Presentation tool).
+Students PDF/CSV export (buttons toast "coming soon") · contact map embed · **social handles — needs
+BOTH a footer social row and the matching Sanity field, in one change**; the dead empty `SOCIAL_LINKS`
+export was removed rather than replaced by a Studio field that would produce nothing visible · Sanity
+draft/preview mode (Presentation tool).
 
 The publish webhook is **built** (`app/api/revalidate-sanity/route.ts`) — a published edit is live on
 the next request. It needs the one-time dashboard setup in `docs/09-DEV-RUNBOOK.md` §6a and only works
