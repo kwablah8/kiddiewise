@@ -60,6 +60,7 @@ export function TerminalReports({ teacherId }: { teacherId?: string }) {
   const selectedClass = classes.find((c) => c.id === classId) ?? null;
   const dialogContext: ReportCardContext = {
     class_name: selectedClass?.name ?? sheet?.class_name ?? "",
+    level_name: selectedClass?.level ?? sheet?.level_name ?? "",
     term_name: selectedTerm?.name ?? sheet?.term_name ?? "",
     year_name:
       (years ?? []).find((y) => y.id === selectedTerm?.academic_year_id)?.name ?? null,

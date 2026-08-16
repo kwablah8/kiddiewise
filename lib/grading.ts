@@ -17,16 +17,23 @@ export function performanceBand(score: number | null): { label: string; tone: Pe
 }
 
 // Map a raw score (out of maxScore) to a grade+remark using the school's percentage-based bands.
-// Percentage is rounded to the nearest integer so contiguous integer bands (70–79, 80–100) have
-// no fractional gap. Returns null if maxScore is non-positive or no band matches.
+//
+// The EXACT percentage is tried first, then the rounded one. Both passes are needed because the two
+// ways schools write a scale need opposite treatment:
+//   - fractional bands (0–34.9, 35–39.9, … 90–100): 89.9% is a grade 2, and rounding it to 90 would
+//     promote a child into the top band they missed;
+//   - contiguous integer bands (70–79, 80–100): 79.5% matches nothing at all, and rounding is what
+//     closes the gap the school left between the two.
+// Returns null if maxScore is non-positive or neither pass finds a band.
 export function scoreToGrade(
   score: number,
   maxScore: number,
   bands: GradeBandVM[],
 ): { grade: string; remark: string } | null {
   if (maxScore <= 0) return null;
-  const pct = Math.round((score / maxScore) * 100);
-  const band = bands.find((b) => pct >= b.min_score && pct <= b.max_score);
+  const pct = (score / maxScore) * 100;
+  const match = (p: number) => bands.find((b) => p >= b.min_score && p <= b.max_score);
+  const band = match(pct) ?? match(Math.round(pct));
   return band ? { grade: band.grade, remark: band.remark } : null;
 }
 

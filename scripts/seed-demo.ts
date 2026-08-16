@@ -22,7 +22,14 @@ config({ path: ENV_FILE });
 
 import { createClient } from "@supabase/supabase-js";
 import type { Database, TablesInsert } from "../lib/supabase/types";
-import { assignPositions } from "../lib/terminal-reports";
+import {
+  assignPositions,
+  computeSubjectComponents,
+  countPasses,
+  round1,
+  spreadStats,
+} from "../lib/terminal-reports";
+import { scoreToGrade } from "../lib/grading";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -112,6 +119,20 @@ async function insert<T extends keyof Database["public"]["Tables"]>(
   }
 }
 
+/** Insert and hand back the generated ids — needed when a child table references the new rows. */
+async function insertReturning<T extends keyof Database["public"]["Tables"]>(
+  table: T,
+  rows: TablesInsert<T>[],
+): Promise<{ id: string; student_id: string }[]> {
+  if (rows.length === 0) return [];
+  const { data, error } = await db
+    .from(table)
+    .insert(rows as never)
+    .select("id, student_id");
+  if (error) throw new Error(`insert ${String(table)}: ${error.message}`);
+  return (data ?? []) as unknown as { id: string; student_id: string }[];
+}
+
 // ---------------------------------------------------------------------------
 // People definitions
 // ---------------------------------------------------------------------------
@@ -164,16 +185,36 @@ const PARENTS: ParentDef[] = [
   { key: "p8", first: "Akua", last: "Kusi", email: "akua.kusi@example.com", phone: "+233 24 111 2229", occupation: "Pharmacist" },
 ];
 
+// The report card prints `code` in its "Short Code" column, so every subject carries one — the
+// column is three or four characters wide and a blank there looks like missing data.
 const SUBJECTS = [
-  { key: "math", name: "Mathematics", code: "MATH" },
+  { key: "math", name: "Mathematics", code: "MAT" },
   { key: "eng", name: "English Language", code: "ENG" },
   { key: "sci", name: "Integrated Science", code: "SCI" },
   { key: "soc", name: "Social Studies", code: "SOC" },
-  { key: "fre", name: "French", code: null },
+  { key: "fre", name: "French", code: "FRE" },
   { key: "rme", name: "Religious and Moral Education", code: "RME" },
   { key: "ict", name: "Information and Communication Technology", code: "ICT" },
-  { key: "art", name: "Creative Arts", code: null },
+  { key: "art", name: "Creative Arts", code: "CAD" },
 ];
+
+// The nine-point scale on the school's report card, printed verbatim in the card's grading key.
+// The bands are FRACTIONAL (80–89.9, not 80–89) because that is how the paper form writes them —
+// scoreToGrade matches the exact percentage before it falls back to rounding, so 89.9 stays a 2.
+// Hoisted so the seeded report cards are graded against the very scale the seed installs.
+const GRADE_BANDS = [
+  { min_score: 90, max_score: 100, grade: "1", remark: "Highest" },
+  { min_score: 80, max_score: 89.9, grade: "2", remark: "Higher" },
+  { min_score: 70, max_score: 79.9, grade: "3", remark: "High" },
+  { min_score: 60, max_score: 69.9, grade: "4", remark: "High Average" },
+  { min_score: 55, max_score: 59.9, grade: "5", remark: "Average" },
+  { min_score: 50, max_score: 54.9, grade: "6", remark: "Low Average" },
+  { min_score: 40, max_score: 49.9, grade: "7", remark: "Low" },
+  { min_score: 35, max_score: 39.9, grade: "8", remark: "Lower" },
+  { min_score: 0, max_score: 34.9, grade: "9", remark: "Lowest" },
+];
+/** `scoreToGrade` takes the read model, which carries the row id the seed hasn't minted yet. */
+const gradeBandVMs = GRADE_BANDS.map((b, i) => ({ id: String(i), ...b }));
 
 const CLASSES = [
   { key: "b1", name: "Basic 1", level: "Primary", capacity: 30, teacher: "t1" },
@@ -199,7 +240,7 @@ async function wipe(): Promise<void> {
   // script working if a future migration changes a cascade to a restrict.
   const tables = [
     "payments", "invoice_items", "invoices", "extra_fee_assignments", "extra_fee_items",
-    "fee_items", "terminal_reports", "results", "assessments", "attendance",
+    "fee_items", "terminal_report_subjects", "terminal_reports", "results", "assessments", "attendance",
     "student_guardians", "enrollments", "students", "class_subjects", "classes", "subjects",
     "grade_bands", "assessment_types", "activity_log", "announcements", "events",
     "admissions_inquiries",
@@ -251,8 +292,10 @@ async function main(): Promise<void> {
     name: "SNAB Learners International School",
     slug: "slis",
     email: "snab.learner@gmail.com",
-    phone: "+233 30 250 1234",
-    address: "Oyarifa, near the Ghana Flag, Behind Rehoboth Estate, Accra, Ghana",
+    // The flyer's real numbers, and the address as TWO lines — the report card's letterhead prints
+    // each line of `address` on its own row, the way it sits on the school's headed paper.
+    phone: "0256855366 / 0244210139",
+    address: "Oyarifa, near the Ghana Flag\nBehind Rehoboth Estate, Accra",
   });
   if (schoolErr) throw new Error(`schools: ${schoolErr.message}`);
 
@@ -403,14 +446,10 @@ async function main(): Promise<void> {
   await insert("class_subjects", assignments);
 
   // --- grading -----------------------------------------------------------
-  await insert("grade_bands", [
-    { school_id: SCHOOL_ID, min_score: 80, max_score: 100, grade: "A", remark: "Excellent" },
-    { school_id: SCHOOL_ID, min_score: 70, max_score: 79, grade: "B", remark: "Very Good" },
-    { school_id: SCHOOL_ID, min_score: 60, max_score: 69, grade: "C", remark: "Good" },
-    { school_id: SCHOOL_ID, min_score: 50, max_score: 59, grade: "D", remark: "Credit" },
-    { school_id: SCHOOL_ID, min_score: 40, max_score: 49, grade: "E", remark: "Pass" },
-    { school_id: SCHOOL_ID, min_score: 0, max_score: 39, grade: "F", remark: "Fail" },
-  ]);
+  await insert(
+    "grade_bands",
+    GRADE_BANDS.map((b) => ({ school_id: SCHOOL_ID, ...b })),
+  );
 
   const typeIds: Record<string, string> = {};
   for (const t of [
@@ -500,12 +539,21 @@ async function main(): Promise<void> {
 
   // --- assessments + results ---------------------------------------------
   console.log("Creating assessments and results…");
-  const assessmentRows: { id: string; classKey: string }[] = [];
+  const assessmentRows: {
+    id: string;
+    classKey: string;
+    subjectKey: string;
+    isExam: boolean;
+  }[] = [];
   for (const c of CLASSES) {
-    for (const sub of ["math", "eng"] as const) {
+    // All four core subjects, so a generated report card has a full subject table rather than two
+    // marked rows and two blanks. The end-of-term paper is what fills the card's Exam Score column
+    // (assessment_types.is_exam — migration 0028), so without it the split has only one half.
+    for (const sub of ["math", "eng", "sci", "soc"] as const) {
       for (const [title, type, offset] of [
         ["Week 4 Class Test", "Class Test", -40],
         ["Mid-Term Examination", "Mid-Term Exam", -18],
+        ["End-of-Term Examination", "End-of-Term Exam", -4],
       ] as const) {
         const { data, error } = await db.from("assessments").insert({
           school_id: SCHOOL_ID,
@@ -519,16 +567,35 @@ async function main(): Promise<void> {
           created_by: staffId[sub === "math" ? "t1" : c.key === "b1" ? "t1" : "t2"]!,
         }).select("id").single();
         if (error) throw new Error(`assessments: ${error.message}`);
-        assessmentRows.push({ id: data.id, classKey: c.key });
+        assessmentRows.push({
+          id: data.id,
+          classKey: c.key,
+          subjectKey: sub,
+          isExam: type === "End-of-Term Exam",
+        });
       }
     }
   }
 
 
   const results: TablesInsert<"results">[] = [];
+  // Kept alongside the insert so the terminal reports below are computed from the SAME marks the
+  // app would read back, rather than from a second set of invented numbers.
+  const markedScores: {
+    studentId: string;
+    subject: string;
+    score: number;
+    isExam: boolean;
+  }[] = [];
   for (const a of assessmentRows) {
     for (const s of activeStudents.filter((s) => s.classKey === a.classKey)) {
       const score = Math.round(45 + rand() * 50);
+      markedScores.push({
+        studentId: s.id,
+        subject: SUBJECTS.find((sub) => sub.key === a.subjectKey)!.name,
+        score,
+        isExam: a.isExam,
+      });
       results.push({
         school_id: SCHOOL_ID,
         assessment_id: a.id,
@@ -581,31 +648,69 @@ async function main(): Promise<void> {
   // is counted from the rows inserted above, and positions come from `assignPositions` — the same
   // tested helper the app uses. Random averages with no position left the Terminal Reports screen
   // showing a column of dashes on a fresh install, which reads as a bug rather than as seed data.
-  const b1 = activeStudents.filter((s) => s.classKey === "b1");
-  const b1Averages = b1.map((s) => ({
-    student_id: s.id,
-    average_score: Math.round(60 + rand() * 30),
-  }));
-  const b1Ranked = assignPositions(b1Averages);
+  const CA_WEIGHT = 30;
+  const PASS_MARK = 50;
+  await db.from("schools").update({ ca_weight: CA_WEIGHT, pass_mark: PASS_MARK }).eq("id", SCHOOL_ID);
 
-  await insert(
+  const b1Roster = CORE.map((k) => ({
+    name: SUBJECTS.find((s) => s.key === k)!.name,
+    code: SUBJECTS.find((s) => s.key === k)!.code,
+  }));
+  const b1 = activeStudents.filter((s) => s.classKey === "b1");
+
+  // Every card figure comes out of the same pure helpers `generateReports` uses, so the seeded
+  // reports are indistinguishable from ones the app produced — including the class comparison
+  // columns, which only mean anything when they are computed across the WHOLE class at once.
+  const b1Cards = b1.map((s) => {
+    const subjects = computeSubjectComponents(
+      markedScores
+        .filter((m) => m.studentId === s.id)
+        .map((m) => ({ subject: m.subject, score: m.score, max_score: 100, is_exam: m.isExam })),
+      CA_WEIGHT,
+      b1Roster,
+    );
+    const totals = subjects.map((x) => x.total).filter((t): t is number => t !== null);
+    return {
+      student_id: s.id,
+      subjects,
+      total_score: totals.length === 0 ? null : round1(totals.reduce((a, b) => a + b, 0)),
+      average_score:
+        totals.length === 0 ? null : round1(totals.reduce((a, b) => a + b, 0) / totals.length),
+      passes: countPasses(subjects, PASS_MARK),
+    };
+  });
+  const b1Ranked = assignPositions(b1Cards);
+  const b1Spread = spreadStats(b1Cards.map((c) => c.average_score));
+
+  const savedReports = await insertReturning(
     "terminal_reports",
     b1Ranked.map((r): TablesInsert<"terminal_reports"> => {
       const mine = attendance.filter((a) => a.student_id === r.student_id);
-      const avg = r.average_score!;
+      const avg = r.average_score ?? 0;
       return {
         school_id: SCHOOL_ID,
         student_id: r.student_id,
         class_id: classId["b1"]!,
         term_id: TERM_ID,
         academic_year_id: YEAR_ID,
-        average_score: avg,
-        // Four subjects on the report card, so the total is the sum of four subject percentages.
-        total_score: avg * 4,
+        average_score: r.average_score,
+        total_score: r.total_score,
         position: r.position,
+        passes: r.passes,
+        class_average: b1Spread.average,
+        class_lowest_average: b1Spread.lowest,
+        class_highest_average: b1Spread.highest,
+        // Basic 1 is the only Primary class with reports, so its level cohort is itself.
+        level_position: r.position,
+        level_size: b1.length,
+        enrolled_count: b1.length,
         // Late counts as attended, matching attendanceTotals().
         attendance_present: mine.filter((a) => a.status === "present" || a.status === "late").length,
         attendance_total: mine.length,
+        conduct: avg >= 75 ? "Very good" : "Good",
+        attitude: "Respectful and cooperative",
+        interest: pick(["Reading", "Football", "Music", "Drawing"]),
+        promoted_to: "Basic 2",
         class_teacher_comment: avg >= 75
           ? "A consistently strong term. Keep up the excellent work."
           : "Steady progress this term. More attention to homework will help.",
@@ -613,6 +718,54 @@ async function main(): Promise<void> {
         is_published: true,
       };
     }),
+  );
+
+  const reportIdByStudent = new Map(savedReports.map((r) => [r.student_id, r.id]));
+  const subjectSpread = new Map(
+    b1Roster.map((sub) => [
+      sub.name,
+      spreadStats(
+        b1Cards.map((c) => c.subjects.find((x) => x.subject_name === sub.name)?.total ?? null),
+      ),
+    ]),
+  );
+  const subjectPosition = new Map<string, number | null>();
+  for (const sub of b1Roster) {
+    for (const r of assignPositions(
+      b1Cards.map((c) => ({
+        student_id: c.student_id,
+        average_score: c.subjects.find((x) => x.subject_name === sub.name)?.total ?? null,
+      })),
+    )) {
+      subjectPosition.set(`${r.student_id}:${sub.name}`, r.position);
+    }
+  }
+
+  await insert(
+    "terminal_report_subjects",
+    b1Cards.flatMap((c) =>
+      c.subjects.map((s): TablesInsert<"terminal_report_subjects"> => {
+        const band = s.total === null ? null : scoreToGrade(s.total, 100, gradeBandVMs);
+        const spread = subjectSpread.get(s.subject_name);
+        return {
+          school_id: SCHOOL_ID,
+          report_id: reportIdByStudent.get(c.student_id)!,
+          student_id: c.student_id,
+          subject_id: subjectId[CORE.find((k) => SUBJECTS.find((x) => x.key === k)!.name === s.subject_name)!]!,
+          subject_name: s.subject_name,
+          short_code: s.short_code,
+          class_score: s.class_score,
+          exam_score: s.exam_score,
+          total: s.total,
+          class_average: spread?.average ?? null,
+          class_lowest: spread?.lowest ?? null,
+          class_highest: spread?.highest ?? null,
+          grade: band?.grade ?? null,
+          position: subjectPosition.get(`${c.student_id}:${s.subject_name}`) ?? null,
+          remark: band?.remark ?? null,
+        };
+      }),
+    ),
   );
 
   // --- fees ---------------------------------------------------------------

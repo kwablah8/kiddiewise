@@ -1379,6 +1379,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          pass_mark: number
           phone: string | null
           slug: string
         }
@@ -1392,6 +1393,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          pass_mark?: number
           phone?: string | null
           slug: string
         }
@@ -1405,6 +1407,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          pass_mark?: number
           phone?: string | null
           slug?: string
         }
@@ -1617,39 +1620,54 @@ export type Database = {
       }
       terminal_report_subjects: {
         Row: {
+          class_average: number | null
+          class_highest: number | null
+          class_lowest: number | null
           class_score: number | null
           exam_score: number | null
+          grade: string | null
           id: string
           position: number | null
           remark: string | null
           report_id: string
           school_id: string
+          short_code: string | null
           student_id: string
           subject_id: string | null
           subject_name: string
           total: number | null
         }
         Insert: {
+          class_average?: number | null
+          class_highest?: number | null
+          class_lowest?: number | null
           class_score?: number | null
           exam_score?: number | null
+          grade?: string | null
           id?: string
           position?: number | null
           remark?: string | null
           report_id: string
           school_id: string
+          short_code?: string | null
           student_id: string
           subject_id?: string | null
           subject_name: string
           total?: number | null
         }
         Update: {
+          class_average?: number | null
+          class_highest?: number | null
+          class_lowest?: number | null
           class_score?: number | null
           exam_score?: number | null
+          grade?: string | null
           id?: string
           position?: number | null
           remark?: string | null
           report_id?: string
           school_id?: string
+          short_code?: string | null
           student_id?: string
           subject_id?: string | null
           subject_name?: string
@@ -1693,6 +1711,9 @@ export type Database = {
           attendance_total: number
           attitude: string | null
           average_score: number | null
+          class_average: number | null
+          class_highest_average: number | null
+          class_lowest_average: number | null
           class_id: string
           class_teacher_comment: string | null
           conduct: string | null
@@ -1702,6 +1723,9 @@ export type Database = {
           id: string
           interest: string | null
           is_published: boolean
+          level_position: number | null
+          level_size: number | null
+          passes: number | null
           pdf_url: string | null
           position: number | null
           promoted_to: string | null
@@ -1716,6 +1740,9 @@ export type Database = {
           attendance_total?: number
           attitude?: string | null
           average_score?: number | null
+          class_average?: number | null
+          class_highest_average?: number | null
+          class_lowest_average?: number | null
           class_id: string
           class_teacher_comment?: string | null
           conduct?: string | null
@@ -1725,6 +1752,9 @@ export type Database = {
           id?: string
           interest?: string | null
           is_published?: boolean
+          level_position?: number | null
+          level_size?: number | null
+          passes?: number | null
           pdf_url?: string | null
           position?: number | null
           promoted_to?: string | null
@@ -1739,6 +1769,9 @@ export type Database = {
           attendance_total?: number
           attitude?: string | null
           average_score?: number | null
+          class_average?: number | null
+          class_highest_average?: number | null
+          class_lowest_average?: number | null
           class_id?: string
           class_teacher_comment?: string | null
           conduct?: string | null
@@ -1748,6 +1781,9 @@ export type Database = {
           id?: string
           interest?: string | null
           is_published?: boolean
+          level_position?: number | null
+          level_size?: number | null
+          passes?: number | null
           pdf_url?: string | null
           position?: number | null
           promoted_to?: string | null

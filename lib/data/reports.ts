@@ -31,7 +31,7 @@ export async function getReportSheet(
   if (!term) return null;
 
   const [classRes, bandsRes, enrolledRes, reportsRes] = await Promise.all([
-    db().from("classes").select("id, name").eq("id", classId).maybeSingle(),
+    db().from("classes").select("id, name, level").eq("id", classId).maybeSingle(),
     db().from("grade_bands").select("id, min_score, max_score, grade, remark"),
     db()
       .from("enrollments")
@@ -42,13 +42,13 @@ export async function getReportSheet(
     db()
       .from("terminal_reports")
       .select(
-        "id, student_id, total_score, average_score, position, attendance_present, attendance_total, class_teacher_comment, head_teacher_comment, conduct, attitude, interest, promoted_to, enrolled_count, is_published, generated_at, terminal_report_subjects(subject_name, class_score, exam_score, total, position, remark)",
+        "id, student_id, total_score, average_score, position, passes, class_average, class_lowest_average, class_highest_average, level_position, level_size, attendance_present, attendance_total, class_teacher_comment, head_teacher_comment, conduct, attitude, interest, promoted_to, enrolled_count, is_published, generated_at, terminal_report_subjects(subject_name, short_code, class_score, exam_score, total, class_average, class_lowest, class_highest, grade, position, remark)",
       )
       .eq("class_id", classId)
       .eq("term_id", termId),
   ]);
 
-  const klass = unwrapMaybe<{ id: string; name: string }>(classRes, "class");
+  const klass = unwrapMaybe<{ id: string; name: string; level: string }>(classRes, "class");
   if (!klass) return null;
 
   const bands: GradeBandVM[] = unwrapList(bandsRes, "grade bands").map((b) => ({
@@ -68,6 +68,7 @@ export async function getReportSheet(
     return {
       class_id: klass.id,
       class_name: klass.name,
+      level_name: klass.level,
       term_id: term.id,
       term_name: term.name,
       rows: [],
@@ -120,11 +121,21 @@ export async function getReportSheet(
       id: stored?.id ?? null,
       student_id: s.id,
       student_name: `${s.first_name} ${s.last_name}`,
+      student_first_name: s.first_name,
+      student_last_name: s.last_name,
       admission_no: s.admission_no,
       subject_count: live.subject_count,
       // Stored figures win where a report exists — that is the snapshot the school committed to.
       total_score: stored ? numberOrNull(stored.total_score) : live.total_score,
       average_score: stored ? numberOrNull(stored.average_score) : live.average_score,
+      // Frozen figures only — a preview can't show them because they are taken across the class at
+      // generation, and half of them (the level rank) across classes that may not be generated yet.
+      passes: stored?.passes ?? null,
+      class_average: stored ? numberOrNull(stored.class_average) : null,
+      class_lowest_average: stored ? numberOrNull(stored.class_lowest_average) : null,
+      class_highest_average: stored ? numberOrNull(stored.class_highest_average) : null,
+      level_position: stored?.level_position ?? null,
+      level_size: stored?.level_size ?? null,
       attendance_present: stored ? stored.attendance_present : attendance.present,
       attendance_total: stored ? stored.attendance_total : attendance.total,
       class_teacher_comment: stored?.class_teacher_comment ?? null,
@@ -139,9 +150,14 @@ export async function getReportSheet(
       subjects: (stored?.terminal_report_subjects ?? [])
         .map((sub) => ({
           subject_name: sub.subject_name,
+          short_code: sub.short_code,
           class_score: numberOrNull(sub.class_score),
           exam_score: numberOrNull(sub.exam_score),
           total: numberOrNull(sub.total),
+          class_average: numberOrNull(sub.class_average),
+          class_lowest: numberOrNull(sub.class_lowest),
+          class_highest: numberOrNull(sub.class_highest),
+          grade: sub.grade,
           position: sub.position,
           remark: sub.remark,
         }))
@@ -167,6 +183,7 @@ export async function getReportSheet(
   return {
     class_id: klass.id,
     class_name: klass.name,
+    level_name: klass.level,
     term_id: term.id,
     term_name: term.name,
     rows,

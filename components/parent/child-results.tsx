@@ -13,7 +13,9 @@ import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { useChildResults, useChildReport, useChildProfile } from "@/lib/queries/parent";
 import { useSchool } from "@/lib/queries/school";
+import { useGradeBands } from "@/lib/queries/grading";
 import { downloadReportCard } from "@/lib/pdf/report-card";
+import { ReportCardTable, ReportCardSummary } from "@/components/reports/report-card-view";
 import { BRAND } from "@/lib/brand";
 import { performanceBand } from "@/lib/grading";
 import type { ChildProfileVM, ChildResultsVM, TerminalReportVM } from "@/lib/validators/parent";
@@ -113,6 +115,7 @@ function ReportCard({
   profile: ChildProfileVM | null;
 }) {
   const { data: school } = useSchool();
+  const { data: bands } = useGradeBands();
   const [downloading, setDownloading] = useState(false);
   const caWeight = school?.ca_weight ?? 50;
 
@@ -123,23 +126,36 @@ function ReportCard({
         schoolName: school?.name ?? BRAND.fullName,
         schoolAddress: school?.address ?? null,
         schoolEmail: school?.email ?? null,
-        studentName: profile ? `${profile.first_name} ${profile.last_name}` : "Student",
+        schoolPhone: school?.phone ?? null,
+        studentFirstName: profile?.first_name ?? "",
+        studentLastName: profile?.last_name ?? "",
         admissionNo: profile?.admission_no ?? "",
         className: report.class_name ?? profile?.class_name ?? "",
+        levelName: report.level_name,
         yearName: report.year_name,
         termName: report.term_name,
         enrolledCount: report.enrolled_count,
         classTeacherName: report.class_teacher_name,
         position: report.position,
+        levelPosition: report.level_position,
+        levelSize: report.level_size,
+        passes: report.passes,
+        totalScore: report.total_score,
+        averageScore: report.overall_average,
+        classAverage: report.class_average,
+        classLowestAverage: report.class_lowest_average,
+        classHighestAverage: report.class_highest_average,
         reopeningDate: report.reopening_date,
         attendancePresent: report.attendance_present,
         attendanceTotal: report.attendance_total,
         subjects: report.subjects,
+        gradeBands: bands ?? [],
         conduct: report.conduct,
         attitude: report.attitude,
         interest: report.interest,
         promotedTo: report.promoted_to,
         classTeacherRemark: report.class_teacher_remark || null,
+        headTeacherRemark: report.head_teacher_remark || null,
         caWeight,
         logoSrc: school?.logo_url ?? BRAND.crest.src,
       });
@@ -176,60 +192,53 @@ function ReportCard({
 
       {/* Header block — the card's identity lines. */}
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+        <HeaderField label="Student ID" value={profile?.admission_no ?? null} />
         <HeaderField
           label="Name"
-          value={profile ? `${profile.first_name} ${profile.last_name}` : null}
+          value={profile ? `${profile.last_name}, ${profile.first_name}` : null}
         />
         <HeaderField label="Class" value={report.class_name ?? profile?.class_name ?? null} />
-        <HeaderField label="Academic year" value={report.year_name} />
-        <HeaderField label="Term" value={report.term_name} />
         <HeaderField
           label="No. on roll"
           value={report.enrolled_count === null ? null : String(report.enrolled_count)}
         />
+        <HeaderField label="Academic year" value={report.year_name} />
+        <HeaderField label="Term" value={report.term_name} />
         <HeaderField label="Class teacher" value={report.class_teacher_name} />
-        <HeaderField
-          label="Position"
-          value={report.position === null ? null : String(report.position)}
-        />
         <HeaderField
           label="Overall"
           value={
             report.overall_average === null
               ? null
-              : `${report.overall_average}%${report.overall_grade ? ` · ${report.overall_grade}` : ""}`
+              : `${report.overall_average.toFixed(1)}%${report.overall_grade ? ` · ${report.overall_grade}` : ""}`
           }
         />
       </dl>
 
-      {/* The subject table, bordered like the sheet. */}
+      {/* The subject table and the totals under it — the same columns the PDF prints. */}
       {report.subjects.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--border)] bg-[var(--bg)] text-left text-xs text-[var(--muted-foreground)]">
-                <th className="px-3 py-2 font-semibold">Subjects</th>
-                <th className="px-3 py-2 text-right font-semibold">Class {caWeight}%</th>
-                <th className="px-3 py-2 text-right font-semibold">Exams {100 - caWeight}%</th>
-                <th className="px-3 py-2 text-right font-semibold">Total 100%</th>
-                <th className="px-3 py-2 text-right font-semibold">Position</th>
-                <th className="px-3 py-2 font-semibold">Remarks</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report.subjects.map((s) => (
-                <tr key={s.subject_name} className="border-b border-[var(--border)] last:border-0">
-                  <td className="px-3 py-2 font-medium text-[var(--text)]">{s.subject_name}</td>
-                  <td className="px-3 py-2 text-right">{s.class_score ?? "—"}</td>
-                  <td className="px-3 py-2 text-right">{s.exam_score ?? "—"}</td>
-                  <td className="px-3 py-2 text-right font-semibold">{s.total ?? "—"}</td>
-                  <td className="px-3 py-2 text-right">{s.position ?? "—"}</td>
-                  <td className="px-3 py-2 text-[var(--muted-foreground)]">{s.remark ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <ReportCardTable
+            subjects={report.subjects}
+            caWeight={caWeight}
+            enrolledCount={report.enrolled_count}
+          />
+          <ReportCardSummary
+            totals={{
+              passes: report.passes,
+              total_score: report.total_score,
+              average_score: report.overall_average,
+              class_average: report.class_average,
+              class_lowest_average: report.class_lowest_average,
+              class_highest_average: report.class_highest_average,
+              position: report.position,
+              enrolled_count: report.enrolled_count,
+              level_position: report.level_position,
+              level_size: report.level_size,
+            }}
+            levelName={report.level_name}
+          />
+        </>
       )}
 
       {/* Attendance · promotion · the teacher's paragraphs. */}
@@ -242,13 +251,14 @@ function ReportCard({
               : `${report.attendance_present} out of ${report.attendance_total}`
           }
         />
-        <HeaderField label="Promoted to" value={report.promoted_to} />
+        <HeaderField label="Promotion" value={report.promoted_to} />
       </dl>
       <div className="space-y-3">
         <Paragraph label="Conduct" value={report.conduct} />
         <Paragraph label="Attitude" value={report.attitude} />
         <Paragraph label="Interest" value={report.interest} />
         <Paragraph label="Class teacher's remarks" value={report.class_teacher_remark || null} />
+        <Paragraph label="Head teacher's remarks" value={report.head_teacher_remark || null} />
       </div>
 
       {/* After the grades, this is the line a parent came to find — they plan childcare and

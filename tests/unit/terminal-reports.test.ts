@@ -5,6 +5,8 @@ import {
   overallGrade,
   attendanceTotals,
   computeSubjectComponents,
+  countPasses,
+  spreadStats,
   type ComponentResultInput,
 } from "@/lib/terminal-reports";
 import type { GradeBandVM } from "@/lib/validators/grading";
@@ -43,8 +45,15 @@ describe("reportTotals", () => {
     });
   });
 
-  it("rounds the average to a whole percent", () => {
-    expect(reportTotals([subject(70), subject(75)]).average_score).toBe(73); // 72.5 → 73
+  it("keeps one decimal, like the printed card", () => {
+    // The card prints "Total Score 877.7 / Average Score 87.8". Rounding to whole percents here
+    // would make the two lines disagree with the subject totals they are summed from.
+    expect(reportTotals([subject(70), subject(75)]).average_score).toBe(72.5);
+    expect(reportTotals([subject(86.7), subject(73.4), subject(96.5)])).toEqual({
+      total_score: 256.6,
+      average_score: 85.5,
+      subject_count: 3,
+    });
   });
 });
 
@@ -143,7 +152,7 @@ describe("computeSubjectComponents", () => {
     );
     // CA mean = (80 + 60) / 2 = 70% → 35.0 of 50; exam = 60% → 30.0 of 50.
     expect(rows).toEqual([
-      { subject_name: "Maths", class_score: 35, exam_score: 30, total: 65 },
+      { subject_name: "Maths", short_code: null, class_score: 35, exam_score: 30, total: 65 },
     ]);
   });
 
@@ -151,6 +160,7 @@ describe("computeSubjectComponents", () => {
     const caOnly = computeSubjectComponents([r("English", 90, 100, false)], 50);
     expect(caOnly[0]).toEqual({
       subject_name: "English",
+      short_code: null,
       class_score: 45,
       exam_score: null,
       total: 45,
@@ -159,6 +169,7 @@ describe("computeSubjectComponents", () => {
     const examOnly = computeSubjectComponents([r("Science", 40, 50, true)], 50);
     expect(examOnly[0]).toEqual({
       subject_name: "Science",
+      short_code: null,
       class_score: null,
       exam_score: 40,
       total: 40,
@@ -172,6 +183,7 @@ describe("computeSubjectComponents", () => {
     );
     expect(rows[0]).toEqual({
       subject_name: "Maths",
+      short_code: null,
       class_score: 30,
       exam_score: 35,
       total: 65,
@@ -186,10 +198,45 @@ describe("computeSubjectComponents", () => {
     // CA: 33.333…% → 16.7 of 50; exam: 66.666…% → 33.3 of 50.
     expect(rows[0]).toEqual({
       subject_name: "RME",
+      short_code: null,
       class_score: 16.7,
       exam_score: 33.3,
       total: 50,
     });
+  });
+
+  it("lists every subject on the class ROSTER, marked or not, and carries its short code", () => {
+    // The paper card prints an empty line for a subject nobody has been marked in yet. A subject
+    // silently missing from the table reads as "not offered" rather than "not marked".
+    const rows = computeSubjectComponents([r("English Language", 80, 100, false)], 50, [
+      { name: "English Language", code: "ENG" },
+      { name: "Physical Health and Education", code: "PHE" },
+    ]);
+    expect(rows).toEqual([
+      {
+        subject_name: "English Language",
+        short_code: "ENG",
+        class_score: 40,
+        exam_score: null,
+        total: 40,
+      },
+      {
+        subject_name: "Physical Health and Education",
+        short_code: "PHE",
+        class_score: null,
+        exam_score: null,
+        total: null,
+      },
+    ]);
+  });
+
+  it("still reports a mark for a subject the roster does not list", () => {
+    // A mark that exists is a fact about the child, however the timetable was configured.
+    const rows = computeSubjectComponents([r("French", 60, 100, true)], 50, [
+      { name: "Twi", code: "TWI" },
+    ]);
+    expect(rows.map((x) => x.subject_name)).toEqual(["French", "Twi"]);
+    expect(rows.find((x) => x.subject_name === "French")!.exam_score).toBe(30);
   });
 
   it("drops results with no subject or a non-positive max score, sorts by subject", () => {
@@ -208,5 +255,38 @@ describe("computeSubjectComponents", () => {
 
   it("returns nothing for no results", () => {
     expect(computeSubjectComponents([], 50)).toEqual([]);
+  });
+});
+
+describe("spreadStats", () => {
+  it("gives the card's Class Ave. / Low. / High. columns", () => {
+    expect(spreadStats([78.6, 58.2, 91.4])).toEqual({
+      average: 76.1,
+      lowest: 58.2,
+      highest: 91.4,
+    });
+  });
+
+  it("ignores unmarked entries rather than counting them as zero", () => {
+    // Half a class still unmarked must not drag the class average toward zero and make every
+    // marked child look strong by comparison.
+    expect(spreadStats([80, null, 60])).toEqual({ average: 70, lowest: 60, highest: 80 });
+  });
+
+  it("is all-null when nothing is marked", () => {
+    expect(spreadStats([null, null])).toEqual({ average: null, lowest: null, highest: null });
+    expect(spreadStats([])).toEqual({ average: null, lowest: null, highest: null });
+  });
+});
+
+describe("countPasses", () => {
+  const at = (total: number | null) => ({ total });
+
+  it("counts subjects at or above the school's pass mark", () => {
+    expect(countPasses([at(50), at(49.9), at(86.7)], 50)).toBe(2);
+  });
+
+  it("does not count an unmarked subject as a failure", () => {
+    expect(countPasses([at(70), at(null)], 50)).toBe(1);
   });
 });

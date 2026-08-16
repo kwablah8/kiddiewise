@@ -38,8 +38,8 @@ export function reportTotals(subjects: readonly SubjectResultVM[]): ReportTotals
   }
   const total = subjects.reduce((sum, s) => sum + s.score, 0);
   return {
-    total_score: total,
-    average_score: Math.round(total / subjects.length),
+    total_score: round1(total),
+    average_score: round1(total / subjects.length),
     subject_count: subjects.length,
   };
 }
@@ -98,12 +98,21 @@ export interface ComponentResultInput {
 
 export interface SubjectComponents {
   subject_name: string;
+  /** The template's "Short Code" column — CAD, ENG, MAT. Null for a subject with no code set. */
+  short_code: string | null;
   class_score: number | null;
   exam_score: number | null;
   total: number | null;
 }
 
-const round1 = (n: number): number => Math.round(n * 10) / 10;
+/** One line of the class's subject list: what the class is timetabled to be taught. */
+export interface SubjectRosterEntry {
+  name: string;
+  code: string | null;
+}
+
+/** The report card carries one decimal throughout — 877.7, not 878. */
+export const round1 = (n: number): number => Math.round(n * 10) / 10;
 
 /**
  * The GES report-card split: per subject, continuous assessment (every non-exam result) scaled to
@@ -113,12 +122,21 @@ const round1 = (n: number): number => Math.round(n * 10) / 10;
  * A missing component is NULL, never zero — a child whose exam sheet hasn't been marked yet has a
  * blank cell, not half their marks confiscated. The total is whatever components exist, so a
  * CA-only subject tops out at the CA weight, which is exactly what the paper form would show.
+ *
+ * The ROSTER (the class's `class_subjects`) drives which rows exist, not the marks. The school's
+ * template prints an empty line for a subject nobody has been marked in yet — the paper form lists
+ * what the class is taught, and a subject silently missing from a card reads as "not offered"
+ * rather than "not marked". Marks for a subject outside the roster still appear, because a mark
+ * that exists is a fact about the child regardless of how the timetable was configured.
  */
 export function computeSubjectComponents(
   results: readonly ComponentResultInput[],
   caWeight: number,
+  roster: readonly SubjectRosterEntry[] = [],
 ): SubjectComponents[] {
+  const codeByName = new Map(roster.map((s) => [s.name, s.code]));
   const bySubject = new Map<string, { ca: number[]; exam: number[] }>();
+  for (const s of roster) bySubject.set(s.name, { ca: [], exam: [] });
   for (const r of results) {
     if (!r.subject || r.max_score <= 0) continue;
     const bucket = bySubject.get(r.subject) ?? { ca: [], exam: [] };
@@ -139,9 +157,52 @@ export function computeSubjectComponents(
         class_score === null && exam_score === null
           ? null
           : round1((class_score ?? 0) + (exam_score ?? 0));
-      return { subject_name, class_score, exam_score, total };
+      return {
+        subject_name,
+        short_code: codeByName.get(subject_name) ?? null,
+        class_score,
+        exam_score,
+        total,
+      };
     })
     .sort((a, b) => a.subject_name.localeCompare(b.subject_name));
+}
+
+/** The template's "Class Ave. / Class Low. / Class High. Score" columns for one subject. */
+export interface SpreadStats {
+  average: number | null;
+  lowest: number | null;
+  highest: number | null;
+}
+
+/**
+ * The spread of a set of scores — used twice on the card: across one subject's totals (the three
+ * per-row columns) and across the class's overall averages (the summary line).
+ *
+ * Unscored entries are excluded rather than counted as zero, so a class where half the exam sheets
+ * are still unmarked does not report a collapsed average that makes every marked child look strong.
+ */
+export function spreadStats(scores: readonly (number | null)[]): SpreadStats {
+  const marked = scores.filter((s): s is number => s !== null);
+  if (marked.length === 0) return { average: null, lowest: null, highest: null };
+  return {
+    average: round1(marked.reduce((a, b) => a + b, 0) / marked.length),
+    lowest: round1(Math.min(...marked)),
+    highest: round1(Math.max(...marked)),
+  };
+}
+
+/**
+ * "Number Of Passes" — how many of the child's subjects reached the school's pass mark.
+ *
+ * Counted over MARKED subjects only. An unmarked subject is not a failure; counting it as one
+ * would make an incomplete mark sheet look like a struggling child.
+ */
+export function countPasses(
+  subjects: readonly { total: number | null }[],
+  passMark: number,
+): number {
+  return subjects.filter((s) => s.total !== null && s.total >= passMark).length;
 }
 
 /**

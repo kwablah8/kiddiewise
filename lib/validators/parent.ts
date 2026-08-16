@@ -84,9 +84,14 @@ export type ChildResultsVM = z.infer<typeof childResultsVM>;
 /** One frozen subject row of the child's report card, as published by the school. */
 export const childReportSubjectVM = z.object({
   subject_name: z.string(),
+  short_code: z.string().nullable(),
   class_score: z.number().nullable(),
   exam_score: z.number().nullable(),
   total: z.number().nullable(),
+  class_average: z.number().nullable(),
+  class_lowest: z.number().nullable(),
+  class_highest: z.number().nullable(),
+  grade: z.string().nullable(),
   position: z.number().nullable(),
   remark: z.string().nullable(),
 });
@@ -98,15 +103,26 @@ export const terminalReportVM = z.object({
   published: z.boolean(),
   overall_average: z.number().nullable(),
   overall_grade: z.string().nullable(),
+  /** The card's "Total Score" line — the sum of the subject totals, not an average. */
+  total_score: z.number().nullable(),
   class_teacher_remark: z.string(),
+  /** The head's line on the card. Written by the admin, published with the rest of it. */
+  head_teacher_remark: z.string(),
   /** The GES subject table. Empty for reports generated before the subject snapshot existed. */
   subjects: z.array(childReportSubjectVM),
   // Everything else the printed card carries (spec 2026-07-31): the header block, attendance,
   // and the class teacher's per-child paragraphs.
   class_name: z.string().nullable(),
+  level_name: z.string().nullable(),
   class_teacher_name: z.string().nullable(),
   year_name: z.string().nullable(),
   position: z.number().nullable(),
+  passes: z.number().nullable(),
+  class_average: z.number().nullable(),
+  class_lowest_average: z.number().nullable(),
+  class_highest_average: z.number().nullable(),
+  level_position: z.number().nullable(),
+  level_size: z.number().nullable(),
   enrolled_count: z.number().nullable(),
   attendance_present: z.number(),
   attendance_total: z.number(),

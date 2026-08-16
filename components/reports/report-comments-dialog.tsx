@@ -15,7 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useSetReportComments } from "@/lib/queries/reports";
 import { useSchool } from "@/lib/queries/school";
+import { useGradeBands } from "@/lib/queries/grading";
 import { downloadReportCard } from "@/lib/pdf/report-card";
+import { ReportCardTable, ReportCardSummary } from "@/components/reports/report-card-view";
 import { BRAND } from "@/lib/brand";
 import type { TerminalReportRowVM } from "@/lib/validators/reports";
 
@@ -25,6 +27,8 @@ const textareaClass =
 /** What the card prints that lives outside the report row — supplied by the sheet around it. */
 export interface ReportCardContext {
   class_name: string;
+  /** Labels the card's second position line ("Position in JHS"). */
+  level_name: string;
   term_name: string;
   year_name: string | null;
   reopening_date: string | null;
@@ -71,6 +75,8 @@ function Form({
   const [downloading, setDownloading] = useState(false);
   const save = useSetReportComments();
   const { data: school } = useSchool();
+  // The card prints the school's grading key; the same bands the scores were graded against.
+  const { data: bands } = useGradeBands();
   const caWeight = school?.ca_weight ?? 50;
 
   async function onSave() {
@@ -102,23 +108,38 @@ function Form({
         schoolName: school?.name ?? BRAND.fullName,
         schoolAddress: school?.address ?? null,
         schoolEmail: school?.email ?? null,
-        studentName: row.student_name,
+        schoolPhone: school?.phone ?? null,
+        studentFirstName: row.student_first_name,
+        studentLastName: row.student_last_name,
         admissionNo: row.admission_no,
         className: context.class_name,
+        levelName: context.level_name,
         yearName: context.year_name,
         termName: context.term_name,
         enrolledCount: row.enrolled_count,
         classTeacherName: context.class_teacher_name,
         position: row.position,
+        levelPosition: row.level_position,
+        levelSize: row.level_size,
+        passes: row.passes,
+        totalScore: row.total_score,
+        averageScore: row.average_score,
+        classAverage: row.class_average,
+        classLowestAverage: row.class_lowest_average,
+        classHighestAverage: row.class_highest_average,
         reopeningDate: context.reopening_date,
         attendancePresent: row.attendance_present,
         attendanceTotal: row.attendance_total,
         subjects: row.subjects,
+        gradeBands: bands ?? [],
+        // The unsaved edits print, not the last saved ones — a teacher who writes a remark and hits
+        // Download expects the words in front of them on the page.
         conduct: conduct.trim() || null,
         attitude: attitude.trim() || null,
         interest: interest.trim() || null,
         promotedTo: promotedTo.trim() || null,
         classTeacherRemark: classComment.trim() || null,
+        headTeacherRemark: headComment.trim() || null,
         caWeight,
         logoSrc: school?.logo_url ?? BRAND.crest.src,
       });
@@ -149,32 +170,14 @@ function Form({
               No subject rows yet — generate the reports to snapshot this term&apos;s scores.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--border)] text-left text-xs text-[var(--muted-foreground)]">
-                    <th className="py-1.5 pr-2 font-medium">Subject</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Class {caWeight}%</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Exams {100 - caWeight}%</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Total</th>
-                    <th className="px-2 py-1.5 text-right font-medium">Position</th>
-                    <th className="py-1.5 pl-2 font-medium">Remarks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {row.subjects.map((s) => (
-                    <tr key={s.subject_name} className="border-b border-[var(--border)] last:border-0">
-                      <td className="py-1.5 pr-2 font-medium text-[var(--text)]">{s.subject_name}</td>
-                      <td className="px-2 py-1.5 text-right">{s.class_score ?? "—"}</td>
-                      <td className="px-2 py-1.5 text-right">{s.exam_score ?? "—"}</td>
-                      <td className="px-2 py-1.5 text-right font-medium">{s.total ?? "—"}</td>
-                      <td className="px-2 py-1.5 text-right">{s.position ?? "—"}</td>
-                      <td className="py-1.5 pl-2 text-[var(--muted-foreground)]">{s.remark ?? "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <>
+              <ReportCardTable
+                subjects={row.subjects}
+                caWeight={caWeight}
+                enrolledCount={row.enrolled_count}
+              />
+              <ReportCardSummary totals={row} levelName={context.level_name} />
+            </>
           )}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

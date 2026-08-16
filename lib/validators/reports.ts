@@ -6,12 +6,22 @@ import { z } from "zod";
  * The stored figures (total, average, position, attendance) are a snapshot taken when the report is
  * generated. See lib/terminal-reports.ts for why a report is frozen while `results.grade` is not.
  */
-/** One frozen subject row on the GES card: Class Score · Exams Score · Total · Position · Remarks. */
+/**
+ * One frozen subject row, in the column order the school's paper card prints:
+ * Subject · Short Code · Class Score · Exam Score · Total Score · Class Ave./Low./High. ·
+ * Grade · Pos. · Remarks.
+ */
 export const reportSubjectRowVM = z.object({
   subject_name: z.string(),
+  short_code: z.string().nullable(),
   class_score: z.number().nullable(),
   exam_score: z.number().nullable(),
   total: z.number().nullable(),
+  /** How the rest of the class did in this subject — the card's three comparison columns. */
+  class_average: z.number().nullable(),
+  class_lowest: z.number().nullable(),
+  class_highest: z.number().nullable(),
+  grade: z.string().nullable(),
   position: z.number().nullable(),
   remark: z.string().nullable(),
 });
@@ -22,6 +32,10 @@ export const terminalReportRowVM = z.object({
   id: z.string().nullable(),
   student_id: z.string(),
   student_name: z.string(),
+  // Kept apart as well as joined: the printed card reads surname-first ("Mensah, Ama"), which a
+  // pre-joined "Ama Mensah" cannot be split back into once a child has two given names.
+  student_first_name: z.string(),
+  student_last_name: z.string(),
   admission_no: z.string(),
   subject_count: z.number(),
   total_score: z.number().nullable(),
@@ -29,6 +43,15 @@ export const terminalReportRowVM = z.object({
   /** Derived from the average via the school's bands at read time — a label, not a stored value. */
   overall_grade: z.string().nullable(),
   position: z.number().nullable(),
+  /** "Number Of Passes" — subjects at or above the school's pass mark. Null before generation. */
+  passes: z.number().nullable(),
+  // The class-wide figures the card prints beside the child's own, so an average has a scale.
+  class_average: z.number().nullable(),
+  class_lowest_average: z.number().nullable(),
+  class_highest_average: z.number().nullable(),
+  /** "Position in J.H.S. 2" — the same rank across every class sharing this class's level. */
+  level_position: z.number().nullable(),
+  level_size: z.number().nullable(),
   attendance_present: z.number(),
   attendance_total: z.number(),
   class_teacher_comment: z.string().nullable(),
@@ -50,6 +73,8 @@ export type TerminalReportRowVM = z.infer<typeof terminalReportRowVM>;
 export const terminalReportSheetVM = z.object({
   class_id: z.string(),
   class_name: z.string(),
+  /** Labels the card's second position line ("Position in JHS"). */
+  level_name: z.string(),
   term_id: z.string(),
   term_name: z.string(),
   rows: z.array(terminalReportRowVM),

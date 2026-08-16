@@ -105,6 +105,8 @@ The tenant root.
 | address, phone, email | text null | contact |
 | active_academic_year_id | uuid null FK → academic_years | one active year |
 | active_term_id | uuid null FK → terms | one active term |
+| ca_weight | int default 50 | continuous-assessment weight on the report card; the exam weight is always `100 - ca_weight`, so the two can never disagree |
+| pass_mark | int default 50 | what counts on the card's "Number Of Passes" line — the grading scale can't say it, because which band is the lowest PASS is the school's call |
 | created_at | timestamptz | |
 
 ### `profiles`
@@ -329,7 +331,9 @@ bands (A1–F9); keep it configurable per school.
 | id | school_id FK | min_score numeric | max_score numeric | grade text ("A1") | remark text ("Excellent") |
 
 ### `terminal_reports`
-Per-student, per-term aggregate (the report card parents view / admins export).
+Per-student, per-term aggregate — the report card parents view and the school prints. Every figure
+here is a SNAPSHOT taken at generation, unlike `results.grade` which is always derived: a published
+report is the official record of a term and must not change because a mark was edited afterwards.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -339,9 +343,14 @@ Per-student, per-term aggregate (the report card parents view / admins export).
 | class_id | uuid FK | |
 | term_id | uuid FK | |
 | academic_year_id | uuid FK | |
-| total_score, average_score | numeric | |
-| position | int null | rank in class |
+| total_score, average_score | numeric | one decimal, as the card prints them |
+| position | int null | rank in class; printed as `position/enrolled_count` |
+| passes | int null | subjects at or above `schools.pass_mark` |
+| class_average, class_lowest_average, class_highest_average | numeric null | the class's spread, so a parent can place their child's average |
+| level_position, level_size | int null | rank across every class sharing `classes.level` |
+| enrolled_count | int null | "number on roll" when the report was generated |
 | attendance_present, attendance_total | int | summary |
+| conduct, attitude, interest, promoted_to | text null | the class teacher's per-child fields |
 | class_teacher_comment | text null | |
 | head_teacher_comment | text null | |
 | pdf_url | text null | Storage path (`reports` bucket) |
@@ -349,6 +358,23 @@ Per-student, per-term aggregate (the report card parents view / admins export).
 | generated_at | timestamptz | |
 
 Constraint: `unique (student_id, term_id)`.
+
+### `terminal_report_subjects`
+One frozen row per subject on a report card — the twelve-column table the paper form prints.
+Replaced wholesale on regeneration, so a subject dropped from the class disappears from the card.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| school_id, report_id, student_id | uuid FK | `report_id` cascades |
+| subject_id | uuid FK null | |
+| subject_name, short_code | text | snapshot by VALUE — renaming or re-coding a subject must not rewrite an issued card |
+| class_score, exam_score, total | numeric null | the CA/exam split; a missing component is null, never 0 |
+| class_average, class_lowest, class_highest | numeric null | how the rest of the class did in this subject |
+| grade, remark | text null | from the school's `grade_bands` at generation |
+| position | int null | rank in this subject |
+
+Constraint: `unique (report_id, subject_name)`.
 
 ---
 

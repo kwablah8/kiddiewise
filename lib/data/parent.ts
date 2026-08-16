@@ -2,6 +2,7 @@ import { activeYearId, db, unwrapList, unwrapMaybe } from "./_client";
 import { scoreToGrade } from "@/lib/grading";
 import { aggregateSubjectResults, overallAverage } from "@/lib/results";
 import { summarizeAttendance } from "@/lib/parent/attendance";
+import { round1 } from "@/lib/terminal-reports";
 import type {
   ChildProfileVM,
   ChildResultsVM,
@@ -35,11 +36,14 @@ const CHILD_PROFILE_SELECT: string = `
 `;
 
 const CHILD_REPORT_SELECT: string =
-  "id, class_teacher_comment, average_score, position, attendance_present, attendance_total, " +
+  "id, class_teacher_comment, head_teacher_comment, total_score, average_score, position, passes, " +
+  "class_average, class_lowest_average, class_highest_average, level_position, level_size, " +
+  "attendance_present, attendance_total, " +
   "conduct, attitude, interest, promoted_to, enrolled_count, is_published, term_id, " +
   "terms(name, reopening_date, academic_years(name)), " +
-  "classes(name, class_teacher:profiles!classes_class_teacher_id_fkey(first_name, last_name)), " +
-  "terminal_report_subjects(subject_name, class_score, exam_score, total, position, remark)";
+  "classes(name, level, class_teacher:profiles!classes_class_teacher_id_fkey(first_name, last_name)), " +
+  "terminal_report_subjects(subject_name, short_code, class_score, exam_score, total, " +
+  "class_average, class_lowest, class_highest, grade, position, remark)";
 
 interface ChildProfileRow {
   id: string;
@@ -56,8 +60,16 @@ interface ChildProfileRow {
 interface ChildReportRow {
   id: string;
   class_teacher_comment: string | null;
-  average_score: number | null;
+  head_teacher_comment: string | null;
+  total_score: number | string | null;
+  average_score: number | string | null;
   position: number | null;
+  passes: number | null;
+  class_average: number | string | null;
+  class_lowest_average: number | string | null;
+  class_highest_average: number | string | null;
+  level_position: number | null;
+  level_size: number | null;
   attendance_present: number;
   attendance_total: number;
   conduct: string | null;
@@ -74,16 +86,27 @@ interface ChildReportRow {
   } | null;
   classes: {
     name: string;
+    level: string;
     class_teacher: { first_name: string; last_name: string } | null;
   } | null;
   terminal_report_subjects: {
     subject_name: string;
+    short_code: string | null;
     class_score: number | string | null;
     exam_score: number | string | null;
     total: number | string | null;
+    class_average: number | string | null;
+    class_lowest: number | string | null;
+    class_highest: number | string | null;
+    grade: string | null;
     position: number | null;
     remark: string | null;
   }[];
+}
+
+/** PostgREST sends `numeric` as a string; a null stays null. */
+function numericOrNull(v: number | string | null): number | null {
+  return v === null ? null : Number(v);
 }
 
 interface ActiveTermRow {
@@ -344,7 +367,7 @@ export async function getChildReport(
 
   // Prefer the report's stored average — it was computed over the whole term when published, which
   // may include subjects beyond the currently submitted set. Fall back to deriving it.
-  let average = report.average_score === null ? null : Math.round(Number(report.average_score));
+  let average = report.average_score === null ? null : round1(Number(report.average_score));
   if (average === null) {
     const results = await getChildResults(parentId, childId);
     average = overallAverage(results?.subjects ?? []);
@@ -357,13 +380,22 @@ export async function getChildReport(
     published: true,
     overall_average: average,
     overall_grade: average !== null ? (scoreToGrade(average, 100, bands)?.grade ?? null) : null,
+    total_score: numericOrNull(report.total_score),
     class_teacher_remark: report.class_teacher_comment ?? "",
+    head_teacher_remark: report.head_teacher_comment ?? "",
     class_name: report.classes?.name ?? null,
+    level_name: report.classes?.level ?? null,
     class_teacher_name: report.classes?.class_teacher
       ? `${report.classes.class_teacher.first_name} ${report.classes.class_teacher.last_name}`
       : null,
     year_name: report.terms?.academic_years?.name ?? null,
     position: report.position,
+    passes: report.passes,
+    class_average: numericOrNull(report.class_average),
+    class_lowest_average: numericOrNull(report.class_lowest_average),
+    class_highest_average: numericOrNull(report.class_highest_average),
+    level_position: report.level_position,
+    level_size: report.level_size,
     enrolled_count: report.enrolled_count,
     attendance_present: report.attendance_present,
     attendance_total: report.attendance_total,
@@ -375,9 +407,14 @@ export async function getChildReport(
     subjects: (report.terminal_report_subjects ?? [])
       .map((s) => ({
         subject_name: s.subject_name,
-        class_score: s.class_score === null ? null : Number(s.class_score),
-        exam_score: s.exam_score === null ? null : Number(s.exam_score),
-        total: s.total === null ? null : Number(s.total),
+        short_code: s.short_code,
+        class_score: numericOrNull(s.class_score),
+        exam_score: numericOrNull(s.exam_score),
+        total: numericOrNull(s.total),
+        class_average: numericOrNull(s.class_average),
+        class_lowest: numericOrNull(s.class_lowest),
+        class_highest: numericOrNull(s.class_highest),
+        grade: s.grade,
         position: s.position,
         remark: s.remark,
       }))
