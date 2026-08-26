@@ -9,7 +9,7 @@ import { CtaButton } from "@/components/marketing/cta-button";
  * The News section's error boundary.
  *
  * Reaching this is unlikely by construction: `getNewsPosts()` catches its own failures and returns an
- * empty list, which renders the designed empty state instead. What this catches is the rest — a
+ * empty list, which renders the designed empty state instead. What this catches is the rest, a
  * rendering fault in a post's rich text, or a Portable Text block shaped in a way the renderer cannot
  * handle. Without it, the marketing site's default error page would show a visitor a stack trace.
  *

@@ -10,4 +10,4 @@ export type DashboardStats = Fns["dashboard_stats"]["Returns"][number];
 export type EnrollmentTrendPoint = Fns["enrollment_trend"]["Returns"][number];
 export type FeeTrendPoint = Fns["fee_collection_trend"]["Returns"][number];
 export type ClassPerformanceRow = Fns["class_performance"]["Returns"][number];
-// …extend per slice as screens need row types.
+// ...extend per slice as screens need row types.

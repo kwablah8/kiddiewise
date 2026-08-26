@@ -16,7 +16,7 @@ interface StatusPillProps {
 }
 
 /**
- * Status shown as a pill, never color alone (06-UI §11 — the label is always real text).
+ * Status shown as a pill, never color alone (06-UI §11, the label is always real text).
  */
 export function StatusPill({ label, tone = "neutral", className }: StatusPillProps) {
   return (

@@ -52,10 +52,10 @@ export type GuardianVM = z.infer<typeof guardianVM>;
 
 /**
  * Whether the holder has taken ownership of their portal account.
- *  - `active`   — they signed in and replaced the temporary password. The account is theirs.
- *  - `pending`  — temporary credentials issued, not yet used. The admin still knows the password.
- *  - `expired`  — the temporary password lapsed unused; the admin must issue a fresh one.
- *  - `no_access` — no credentials have ever been issued (e.g. invited by link, never completed).
+ *  - `active`; they signed in and replaced the temporary password. The account is theirs.
+ *  - `pending`, temporary credentials issued, not yet used. The admin still knows the password.
+ *  - `expired`, the temporary password lapsed unused; the admin must issue a fresh one.
+ *  - `no_access`, no credentials have ever been issued (e.g. invited by link, never completed).
  */
 export const portalAccessStatus = z.enum(["active", "pending", "expired", "no_access"]);
 export type PortalAccessStatus = z.infer<typeof portalAccessStatus>;
@@ -150,7 +150,7 @@ export type LinkGuardianInput = z.infer<typeof linkGuardianSchema>;
 
 // Academic performance (admin view of a single student): this term's per-subject results (same
 // shape the parent portal reads, subject/score/grade/remark/teacher_comment) plus the published
-// terminal report, if any. Ungated — unlike the parent portal's guardian-scoped equivalent, this
+// terminal report, if any. Ungated, unlike the parent portal's guardian-scoped equivalent; this
 // is the admin's own read of the school's data, so there is no guardian check.
 export const studentAcademicsVM = z.object({
   term_name: z.string(),

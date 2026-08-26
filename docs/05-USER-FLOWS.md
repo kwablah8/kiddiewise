@@ -164,11 +164,16 @@ flowchart TD
     D --> E[Attendance: history + percentage]
     D --> F[Results: submitted scores, grades, comments]
     D --> G[Terminal report: published only]
+    D --> I[Fees: balance, per-term position, extra fees]
+    I --> J[Download a receipt for any recorded payment]
     B --> H[Read targeted announcements + calendar]
 ```
 
 Everything a parent sees is filtered by `student_guardians` — they can never reach a child
-they aren't linked to.
+they aren't linked to. The fees branch is read-only in the database too, not just in the UI: a
+parent holds SELECT on `invoices` / `payments` / `extra_fee_assignments` and nothing else, so they
+cannot invent a payment against their own child's invoice
+(`tests/rls/parent-fees.test.ts` asserts the insert, update and delete all fail).
 
 ---
 

@@ -55,10 +55,10 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  /* Primary accent (headings, primary actions, links, focus). DERIVED from the SLIS brand block
+  /* Primary accent (headings, primary actions, links, focus). derived from the SLIS brand block
      below: a darker tint of the crest royal blue, dark enough that white text clears 7.15:1 and
      still clears AA after shadcn's `hover:bg-primary/80` lightens it. The crest royal itself
-     (#4169E1) is only 4.85:1 with white and fails once that hover applies — which is why primary
+     (#4169E1) is only 4.85:1 with white and fails once that hover applies, which is why primary
      is a tint and not the raw brand hex. */
   --primary: var(--m-brand-strong, #2a4bc8);
   --primary-foreground: #FFFFFF;
@@ -90,7 +90,7 @@
   /* --- School Management design tokens (docs/06-UI-UX-STANDARDS.md §2) --- */
   /* provisional until confirmed against the brand kit. NOTE: --border, --primary,
      --primary-foreground and --muted-foreground are declared once, above, in the shadcn
-     variable set they map onto — redeclaring the same custom property twice in one :root
+     variable set they map onto, redeclaring the same custom property twice in one :root
      causes Tailwind/Lightning CSS's oklch->lab fallback duplication to shadow the second
      (correct) value with the first. --muted intentionally stays shadcn's light bg tint
      (Skeleton/Table/DropdownMenu use `bg-muted`); our doc's "muted text" token lives on
@@ -109,7 +109,7 @@
   --indigo-fg: #4338CA;
   --danger: #DC2626;
   /* Signature brand surface: SLIS deep navy → near-black navy vertical gradient (sidebar, auth
-     panel, 404 illustration). DERIVED from the SLIS brand block below — the hexes live there, once,
+     panel, 404 illustration). derived from the SLIS brand block below, the hexes live there, once,
      so there is never a second definition of "SLIS blue" to drift. The literal fallbacks are
      defensive: if `data-brand` is ever dropped from <html>, these keep rendering a navy surface
      instead of collapsing to an unset (transparent) gradient. */
@@ -159,25 +159,25 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* --- SLIS brand tokens — THE single source of every SLIS hex ---
+/* --- SLIS brand tokens, THE single source of every SLIS hex ---
    Set on `<html>` (app/layout.tsx), so marketing AND the authenticated portal both inherit one
    palette.
 
-   HISTORY — this reverses an earlier decision on purpose. These tokens were originally scoped to
-   the `(marketing)` layout's root div specifically so they could NEVER reach the portal, back when
+   HISTORY, this reverses an earlier decision on purpose. These tokens were originally scoped to
+   the `(marketing)` layout's root div specifically so they could never reach the portal, back when
    the portal was meant to look tenant-neutral (maroon + green). The client asked for this build to
    be tailored to them, so the wall came down: `:root` above now DERIVES --brand-top/--brand-bottom
    /--primary from the tokens here rather than declaring maroon hexes of its own.
 
    Hex values were sampled directly from the resized crest (`public/slis/logo.jpg`): the shield's
-   blue half clusters tightly on #4169E1, the gold half + motto band on #FFD700 — both are, by
+   blue half clusters tightly on #4169E1, the gold half + motto band on #FFD700, both are, by
    coincidence, the exact CSS-named "royalblue"/"gold" hues.
 
    The blue ramp is one family, lightest to darkest:
      --m-brand (#4169E1) → --m-brand-strong (#2A4BC8) → --m-brand-deep (#1D2F65) → --m-brand-ink (#0B1229)
 
    Contrast, measured (not eyeballed): white on --m-brand-strong 7.15:1 · on --m-brand-deep 12.75:1
-   · on --m-brand-ink 18.54:1. Gold on --m-brand-deep 9.09:1 and on --m-brand-ink 13.22:1 — high
+   · on --m-brand-ink 18.54:1. Gold on --m-brand-deep 9.09:1 and on --m-brand-ink 13.22:1, high
    enough that gold is legible as TEXT on the navy sidebar, not merely as decoration.
 
    MIRRORED in `lib/brand.ts` as `BRAND.palette` (deep / strong / accent, plus a `tint` that exists
@@ -186,16 +186,16 @@
    the very split that keeps `renderReceipt` testable without a browser. Change a hex here, change it
    there.
 
-   SEAM: a second school would either override this block's values or swap the attribute value on
-   <html>. True per-tenant branding (school name + logo from the `schools` row and Storage) is still
-   unbuilt — see CLAUDE.md §5. */
+   A second school would either override this block's values or swap the attribute value on
+   <html>. True per-tenant branding, reading the school name and logo from the `schools` row and
+   Storage, is not built yet; see docs/08-ROADMAP.md. */
 [data-brand="slis"] {
   --m-brand: #4169e1; /* royal blue, sampled from the crest shield */
-  --m-brand-strong: #2a4bc8; /* darker royal — --primary; 7.15:1 with white, survives /80 hover */
+  --m-brand-strong: #2a4bc8; /* darker royal, --primary; 7.15:1 with white, survives /80 hover */
   --m-brand-deep: #1d2f65; /* darker blue for gradients/footer bands + sidebar top */
-  --m-brand-ink: #0b1229; /* near-black navy — sidebar/auth-panel gradient bottom */
+  --m-brand-ink: #0b1229; /* near-black navy, sidebar/auth-panel gradient bottom */
   --m-accent: #ffd700; /* gold, sampled from the crest shield + motto band */
-  --m-accent-ink: #142044; /* dark navy text on gold — 11.3:1 contrast, AA/AAA-safe */
+  --m-accent-ink: #142044; /* dark navy text on gold, 11.3:1 contrast, AA/AAA-safe */
   --m-canvas: #ffffff; /* white, from the crest's white background */
   --m-warm: #fffbeb; /* soft warm white, gold-tinted section alternate */
 }
@@ -216,7 +216,7 @@
    Progressive enhancement only: elements are fully visible by default. Where the browser
    supports scroll-driven animations AND the visitor has not asked to reduce motion, `.reveal`
    fades + rises as it scrolls into view. Unsupported browsers and reduced-motion users simply
-   see the resting state — no JS, no hidden content. The d1/d2/d3 helpers stagger a row of
+   see the resting state, no JS, no hidden content. The d1/d2/d3 helpers stagger a row of
    siblings by shifting each one's entry range slightly later. */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
@@ -251,18 +251,18 @@
 
 /* --- Home hero parallax ---
    The hero photo drifts a few percent and gains a faint scale as it travels through the viewport,
-   tied to its own `view()` timeline rather than raw scroll position — so it costs nothing once
+   tied to its own `view()` timeline rather than raw scroll position, so it costs nothing once
    scrolled away and never touches layout. The hero `<section>` clips overflow, so the extra scale
    guarantees the drift never reveals an edge. Foreground text is a normal, untransformed sibling,
    so it stays perfectly crisp. Progressive enhancement: static (and un-scaled) without support or
    with reduced motion requested. */
-/* Hero parallax is handled in JS (components/marketing/home/hero-parallax-image.tsx) — a CSS
+/* Hero parallax is handled in JS (components/marketing/home/hero-parallax-image.tsx), a CSS
    view()/scroll() timeline stays inactive for the absolutely-positioned hero image inside its
    overflow-hidden section, so it never produced any transform. The JS version is rAF-throttled,
    transform-only, and disabled under prefers-reduced-motion. */
 
 /* --- Mid-page parallax accent (values band) ---
-   A soft, blurred glow drifts diagonally as the band scrolls through view — the one other
+   A soft, blurred glow drifts diagonally as the band scrolls through view, the one other
    continuously-transformed layer on the page besides the hero. It's decorative, `aria-hidden`,
    and sits behind the text, so it never affects legibility or layout. */
 @media (prefers-reduced-motion: no-preference) {
@@ -283,7 +283,7 @@
 }
 
 /* --- Continuous accent pulse ---
-   A slow, quiet pulse on the hero's "admission open" dot — the only looping motion on the page,
+   A slow, quiet pulse on the hero's "admission open" dot, the only looping motion on the page,
    reserved for a single small decorative accent that is genuinely signalling a live status. */
 @media (prefers-reduced-motion: no-preference) {
   .accent-pulse {

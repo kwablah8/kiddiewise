@@ -66,7 +66,7 @@ function buildColumns(
     key: "actions",
     header: "",
     align: "right",
-    // Both labels name the class AND the term: two Basic 1 rows differing only by term are exactly
+    // Both labels name the class and the term: two Basic 1 rows differing only by term are exactly
     // the case this column exists to untangle, and "Edit Basic 1" twice over tells a screen-reader
     // user nothing.
     render: (r) => (
@@ -216,7 +216,7 @@ function ConfirmDeleteFeeStructureDialog({
           <DialogDescription>
             {structure && (
               <>
-                {/* Names class, term AND amount — telling two near-identical rows apart before one
+                {/* Names class, term and amount, telling two near-identical rows apart before one
                     of them is removed is the entire job of this dialog. */}
                 <strong className="text-[var(--text)]">
                   {structure.class_name} — {FEE_TERM_LABEL[structure.term]},{" "}

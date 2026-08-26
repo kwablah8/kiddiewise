@@ -7,7 +7,7 @@ import { useSubjects } from "@/lib/queries/academics";
 import { subjectStats } from "@/lib/academics";
 
 /** Overview cards above the Subjects table. Shares `useSubjects` with the table (React Query dedupes),
- *  deriving the counts via the pure `subjectStats` helper — no separate stored status. */
+ *  deriving the counts via the pure `subjectStats` helper, no separate stored status. */
 export function SubjectsStats() {
   const { data, isLoading, isError } = useSubjects();
 

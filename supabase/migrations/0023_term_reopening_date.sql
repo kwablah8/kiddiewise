@@ -1,13 +1,13 @@
 -- 0023_term_reopening_date.sql
 -- When school reopens after this term.
 --
--- It is the single most-read line on a Ghanaian terminal report after the grades — parents plan
--- childcare, travel and fees around it — and until now the app had nowhere to put it, so it was
+-- It is the single most-read line on a Ghanaian terminal report after the grades, parents plan
+-- childcare, travel and fees around it, and until now the app had nowhere to put it, so it was
 -- being written on report cards by hand.
 --
 -- On the TERM rather than on `terminal_reports`, for two reasons. A school reopens on one date, so
 -- storing it per report row would be the same fact copied once per pupil, free to drift between two
--- children in the same class (golden rule 9). And the admin sets it BEFORE generating a batch — the
+-- children in the same class. And the admin sets it before generating a batch, the
 -- reopening-date control on /terminal-reports has to show a value when no report rows exist yet,
 -- which a column on `terminal_reports` cannot do.
 --

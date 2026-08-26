@@ -74,7 +74,7 @@ describe("route progress store", () => {
     vi.advanceTimersByTime(GRACE_MS - 20);
     finishRouteProgress();
 
-    // Straight back to idle — no paint, so no one-frame flash on a cached route.
+    // Straight back to idle: no paint, so no one-frame flash on a cached route.
     expect(getRouteProgressState()).toEqual({ phase: "idle", value: 0 });
     vi.advanceTimersByTime(SAFETY_MS);
     expect(getRouteProgressState().phase).toBe("idle");

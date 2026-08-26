@@ -2,7 +2,7 @@ import { Section } from "@/components/marketing/section";
 import { SITE } from "@/lib/marketing/site";
 
 /**
- * The school's own promise — deliberately NOT a testimonial. The M4 honesty guard forbids
+ * The school's own promise, deliberately not a testimonial. The M4 honesty guard forbids
  * inventing a named parent or student quote for a real client, so this is an unattributed
  * statement in the school's voice, credited to the school itself.
  *

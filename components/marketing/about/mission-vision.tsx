@@ -3,7 +3,7 @@ import { SITE } from "@/lib/marketing/site";
 
 /**
  * Mission & vision statements grounded in the school's real motto and positioning (Creche → JHS,
- * one Oyarifa campus) — not invented history or figures, per the M4 honesty guard.
+ * one Oyarifa campus), not invented history or figures, per the M4 honesty guard.
  */
 const PILLARS: readonly { label: string; body: string }[] = [
   {

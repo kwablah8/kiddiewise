@@ -9,10 +9,10 @@ import { useDashboardStats, useDashboardTrends } from "@/lib/queries/dashboard";
 import { formatGHS, formatPercent } from "@/lib/format";
 
 /**
- * Row of 4 metric cards — Total Students, Total Staff, Total Revenue, Attendance Rate
+ * Row of 4 metric cards: Total Students, Total Staff, Total Revenue, Attendance Rate
  * (01-REQ Admin §Dashboard, 06-UI §5). Backed by two independent hooks: `useDashboardStats()`
  * (the real 4-total RPC shape) supplies each card's value, `useDashboardTrends()` (a seam-only
- * enrichment — see lib/data/dashboard.ts) supplies its trend pill. Stats is load-bearing (no
+ * enrichment, see lib/data/dashboard.ts) supplies its trend pill. Stats is load-bearing (no
  * stats -> ErrorState for the whole row); trends is decorative (no trends -> pills just render
  * 0/neutral, same as the "empty" mock state) so a trends failure never blocks the totals.
  */

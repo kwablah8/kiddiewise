@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
  *
  * Base UI decides on first render whether a Select is controlled, and treats any value that is not
  * `undefined` as controlled. Returning `undefined` here made the switcher start uncontrolled and then
- * flip to controlled on navigating to a child — which logged a React warning on every parent page.
+ * flip to controlled on navigating to a child, which logged a React warning on every parent page.
  */
 function activeChildId(pathname: string): string | null {
   const m = /^\/parent\/children\/([^/]+)/.exec(pathname);

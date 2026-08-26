@@ -92,5 +92,6 @@ export const queryKeys = {
     attendance: (id: string) => ["parent", "attendance", id] as const,
     results: (id: string) => ["parent", "results", id] as const,
     report: (id: string) => ["parent", "report", id] as const,
+    fees: (id: string) => ["parent", "fees", id] as const,
   },
 } as const;

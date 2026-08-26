@@ -114,7 +114,7 @@ export function ScoreEntry({ teacherId }: { teacherId: string }) {
             disabled={listLoading || (assessments?.length ?? 0) === 0}
           >
             <SelectTrigger id="assessment" className="w-[22rem]">
-              {/* This SelectValue needs a render child to map the value to a label — without one,
+              {/* This SelectValue needs a render child to map the value to a label, without one,
                   base-ui renders the raw value, which here is a UUID. */}
               <SelectValue placeholder={listLoading ? "Loading…" : "Select an assessment…"}>
                 {(v: string) => {
@@ -185,7 +185,7 @@ export function ScoreEntry({ teacherId }: { teacherId: string }) {
                 const value = shown(e.student_id, e.score);
                 const n = parsed(e.student_id, e.score);
                 const isInvalid = n !== null && (n < 0 || n > max);
-                // Percentage of THIS assessment's max, because assessments aren't all out of 100.
+                // Percentage of this assessment's max, because assessments aren't all out of 100.
                 const band =
                   n !== null && !isInvalid && bands
                     ? scoreToGrade(n, max, bands)

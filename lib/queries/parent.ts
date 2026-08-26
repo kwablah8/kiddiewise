@@ -64,3 +64,13 @@ export function useChildReport(childId: string) {
     enabled: !!parentId && !!childId,
   });
 }
+
+export function useChildFees(childId: string) {
+  const { profile } = useSession();
+  const parentId = profile?.id ?? "";
+  return useQuery({
+    queryKey: queryKeys.parent.fees(childId),
+    queryFn: () => data.getChildFees(parentId, childId),
+    enabled: !!parentId && !!childId,
+  });
+}

@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
  * Error boundary for the whole authenticated portal.
  *
  * Without an error.tsx here, a render-time throw anywhere in admin/teacher/parent screens takes the
- * entire page down to a blank white screen with no way back — the worst possible outcome for a
+ * entire page down to a blank white screen with no way back, the worst possible outcome for a
  * non-technical school user mid-task. This catches it, shows a plain-language recovery, and keeps the
  * app shell around it. `reset()` re-renders the failed segment (a transient data blip recovers without
  * a full reload); the reload link is the fallback when it doesn't.
  *
- * Deliberately generic copy — `error.message` can carry internals that mean nothing to a user and
+ * Deliberately generic copy, `error.message` can carry internals that mean nothing to a user and
  * shouldn't be shown; the digest goes to the server logs for us instead.
  */
 export default function AppError({

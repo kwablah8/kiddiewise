@@ -13,15 +13,15 @@ import {
 import { canTransitionInquiry } from "@/lib/inquiries";
 
 /**
- * The public admissions/contact form — the ONLY write an unauthenticated visitor can make
+ * The public admissions/contact form, the only write an unauthenticated visitor can make
  * (`inq_anon_insert`, migration 0010).
  *
  * `status` and `school_id` are set here, not accepted from the form: a visitor must not be able to
  * file an inquiry as already-accepted, nor aim one at another school's inbox.
  *
- * Deliberately does NOT ask for the inserted row back. `anon` holds INSERT but not SELECT on this
+ * Deliberately does not ask for the inserted row back. `anon` holds INSERT but not SELECT on this
  * table, so adding `.select()` appends a RETURNING clause and the whole statement fails with 42501.
- * Postgres helpfully suggests `GRANT SELECT ... TO anon` — following that would let any visitor read
+ * Postgres helpfully suggests `GRANT SELECT ... TO anon`, following that would let any visitor read
  * every inquiry ever submitted, exposing the name, email and phone number of every family who has
  * ever enquired. Write-only is the correct shape for a public form: the visitor needs confirmation it
  * was received, not the row.
@@ -49,7 +49,7 @@ export async function submitInquiry(input: InquiryCreateInput): Promise<ActionRe
  *
  * The transition guard is the reason this is a Server Action and not a plain UPDATE from the browser.
  * RLS decides WHO may write the row; it says nothing about WHICH transitions are legal. A bare
- * client-side update would silently drop the state machine — letting an inquiry jump from `new`
+ * client-side update would silently drop the state machine, letting an inquiry jump from `new`
  * straight to `converted`, or mutating a row that was already rejected. Read-check-write happens here,
  * where the client cannot skip it.
  */

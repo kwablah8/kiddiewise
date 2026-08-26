@@ -22,7 +22,7 @@ const ghsCompactFormatter = new Intl.NumberFormat("en-GH", {
 });
 
 /**
- * `12,500.00` — the bare figure, for the rare surface that prints its own currency mark. The
+ * `12, 500.00`, the bare figure, for the rare surface that prints its own currency mark. The
  * school's receipt form has a pre-printed "GHc" field, so a second "GHS" on the line would read as
  * a correction of it.
  */
@@ -30,7 +30,7 @@ export function formatAmount(value: number): string {
   return ghsFormatter.format(value);
 }
 
-/** `GHS 12,500.00` */
+/** `GHS 12, 500.00` */
 export function formatGHS(value: number): string {
   return `GHS ${formatAmount(value)}`;
 }
@@ -46,12 +46,12 @@ export function formatPercent(value: number): string {
   return `${Math.round(value)}%`;
 }
 
-/** `GHS 22K` — compact axis-label form of `formatGHS` for chart ticks. */
+/** `GHS 22K`, compact axis-label form of `formatGHS` for chart ticks. */
 export function formatGHSCompact(value: number): string {
   return `GHS ${ghsCompactFormatter.format(value)}`;
 }
 
-/** `"2026-01"` -> `"Jan"` — month-point labels for trend chart axes. */
+/** `"2026-01"` -> `"Jan"`, month-point labels for trend chart axes. */
 export function formatMonthShort(value: string): string {
   return monthFormatter.format(new Date(value));
 }

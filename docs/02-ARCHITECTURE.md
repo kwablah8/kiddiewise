@@ -225,7 +225,7 @@ The platform has **two content stores**, with a hard boundary between them.
 | Audience | Signed-in admins, teachers, parents | Anyone on the public site |
 | Security | RLS is the boundary | Published-only, public dataset; no secrets involved |
 
-**This does not violate golden rule 9.** No fact lives in both stores. A news post is not an
+**No fact lives in both stores.** A news post is not an
 announcement: different audience, different voice, no sync between them. If a fact is tenant-scoped or
 RLS-governed it is Supabase's, always.
 

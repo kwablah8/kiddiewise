@@ -9,7 +9,7 @@ import { Lightbox } from "@/components/marketing/gallery/lightbox";
 
 interface GalleryGridProps {
   /**
-   * Photos to show, already resolved. Comes from `getGalleryPhotos()` — the school's Studio uploads
+   * Photos to show, already resolved. Comes from `getGalleryPhotos()`, the school's Studio uploads
    * when there are any, otherwise the committed set in `MEDIA.gallery`. Passed as a prop rather than
    * imported because this is a client component and the read is server-side.
    */

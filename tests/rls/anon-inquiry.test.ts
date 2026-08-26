@@ -26,11 +26,11 @@ describe("anonymous admissions inquiry path", () => {
 
   it("anon INSERT ... RETURNING is rejected, because RETURNING needs SELECT", async () => {
     // This combination is the gap that let a real bug ship: the two cases above pass individually,
-    // so `submitInquiry` looked fine while calling `.insert().select("id")` — which appends a
+    // so `submitInquiry` looked fine while calling `.insert().select("id")`, which appends a
     // RETURNING clause, needs the SELECT privilege anon does not have, and failed every public
     // enquiry with 42501 "permission denied".
     //
-    // The fix is NOT to grant SELECT to anon (Postgres even suggests that in its error hint) — that
+    // The fix is not to grant SELECT to anon (Postgres even suggests that in its error hint), that
     // would let any visitor read every inquiry ever submitted, exposing the name, email and phone of
     // every family who has enquired. The fix is for the action not to ask for the row back. This test
     // pins that constraint so nobody "helpfully" adds a .select() to the public write again.

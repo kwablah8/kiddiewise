@@ -38,7 +38,7 @@ function nameForOrdinal(ordinal: number): string {
 }
 
 // `termCreateSchema` uses `z.coerce.number()` for `ordinal`, whose input type is effectively
-// `unknown` (Zod's coerce schemas accept any raw value and coerce it) — so its input type
+// `unknown` (Zod's coerce schemas accept any raw value and coerce it), so its input type
 // differs from its output type the same way a `.default()` field does elsewhere in this file
 // set (see `class-form.tsx` / `student-form.tsx`). RHF needs both: defaultValues satisfy the
 // input shape, `onSubmit` receives the resolver's parsed *output*.
@@ -55,7 +55,7 @@ interface TermFormDialogProps {
 
 /**
  * "New Term" / "Edit term" dialog, scoped to one academic year. The term's `name` is derived
- * from the chosen ordinal (First/Second/Third Term) rather than free-typed — Ghanaian terms are
+ * from the chosen ordinal (First/Second/Third Term) rather than free-typed, Ghanaian terms are
  * always one of those three, so exposing a separate text field would only invite typos/duplicates
  * of the same fixed vocabulary. Submitted as a hidden field, same pattern as `student_id` in
  * `LinkGuardianDialog`.

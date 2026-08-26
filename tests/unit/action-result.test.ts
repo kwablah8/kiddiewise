@@ -3,7 +3,7 @@
  *
  * These guard a bug that no other suite could see, because it only appeared in a PRODUCTION build:
  * an error thrown out of a Server Action has its message replaced by React's
- * "An error occurred in the Server Components render…" placeholder. Every user-facing message in
+ * "An error occurred in the Server Components render..." placeholder. Every user-facing message in
  * `lib/actions/*` was therefore invisible to the people using the app, who are school
  * administrators, not developers.
  *
@@ -33,7 +33,7 @@ describe("attempt", () => {
     const result = await attempt(async () => {
       throw new UserFacingError("Someone with that email address already has an account.");
     });
-    // Returned, not thrown — that is the whole point. A throw would lose this wording in production.
+    // Returned, not thrown; that is the whole point. A throw would lose this wording in production.
     expect(result).toEqual({
       ok: false,
       message: "Someone with that email address already has an account.",
@@ -98,7 +98,7 @@ describe("mutate", () => {
   });
 
   it("replaces a thrown fault with the plain-language fallback", async () => {
-    // In production the rejection arriving here IS React's redaction paragraph. Nothing in it is
+    // In production the rejection arriving here is React's redaction paragraph. Nothing in it is
     // worth showing a school administrator, so it must never reach the screen.
     const action = async (): Promise<ActionResult<never>> => {
       throw new Error(

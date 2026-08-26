@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
  * three portals. All of the timing lives in `lib/route-progress.ts`; this file is the three ways a
  * navigation announces itself, the one way it announces it finished, and the markup.
  *
- * WHY the listener-and-store arrangement rather than `useLinkStatus`: see the note at the top of
+ * why the listener-and-store arrangement rather than `useLinkStatus`: see the note at the top of
  * `lib/route-progress.ts`. In short, half of this app navigates from table row clicks, which are
  * not anchors at all.
  */
@@ -33,7 +33,7 @@ export function RouteProgressBar() {
     getRouteProgressState,
   );
 
-  // 1. Anchor clicks — every `<Link>` in the app, without touching a single one of them.
+  // 1. Anchor clicks, every `<Link>` in the app, without touching a single one of them.
   useEffect(() => {
     function onClick(event: MouseEvent) {
       // Let the browser, not us, handle new-tab/window and non-primary clicks.
@@ -47,7 +47,7 @@ export function RouteProgressBar() {
 
       const url = new URL(anchor.href, window.location.href);
       if (url.origin !== window.location.origin) return; // leaving the app entirely
-      // Same-page links — the active sidebar item, an in-page `#anchor` — never transition, so a
+      // Same-page links: the active sidebar item, an in-page `#anchor`. Neither transitions, so a
       // bar for them would appear and be cancelled with nothing in between.
       if (url.pathname === window.location.pathname && url.search === window.location.search) return;
 
@@ -73,7 +73,7 @@ export function RouteProgressBar() {
     finishRouteProgress();
   }, [pathname]);
 
-  // A bar that creeps IS animation, so for anyone who asked for less of it we show a still bar
+  // A bar that creeps is animation, so for anyone who asked for less of it we show a still bar
   // instead: parked at the ceiling, no width transition, no fade. Tracked in state rather than left
   // to a `motion-reduce:` class because the transition below is an inline style, which would win.
   useEffect(() => {

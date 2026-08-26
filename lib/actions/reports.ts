@@ -28,10 +28,10 @@ import type { GradeBandVM } from "@/lib/validators/grading";
 import type { TablesUpdate } from "@/lib/supabase/types";
 
 /**
- * Read EVERY row a filtered query matches, not just PostgREST's first page.
+ * Read every row a filtered query matches, not just PostgREST's first page.
  *
  * PostgREST caps a response at a server-side maximum (1000 rows by default) and returns a short page
- * with NO error when there are more. For most screens that is a paginated table and fine. Here it is a
+ * with no error when there are more. For most screens that is a paginated table and fine. Here it is a
  * silent-corruption trap: these figures are FROZEN into official, printed report cards, and a class of
  * 40 with a few years of history has far more than 1000 result rows, and one term of attendance for
  * that class (≈40 × 60 school days) already exceeds it. A truncated read would freeze wrong totals,
@@ -54,7 +54,7 @@ async function fetchAllPaged<T>(
 /**
  * Generate (or regenerate) terminal reports for a class and term.
  *
- * Safe to run repeatedly, and deliberately NOT the same act as publishing: generating produces
+ * Safe to run repeatedly, and deliberately not the same act as publishing: generating produces
  * unpublished snapshots an admin reviews first. That separation is what makes it safe to regenerate
  * after a teacher corrects a mark.
  *
@@ -100,7 +100,7 @@ export async function generateReports(
         .select("student_id")
         .eq("class_id", class_id)
         .eq("status", "active")
-        // The term's own year, NOT just "active status": promotion appends an enrollment per year
+        // The term's own year, not just "active status": promotion appends an enrollment per year
         // and leaves history in place, so an unscoped roster would generate reports for every
         // student the class has ever held.
         .eq("academic_year_id", term.academic_year_id),
@@ -113,7 +113,7 @@ export async function generateReports(
         .eq("class_id", class_id)
         .eq("term_id", term_id),
       ctx.db.from("schools").select("ca_weight, pass_mark").eq("id", ctx.schoolId).single(),
-      // The class's timetable — what the card lists, marked or not (see computeSubjectComponents).
+      // The class's timetable: what the card lists, marked or not (see computeSubjectComponents).
       ctx.db.from("class_subjects").select("subjects(name, code)").eq("class_id", class_id),
     ]);
 
@@ -138,13 +138,13 @@ export async function generateReports(
 
     // Read the marks and attendance with the SERVICE ROLE, not the caller's client.
     //
-    // A report card lists EVERY subject on the class's timetable, but res_teacher_rw scopes a teacher
+    // A report card lists every subject on the class's timetable, but res_teacher_rw scopes a teacher
     // to results for the subjects THEY personally teach (teacher_teaches checks class_subjects, with no
     // homeroom clause). So a class teacher compiling the card under their own RLS would silently get
     // zero rows for every colleague-taught subject and freeze null totals and a wrong class rank onto
     // an official document. The caller was authorized as this class's teacher (or an admin) above, and
     // every read below is pinned to this school and this class's roster, so elevating just these reads
-    // is safe and is what lets the card be complete. Writes stay on ctx.db — RLS still confines the
+    // is safe and is what lets the card be complete. Writes stay on ctx.db; RLS still confines the
     // teacher to their own class.
     const svc = createServiceClient();
     const [allResults, allAttendance] = await Promise.all([
@@ -155,7 +155,7 @@ export async function generateReports(
             "student_id, score, assessments!inner(max_score, term_id, subjects(name), assessment_types(is_exam))",
           )
           .eq("school_id", ctx.schoolId)
-          // Only submitted marks reach a report — a teacher's draft must never become an official record.
+          // Only submitted marks reach a report, a teacher's draft must never become an official record.
           .eq("is_submitted", true)
           .eq("assessments.term_id", term_id)
           .in("student_id", studentIds)
@@ -200,7 +200,7 @@ export async function generateReports(
       };
     });
 
-    // Positions computed across the whole class at once — a rank is meaningless per student.
+    // Positions computed across the whole class at once, a rank is meaningless per student.
     // Overall position ranks the averages; each SUBJECT is ranked separately over its totals.
     const positioned = assignPositions(draft);
     const subjectPosition = new Map<string, number | null>();
@@ -215,12 +215,12 @@ export async function generateReports(
       for (const r of ranked) subjectPosition.set(`${r.student_id}:${name}`, r.position);
     }
 
-    // The class's own spread — the card's "Class Average / Lowest Class Ave. / Highest Class Ave."
+    // The class's own spread, the card's "Class Average / Lowest Class Ave. / Highest Class Ave."
     const classSpread = spreadStats(draft.map((d) => d.average_score));
 
     // "Position in <level>": the same rank taken across every class at this level. The sister
     // classes' figures come from their STORED reports, so a level whose other classes have not been
-    // generated yet ranks against a partial cohort — generate the whole level before publishing.
+    // generated yet ranks against a partial cohort, generate the whole level before publishing.
     const levelRank = await rankAcrossLevel(svc, {
       schoolId: ctx.schoolId,
       classId: class_id,
@@ -230,7 +230,7 @@ export async function generateReports(
     });
 
     // Published reports are refreshed like the rest (comments and figures preserved/recomputed the
-    // same way), but their SUBJECT rows are also rewritten — figures and rows must never disagree.
+    // same way), but their SUBJECT rows are also rewritten, figures and rows must never disagree.
     const rows = positioned.map((r) => {
       const prior = existing.get(r.student_id);
       return {
@@ -251,7 +251,7 @@ export async function generateReports(
         attendance_present: r.present,
         attendance_total: r.total,
         enrolled_count: studentIds.length,
-        // Preserved, never recomputed — a human's words are not arithmetic.
+        // Preserved, never recomputed, a human's words are not arithmetic.
         class_teacher_comment: prior?.class_teacher_comment ?? null,
         head_teacher_comment: prior?.head_teacher_comment ?? null,
         conduct: prior?.conduct ?? null,
@@ -264,7 +264,7 @@ export async function generateReports(
     });
 
     const saved = assertWrite(
-      // unique(student_id, term_id) from 0009 — regenerating updates in place.
+      // unique(student_id, term_id) from 0009, regenerating updates in place.
       await ctx.db
         .from("terminal_reports")
         .upsert(rows, { onConflict: "student_id,term_id" })
@@ -319,7 +319,7 @@ export async function generateReports(
 }
 
 /**
- * The card's second position line — where the child stands among everyone at their level, not just
+ * The card's second position line: where the child stands among everyone at their level, not just
  * in their class ("Position in J.H.S. 2: 1/16" on the school's template).
  *
  * The cohort is the class being generated (whose averages are still in memory, not yet written)
@@ -342,7 +342,7 @@ async function rankAcrossLevel(
   if (!args.level) return empty;
 
   // Read the sibling classes' stored reports with the service role: under a class teacher's own RLS
-  // (tr_teacher_read) only their OWN class's reports are visible, which would silently size the level
+  // (tr_teacher_read) only their own class's reports are visible, which would silently size the level
   // rank against a single class ("1/16" when the level holds 48). Scoped to this school and level.
   const { data: siblings, error } = await svc
     .from("terminal_reports")
@@ -351,7 +351,7 @@ async function rankAcrossLevel(
     .eq("term_id", args.termId)
     .eq("classes.level", args.level)
     .neq("class_id", args.classId);
-  // A level rank is a nicety on the card, not the record itself — a failed read leaves it blank
+  // A level rank is a nicety on the card, not the record itself, a failed read leaves it blank
   // rather than aborting a generation the school is waiting on.
   if (error) return empty;
 
@@ -373,7 +373,7 @@ async function rankAcrossLevel(
 /**
  * Save the human-written card fields for one report: the two remarks plus conduct, attitude,
  * interest and promoted-to. Only the keys the caller sent are written (omitted = untouched,
- * empty string = cleared) — the teacher dialog and the admin dialog send different subsets and
+ * empty string = cleared), the teacher dialog and the admin dialog send different subsets and
  * neither may wipe the other's fields. RLS decides who may write: admin anywhere,
  * the class teacher on their own class (tr_class_teacher_update, migration 0028).
  */
@@ -423,7 +423,7 @@ export async function setReportsPublished(
 
     if (error) throw new Error(`Could not ${published ? "publish" : "retract"} these reports: ${error.message}`);
 
-    // Publication is the feed-worthy moment — it's when parents can suddenly see the reports.
+    // Publication is the feed-worthy moment; it's when parents can suddenly see the reports.
     if (published && (data?.length ?? 0) > 0) {
       const { data: klass } = await ctx.db.from("classes").select("name").eq("id", class_id).maybeSingle();
       await logActivity(ctx, `published terminal reports for ${klass?.name ?? "a class"}`, "terminal_report");

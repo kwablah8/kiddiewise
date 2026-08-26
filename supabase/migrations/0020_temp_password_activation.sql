@@ -10,7 +10,7 @@
 -- `profiles_self_update` (0004) lets a user update their own row, so if `must_change_password` were
 -- writable the parent could simply clear the flag and skip the change entirely. 0015 revoked
 -- table-level UPDATE on profiles and grants it column by column, so omitting these from any grant
--- leaves them read-only via the API — writable only by the service role (admin actions) and by the
+-- leaves them read-only via the API, writable only by the service role (admin actions) and by the
 -- narrow function below.
 
 alter table public.profiles
@@ -20,7 +20,7 @@ alter table public.profiles
   -- until the parent takes ownership, the admin who issued it can read that child's attendance,
   -- results and fees. Expiry bounds that window; the admin reissues on demand.
   add column temp_password_expires_at timestamptz,
-  -- Set when the holder replaces the temporary password — i.e. when the account becomes truly theirs.
+  -- Set when the holder replaces the temporary password, i.e. when the account becomes truly theirs.
   -- Drives the "activated / awaiting first sign-in" status on the admin's parents screen.
   add column password_changed_at timestamptz;
 

@@ -1,9 +1,11 @@
 import { activeYearId, db, unwrapList, unwrapMaybe } from "./_client";
+import { getFeesOverview, listClassFees, listExtraFeeAssignments, listPayments } from "./fees";
 import { scoreToGrade } from "@/lib/grading";
 import { aggregateSubjectResults, overallAverage } from "@/lib/results";
 import { summarizeAttendance } from "@/lib/parent/attendance";
 import { round1 } from "@/lib/terminal-reports";
 import type {
+  ChildFeesVM,
   ChildProfileVM,
   ChildResultsVM,
   ChildSummaryVM,
@@ -11,16 +13,17 @@ import type {
   ParentAnnouncementVM,
   TerminalReportVM,
 } from "@/lib/validators/parent";
+import type { FeesFilter } from "@/lib/validators/fees";
 import type { GradeBandVM } from "@/lib/validators/grading";
 
 /**
  * The parent portal.
  *
- * Every read here is scoped by RLS to the caller's linked children — `students_parent_read`,
+ * Every read here is scoped by RLS to the caller's linked children, `students_parent_read`,
  * `att_parent_read`, `res_parent_read` and friends all gate on `parent_of_student()`. The mock
  * version of this module had to re-implement that gate in application code (`isGuardianOf`); now the
  * database enforces it, so asking for a child you don't guard returns zero rows and these functions
- * resolve to null. That is the correct behaviour AND it cannot be bypassed from the client.
+ * resolve to null. That is the correct behaviour and it cannot be bypassed from the client.
  *
  * `parentId` stays in each signature: the query hooks pass it as part of the React Query key, so a
  * cached parent's data can never be served to a different signed-in user.
@@ -29,7 +32,7 @@ import type { GradeBandVM } from "@/lib/validators/grading";
 // Supabase infers row types by parsing the select string at the type level. That parser gives up on
 // some of the multi-column-plus-embedded-relation selects below and yields `never`, so these reads
 // declare their select as `string` (which opts into the untyped overload) and state the row shape
-// explicitly instead. The shape is still checked — just by these interfaces rather than by inference.
+// explicitly instead. The shape is still checked, just by these interfaces rather than by inference.
 const CHILD_PROFILE_SELECT: string = `
   id, first_name, last_name, other_names, photo_url, admission_no, date_of_birth, gender,
   enrollments(status, class_id, classes(name))
@@ -136,8 +139,8 @@ async function gradeBands(): Promise<GradeBandVM[]> {
 export async function getParentChildren(parentId: string): Promise<ChildSummaryVM[]> {
   void parentId; // RLS resolves "my children" from auth.uid(); the arg only keys the query cache.
 
-  // The year first: a child's class is their enrollment in the ACTIVE year, and a promoted child
-  // has one enrollment per year — unscoped, the embed would surface last year's class.
+  // The year first: a child's class is their enrollment in the active year, and a promoted child
+  // has one enrollment per year, unscoped, the embed would surface last year's class.
   const yearId = await activeYearId();
   let childrenQuery = db()
     .from("students")
@@ -159,7 +162,7 @@ export async function getParentChildren(parentId: string): Promise<ChildSummaryV
 
   const ids = children.map((c) => c.id);
 
-  // Attendance and the latest result are fetched for all children at once rather than per child —
+  // Attendance and the latest result are fetched for all children at once rather than per child,
   // a parent with four children shouldn't cost nine round trips.
   const [attendanceRes, resultsRes] = await Promise.all([
     term
@@ -178,7 +181,7 @@ export async function getParentChildren(parentId: string): Promise<ChildSummaryV
 
   return children.map((c): ChildSummaryVM => {
     const mine = attendance.filter((a) => a.student_id === c.id);
-    // summarizeAttendance yields null pct for no records — "not measured", not "0% attendance".
+    // summarizeAttendance yields null pct for no records, "not measured", not "0% attendance".
     const pct = summarizeAttendance(mine.map((a) => ({ date: "", status: a.status }))).pct;
 
     // Already ordered newest-first, so the first match is the most recent.
@@ -211,7 +214,7 @@ export async function getParentChildren(parentId: string): Promise<ChildSummaryV
 export async function getParentAnnouncements(parentId: string): Promise<ParentAnnouncementVM[]> {
   void parentId;
   // The `ann_read` policy already restricts this to published announcements whose audience includes
-  // parents, so no audience filter is repeated here — duplicating it in the query would imply the
+  // parents, so no audience filter is repeated here, duplicating it in the query would imply the
   // client was the thing enforcing it.
   const rows = unwrapList(
     await db()
@@ -240,7 +243,7 @@ export async function getChildProfile(
   let q = db().from("students").select(CHILD_PROFILE_SELECT).eq("id", childId);
   if (yearId) q = q.eq("enrollments.academic_year_id", yearId);
   const student = unwrapMaybe<ChildProfileRow>(await q.single(), "child profile");
-  // Null here is both "no such student" and "not your child" — RLS makes them indistinguishable
+  // Null here is both "no such student" and "not your child"; RLS makes them indistinguishable
   // from the client, which is exactly right: existence itself shouldn't leak.
   if (!student) return null;
 
@@ -323,7 +326,7 @@ export async function getChildResults(
     await db()
       .from("results")
       .select("score, teacher_comment, created_at, assessments!inner(max_score, term_id, subjects(name))")
-      // Unsubmitted results are a teacher's work in progress — a parent must never see a draft mark.
+      // Unsubmitted results are a teacher's work in progress, a parent must never see a draft mark.
       .eq("is_submitted", true)
       .eq("student_id", childId),
     "child results",
@@ -365,7 +368,7 @@ export async function getChildReport(
   const report = unwrapMaybe<ChildReportRow>(await q.maybeSingle(), "child report");
   if (!report) return null;
 
-  // Prefer the report's stored average — it was computed over the whole term when published, which
+  // Prefer the report's stored average; it was computed over the whole term when published, which
   // may include subjects beyond the currently submitted set. Fall back to deriving it.
   let average = report.average_score === null ? null : round1(Number(report.average_score));
   if (average === null) {
@@ -419,5 +422,52 @@ export async function getChildReport(
         remark: s.remark,
       }))
       .sort((a, b) => a.subject_name.localeCompare(b.subject_name)),
+  };
+}
+
+/**
+ * A child's fees: what the school expects, what has been paid, what is left, and every receipt.
+ *
+ * Reads through the same functions the admin Fees screens use (`lib/data/fees.ts`), narrowed to one
+ * student. Nothing here re-implements the arithmetic, `paid`, `balance` and `status` come from the
+ * `student_fee_positions` / `extra_fee_positions` views and the totals from `summarizeFees`, so the
+ * figure a parent reads is the figure the office reads.
+ *
+ * Security is unchanged and unweakened: those reads carry the parent's own session, and
+ * `inv_parent_read` / `pay_parent_read` / `efa_parent_read` (migrations 0011 and 0017) already
+ * confine every row to their linked children. Asking for a child they do not guard returns zero
+ * rows, so this resolves to an empty position rather than leaking that the student exists.
+ */
+export async function getChildFees(parentId: string, childId: string): Promise<ChildFeesVM> {
+  void parentId;
+
+  const yearId = await activeYearId();
+
+  // Class fees are scoped to the active year, like every other "current" read in this portal.
+  // Promotion appends an enrollment per year and never deletes the old invoices, so an unscoped
+  // read would fold a long-settled (or long-abandoned) prior-year invoice into "outstanding" and
+  // show a parent a balance the school is not asking them for. Arrears genuinely carried forward
+  // are on this year's invoice, in its own `arrears` column, and are counted.
+  const feeFilter: FeesFilter = yearId
+    ? { student_id: childId, academic_year_id: yearId }
+    : { student_id: childId };
+
+  const [year, overview, class_fees, extra_fees, payments] = await Promise.all([
+    yearId
+      ? db().from("academic_years").select("name").eq("id", yearId).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    getFeesOverview(feeFilter),
+    listClassFees(feeFilter),
+    listExtraFeeAssignments(feeFilter),
+    // Unscoped by year on purpose, see the note on `childFeesVM.payments`.
+    listPayments({ student_id: childId }),
+  ]);
+
+  return {
+    year_name: unwrapMaybe<{ name: string }>(year, "active year name")?.name ?? null,
+    overview,
+    class_fees,
+    extra_fees,
+    payments,
   };
 }

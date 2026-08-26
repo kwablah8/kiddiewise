@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, MessageCircleQuestion } from "lucide-react";
 
 /**
- * Floating "Make an Enquiry" button — a persistent, unmissable shortcut that lets a browsing parent
+ * Floating "Make an Enquiry" button: a persistent, unmissable shortcut that lets a browsing parent
  * jump straight to the admissions enquiry form from anywhere on the home page (a softer, lower-
  * commitment action than the page's "Apply" CTAs). It's a plain link, so no client JS is needed.
  *

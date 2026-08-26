@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     // `data-brand` lives HERE, on <html>, so the SLIS palette in app/globals.css reaches every
-    // surface — marketing, the authenticated portal, and the auth screens alike. It used to sit on
+    // surface, marketing, the authenticated portal, and the auth screens alike. It used to sit on
     // the `(marketing)` layout to keep the brand OUT of the portal; that wall came down when this
     // build was tailored to SLIS (see the token block's HISTORY note).
     <html
@@ -35,7 +35,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {/* One bar for the whole product — marketing, auth and all three portals. It sits outside
+        {/* One bar for the whole product: marketing, auth and all three portals. It sits outside
             <Providers> because it needs nothing from React Query; its own store is the state. */}
         <RouteProgressBar />
         <Providers>{children}</Providers>

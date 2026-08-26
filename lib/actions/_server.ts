@@ -27,7 +27,7 @@ export type { IssuedCredentials };
 export interface TenantContext {
   db: SupabaseClient<Database>;
   profile: Profile;
-  /** The caller's school. Every insert stamps this — it is never taken from the input. */
+  /** The caller's school. Every insert stamps this; it is never taken from the input. */
   schoolId: string;
 }
 
@@ -91,11 +91,11 @@ export function assertWrite<T>(
         friendly ?? `That ${context} refers to something that no longer exists.`,
       );
     }
-    // 42501 is RLS/privilege denial — the row exists but this caller may not touch it.
+    // 42501 is RLS/privilege denial, the row exists but this caller may not touch it.
     if (code === "42501") {
       throw new UserFacingError("You don't have permission to make that change.");
     }
-    // Any other Postgres code is a fault, not a rule the user broke — a bad column, a broken
+    // Any other Postgres code is a fault, not a rule the user broke, a bad column, a broken
     // constraint, a dropped connection. A plain Error (not UserFacingError) so `attempt` rethrows
     // it: the raw driver text goes to the server log where it is useful, and the user gets the
     // plain-language fallback instead of "null value in column \"school_id\" violates not-null
@@ -126,7 +126,7 @@ export function assertAdmin(ctx: TenantContext): void {
 /**
  * Block or restore a user's ability to sign in.
  *
- * Deactivating staff must actually revoke access (spec 2026-07-31 decision 2) — a departed teacher
+ * Deactivating staff must actually revoke access (spec 2026-07-31 decision 2), a departed teacher
  * with a working password could still read student data, so `is_active` cannot be display-only.
  * GoTrue has no permanent flag, only a duration, hence ten years; "none" lifts it. Bans also cut
  * refresh-token renewal, so a live session dies within the access token's lifetime.
@@ -142,7 +142,7 @@ export async function setSignInBlocked(userId: string, blocked: boolean): Promis
 
 /**
  * Permanently remove an auth account (and, via the profiles FK cascade, its profile row).
- * Callers are responsible for the block-if-history checks — by the time this runs, the decision
+ * Callers are responsible for the block-if-history checks, by the time this runs, the decision
  * that nothing depends on the person has already been made.
  */
 export async function deleteAuthUser(userId: string): Promise<void> {
@@ -155,10 +155,10 @@ export async function deleteAuthUser(userId: string): Promise<void> {
  * teacher dashboard's own recent actions).
  *
  * Best-effort by design: the feed is a byproduct, and a logging hiccup must never fail the write
- * it describes — hence the error goes to the server log, not to the caller. Inserted with the
- * CALLER's rights: `al_insert_self` (0010) makes a forged actor impossible, and the row is
+ * it describes, hence the error goes to the server log, not to the caller. Inserted with the
+ * caller's rights: `al_insert_self` (0010) makes a forged actor impossible, and the row is
  * tenant-stamped like every other write. `action` should read as a sentence fragment after the
- * actor's name — "recorded a fee payment", "marked attendance for Basic 1".
+ * actor's name, "recorded a fee payment", "marked attendance for Basic 1".
  */
 export async function logActivity(
   ctx: TenantContext,
@@ -188,11 +188,11 @@ export function passwordSetupUrl(): string {
  * Create the auth account behind a new staff member or parent, and return its id.
  *
  * `profiles.id` is a foreign key to `auth.users(id)`, so a person cannot exist in this system without
- * an auth account — there is no such thing as a profile-only record. Creating one needs the service
+ * an auth account; there is no such thing as a profile-only record. Creating one needs the service
  * role, which is why every caller must hold a `tenant()` context: that proves the caller is signed in,
  * and `assertAdmin` proves they may do this.
  *
- * Deliberately SILENT — it notifies nobody. The admin-issued temporary password is handed over in
+ * Deliberately SILENT; it notifies nobody. The admin-issued temporary password is handed over in
  * person (or over WhatsApp) by whoever created the record; sending mail here would need an SMTP
  * provider the school may not have, and would fire at addresses that are often wrong at admission.
  * `invitePortalUser` is the separate route for people who would rather set their own password.
@@ -234,7 +234,7 @@ export async function provisionUser(
 /**
  * Mark a profile as holding an admin-issued temporary password.
  *
- * Written with the service role because `authenticated` has no grant on these columns — deliberately,
+ * Written with the service role because `authenticated` has no grant on these columns, deliberately,
  * since `profiles_self_update` would otherwise let the holder clear their own `must_change_password`
  * flag and skip the change (see migration 0020).
  */
@@ -253,7 +253,7 @@ export async function markTempCredential(profileId: string, expiresAt: string): 
 /**
  * Issue a FRESH temporary password for someone who already has an account.
  *
- * This exists because the original cannot be shown again — passwords are stored as bcrypt hashes, so
+ * This exists because the original cannot be shown again, passwords are stored as bcrypt hashes, so
  * there is nothing to reveal. Keeping the plaintext around to make a "re-copy" button possible would
  * put every parent's password in the database in readable form, visible to any admin and exposed
  * wholesale in a breach. Regenerating gives the admin the same outcome (a credential they can send
@@ -266,7 +266,7 @@ export async function reissueTempPassword(
   assertAdmin(ctx);
 
   // The one row this must never touch is the caller's own. An admin is a staff member, so their row
-  // sits in the staff list beside everyone else's with the same button on it — and pressing it
+  // sits in the staff list beside everyone else's with the same button on it, and pressing it
   // replaces the password they are signed in with by a generated one shown once, then flags the
   // account as owing a change. Closing that dialog locks the school's administrator out of the
   // school. This is a server-side guard rather than only a hidden button because a hidden button
@@ -278,7 +278,7 @@ export async function reissueTempPassword(
     );
   }
 
-  // Read through the CALLER's client so RLS confines this to their own school — with the service role
+  // Read through the caller's client so RLS confines this to their own school, with the service role
   // this would be a cross-tenant password-reset machine.
   const { data: target, error } = await ctx.db
     .from("profiles")
@@ -312,7 +312,7 @@ export async function reissueTempPassword(
 }
 
 export interface PortalInvite {
-  /** Present when delivery was "link" — the admin copies this and sends it themselves. */
+  /** Present when delivery was "link", the admin copies this and sends it themselves. */
   link: string | null;
   /** True when an email was dispatched to the recipient. */
   emailSent: boolean;
@@ -323,7 +323,7 @@ export interface PortalInvite {
  * Grant portal access to an existing profile, either by emailing them or by handing the admin a link
  * to send themselves.
  *
- * The "link" mode is not a fallback — for Ghanaian day schools it is the primary channel. Staff
+ * The "link" mode is not a fallback, for Ghanaian day schools it is the primary channel. Staff
  * already coordinate with parents over WhatsApp, many parents don't check email, and pasting a link
  * into a chat gives the admin immediate confirmation it arrived. Email is offered alongside for the
  * parents who do use it.
@@ -339,7 +339,7 @@ export async function invitePortalUser(
 ): Promise<PortalInvite> {
   assertAdmin(ctx);
 
-  // Read through the CALLER's client, not the service role: RLS then guarantees an admin can only
+  // Read through the caller's client, not the service role: RLS then guarantees an admin can only
   // invite someone in their own school. Looking the email up with elevated rights would make this
   // action a cross-tenant invitation machine.
   const { data: target, error } = await ctx.db
@@ -356,9 +356,9 @@ export async function invitePortalUser(
 
   // Resolve the recovery address from the AUTH record, never from profiles.email.
   //
-  // profiles.email is writable by its own owner (0015 grants `update (…, email, …)` to authenticated,
+  // profiles.email is writable by its own owner (0015 grants `update (..., email, ...)` to authenticated,
   // and profiles_self_update lets a user rewrite their own row), and nothing keeps it in step with the
-  // account's real sign-in address. Both delivery paths below look the account up BY EMAIL — so if we
+  // account's real sign-in address. Both delivery paths below look the account up BY EMAIL, so if we
   // trusted profiles.email, a user who set their profile's email to a victim's sign-in address could
   // have an admin "resend their portal link" and receive a recovery link minted for the VICTIM's
   // account. Because the lookup is purely by email it ignores school_id, so the victim could even be in
@@ -374,7 +374,7 @@ export async function invitePortalUser(
   const redirectTo = passwordSetupUrl();
 
   if (delivery === "link") {
-    // generateLink returns the URL WITHOUT sending anything — exactly what "copy and WhatsApp it"
+    // generateLink returns the URL WITHOUT sending anything, exactly what "copy and WhatsApp it"
     // needs.
     const { data, error: linkError } = await admin.auth.admin.generateLink({
       type: "recovery",
@@ -401,7 +401,7 @@ export async function invitePortalUser(
  * Delete an auth user created moments ago, after a later step failed.
  *
  * Provisioning spans two systems: `auth.users` (service role) and `profiles` (RLS). If the profile
- * insert fails, the orphaned auth account would block the admin from ever retrying with that email —
+ * insert fails, the orphaned auth account would block the admin from ever retrying with that email,
  * the failure would look permanent. There is no cross-system transaction, so this is the compensating
  * action. Best-effort by design: if the cleanup itself fails there is nothing further to do, and
  * throwing here would mask the original error, which is the one worth reporting.
@@ -410,7 +410,7 @@ export async function rollbackProvisionedUser(userId: string): Promise<void> {
   try {
     await createServiceClient().auth.admin.deleteUser(userId);
   } catch {
-    /* swallowed on purpose — see above */
+    /* swallowed on purpose, see above */
   }
 }
 
@@ -419,7 +419,7 @@ export async function rollbackProvisionedUser(userId: string): Promise<void> {
  *
  * A visitor on the public site has no session, so they cannot be asked which tenant they are writing
  * into, and `anon` has no SELECT policy on `schools` to look it up with. So the slug→id resolution
- * runs with the service role — the ONLY elevated step — and the insert itself still goes through the
+ * runs with the service role, the only elevated step, and the insert itself still goes through the
  * anon path governed by `inq_anon_insert`. Configure `SCHOOL_SLUG` per deployment.
  */
 export async function publicSchoolId(): Promise<string> {

@@ -104,7 +104,7 @@ function Paragraph({ label, value }: { label: string; value: string | null }) {
 /**
  * The published report card, laid out like the school's paper Terminal Report Sheet: title band,
  * header block, the five-column subject table, then attendance, promotion and the class teacher's
- * paragraphs. The PDF downloads the same card on the school's letterhead — that is the copy that
+ * paragraphs. The PDF downloads the same card on the school's letterhead; that is the copy that
  * gets printed or forwarded.
  */
 function ReportCard({
@@ -190,7 +190,7 @@ function ReportCard({
         </Button>
       </div>
 
-      {/* Header block — the card's identity lines. */}
+      {/* Header block, the card's identity lines. */}
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
         <HeaderField label="Student ID" value={profile?.admission_no ?? null} />
         <HeaderField
@@ -215,7 +215,7 @@ function ReportCard({
         />
       </dl>
 
-      {/* The subject table and the totals under it — the same columns the PDF prints. */}
+      {/* The subject table and the totals under it, the same columns the PDF prints. */}
       {report.subjects.length > 0 && (
         <>
           <ReportCardTable
@@ -261,7 +261,7 @@ function ReportCard({
         <Paragraph label="Head teacher's remarks" value={report.head_teacher_remark || null} />
       </div>
 
-      {/* After the grades, this is the line a parent came to find — they plan childcare and
+      {/* After the grades; this is the line a parent came to find; they plan childcare and
           travel around it. Absent when the school has not confirmed a date. */}
       {report.reopening_date && (
         <p className="flex items-center gap-1.5 border-t border-[var(--border)] pt-4 text-sm font-medium text-[var(--text)]">

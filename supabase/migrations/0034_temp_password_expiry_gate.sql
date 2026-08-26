@@ -1,12 +1,12 @@
 -- 0034_temp_password_expiry_gate.sql
 --
--- Enforce temporary-password expiry in the ONE place a client cannot skip.
+-- Enforce temporary-password expiry in the one place a client cannot skip.
 --
 -- 0020 declares temp_password_expires_at "the security boundary", but nothing on the server actually
 -- checked it: the expiry test lived only in the login page (client code), and complete_password_change()
 -- cleared must_change_password unconditionally. So a holder of an EXPIRED temporary password (e.g. one
 -- written on an admission slip and later found) could sign in straight against the public GoTrue
--- endpoint — bypassing the login page — and call this RPC to take permanent ownership of the account.
+-- endpoint, bypassing the login page, and call this RPC to take permanent ownership of the account.
 --
 -- Refuse to complete the change once the credential has expired. An expired holder can no longer clear
 -- the flag, so the middleware keeps them pinned on /update-password and out of the app; the admin must
@@ -15,7 +15,7 @@
 --
 -- NOTE: this closes the ownership-takeover path. Fully revoking an expired credential's ability to
 -- AUTHENTICATE at all (so it cannot even open a session) requires banning the GoTrue user when the
--- window lapses — a scheduled job (pg_cron) or an issue-time TTL, which is an operational follow-up,
+-- window lapses, a scheduled job (pg_cron) or an issue-time TTL, which is an operational follow-up,
 -- since Postgres/RLS cannot expire a JWT that GoTrue already signed.
 
 create or replace function public.complete_password_change()

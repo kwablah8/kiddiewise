@@ -1,20 +1,20 @@
 /**
- * Route-transition progress — the store behind `components/app/route-progress-bar.tsx`.
+ * Route-transition progress, the store behind `components/app/route-progress-bar.tsx`.
  *
  * Framework-free on purpose. The bar is a single instance mounted in the root layout, so its
  * timers and its easing curve have no business living in a component: keeping them here makes the
  * whole behaviour unit-testable without rendering anything (`tests/unit/route-progress.test.ts`),
  * and leaves the component to do nothing but subscribe and draw.
  *
- * Why a store instead of Next's `useLinkStatus`: that hook reports the pending state of ONE
- * `<Link>`, and most navigations in this app are programmatic — a data-table row click pushing
+ * Why a store instead of Next's `useLinkStatus`: that hook reports the pending state of one
+ * `<Link>`, and most navigations in this app are programmatic, a data-table row click pushing
  * `/students/:id`, a form redirecting back to its list. Those are the slowest transitions here, so
  * the indicator cannot be link-bound. `lib/navigation.ts` feeds them in instead.
  */
 
 /** The creep approaches this fraction but never arrives; 1 is reserved for "the route committed". */
 export const CREEP_CEILING = 0.9;
-/** Where the bar starts once it paints — visible at once, without claiming real progress. */
+/** Where the bar starts once it paints: visible at once, without claiming real progress. */
 export const CREEP_START = 0.08;
 /** Share of the remaining distance each tick covers, so the steps decelerate on their own. */
 const CREEP_RATE = 0.22;
@@ -47,7 +47,7 @@ export interface RouteProgressState {
 /**
  * The next creep value: decelerating, and clamped so it can only approach the ceiling. A bar that
  * slows as it goes reads as "still working" for an unknown wait, which is exactly what a route
- * transition is — we never know how much of it is left.
+ * transition is; we never know how much of it is left.
  */
 export function nextProgress(current: number): number {
   const from = Math.min(Math.max(current, 0), CREEP_CEILING);
@@ -75,7 +75,7 @@ function clearTimers(): void {
   graceTimer = tickTimer = fadeTimer = safetyTimer = null;
 }
 
-/** Swap in a new state object — never mutate, so `useSyncExternalStore` sees the change. */
+/** Swap in a new state object: never mutate, so `useSyncExternalStore` sees the change. */
 function publish(next: RouteProgressState): void {
   state = next;
   for (const listener of [...listeners]) listener();
@@ -96,7 +96,7 @@ export function subscribeRouteProgress(listener: Listener): () => void {
 /**
  * Turn the creep off for visitors who asked to reduce motion: the bar then appears at the ceiling
  * and disappears, saying "loading" without animating anything. Driven from the component's mount
- * effect — `matchMedia` is a browser concern and stays out of this module.
+ * effect, `matchMedia` is a browser concern and stays out of this module.
  */
 export function setRouteProgressCreep(enabled: boolean): void {
   creepEnabled = enabled;
@@ -132,7 +132,7 @@ export function finishRouteProgress(): void {
   const painted = state.phase === "running";
   clearTimers();
   // A navigation that resolved inside the grace window never painted, so there is nothing to fade
-  // out — going straight back to idle is what keeps a fast, cached transition silent.
+  // out, going straight back to idle is what keeps a fast, cached transition silent.
   if (!painted) {
     publish(IDLE);
     return;

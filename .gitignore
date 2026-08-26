@@ -31,9 +31,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-# claude local
+# local tooling state
 .claude/
 .superpowers/
-# SLIS rebrand: raw source photography/video/logo (145MB) — optimized copies live in
-# public/slis/ and ARE committed; this raw source folder is not.
+# Raw source photography, video and logo from the school (145MB). The optimised copies in
+# public/slis/ are committed; this source folder is not.
 SNAB-Assets/

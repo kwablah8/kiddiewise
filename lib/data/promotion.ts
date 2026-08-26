@@ -5,8 +5,8 @@ import type { PromotionCandidateVM } from "@/lib/validators/promotion";
  * The end-of-year review list for one class.
  *
  * Four reads rather than one join, deliberately. The three decision figures come from three
- * unrelated parts of the schema — published reports, attendance marks, and the fee-position view —
- * and each is already the canonical derivation used elsewhere in the app (golden rule 9). Forcing
+ * unrelated parts of the schema, published reports, attendance marks, and the fee-position view,
+ * and each is already the canonical derivation used elsewhere in the app. Forcing
  * them into a single PostgREST query would mean either a new database view duplicating logic that
  * already exists in three places, or embedded joins that silently drop students with no marks and
  * no attendance, which are exactly the students an admin needs to see before promoting anybody.
@@ -34,7 +34,7 @@ export async function listPromotionCandidates(
   const studentIds = enrolled.map((e) => e.student_id);
 
   const [reports, attendance, positions] = await Promise.all([
-    // 2. Published reports only — an unpublished report is the class teacher's draft, and deciding
+    // 2. Published reports only, an unpublished report is the class teacher's draft, and deciding
     //    a child's year on a draft is exactly the mistake this filter prevents.
     db()
       .from("terminal_reports")

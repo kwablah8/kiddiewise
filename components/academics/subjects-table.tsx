@@ -18,7 +18,7 @@ interface SubjectsTableProps {
   onNewSubject: () => void;
 }
 
-/** Subjects list — name, code or "—", # classes, with a per-row edit action (06-UI §6). */
+/** Subjects list: name, code or "—", # classes, with a per-row edit action (06-UI §6). */
 export function SubjectsTable({ onNewSubject }: SubjectsTableProps) {
   const { data, isLoading, isError, refetch } = useSubjects();
   const [editSubject, setEditSubject] = useState<SubjectVM | null>(null);

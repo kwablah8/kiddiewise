@@ -12,8 +12,8 @@ import type {
   StaffGender,
 } from "@/lib/validators/academics";
 
-// Counts on these view-models (term_count, student_count, subject_count, class_count) are DERIVED at
-// read time, never stored — so they cannot go stale after a mutation (golden rule 9). PostgREST
+// Counts on these view-models (term_count, student_count, subject_count, class_count) are derived at
+// read time, never stored, so they cannot go stale after a mutation. PostgREST
 // computes them server-side via embedded aggregate selects (`terms(count)`), which keeps it to a
 // single round trip rather than N+1 follow-up queries.
 
@@ -109,7 +109,7 @@ const toClassVM = (c: ClassRow): ClassVM => ({
   subject_count: c.class_subjects[0]?.count ?? 0,
 });
 
-// The student count is the ACTIVE year's active enrollments. Promotion leaves last year's rows
+// The student count is the active year's active enrollments. Promotion leaves last year's rows
 // untouched, so an unscoped count would keep counting every student the class has ever held.
 export async function listClasses(): Promise<ClassVM[]> {
   const yearId = await activeYearId();
@@ -147,9 +147,9 @@ export async function listSubjects(): Promise<SubjectVM[]> {
 // ---------------------------------------------------------------------------
 // Staff
 // ---------------------------------------------------------------------------
-// class_count/subject_count union TWO relationships: subject assignments (class_subjects.teacher_id)
+// class_count/subject_count union two relationships: subject assignments (class_subjects.teacher_id)
 // and being a class's homeroom teacher (classes.class_teacher_id). A teacher taking the same subject
-// in two classes counts as one subject but two classes — hence the Sets rather than row counts.
+// in two classes counts as one subject but two classes, hence the Sets rather than row counts.
 const STAFF_SELECT = `
   id, first_name, last_name, email, phone, staff_no, role, position, department,
   gender, date_of_birth, hire_date, qualification, is_active,
@@ -197,7 +197,7 @@ function toStaffVM(s: StaffRow, now: number): StaffVM {
     // nullable because parents have none. Staff rows always have one assigned at creation.
     staff_no: s.staff_no ?? "—",
     // Only teacher/school_admin reach these screens (the query filters on it), so the narrowing is
-    // safe — but assert it rather than casting blindly.
+    // safe, but assert it rather than casting blindly.
     role: (s.role === "teacher" ? "teacher" : "school_admin") satisfies StaffRole,
     position: s.position,
     department: s.department,
@@ -262,7 +262,7 @@ const toAssignmentVM = (a: AssignmentRow): AssignmentVM => ({
   subject_id: a.subject_id,
   subject_name: a.subjects?.name ?? "",
   teacher_id: a.teacher_id,
-  // Null teacher is legitimate — the UI renders "Unassigned".
+  // Null teacher is legitimate, the UI renders "Unassigned".
   teacher_name: a.teacher ? `${a.teacher.first_name} ${a.teacher.last_name}` : null,
 });
 

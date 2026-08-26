@@ -5,7 +5,7 @@ import type { CmsSiteSettings, PortableText } from "@/lib/validators/marketing";
  * Folds the school's Studio edits over the committed config.
  *
  * Pure and dependency-free so the whole fallback policy is unit-testable without a network, a database
- * or a Sanity project — which matters, because this function is the only thing standing between an
+ * or a Sanity project, which matters, because this function is the only thing standing between an
  * editor clearing a field and the public site rendering a blank.
  *
  * THE RULES, and why each one:
@@ -17,7 +17,7 @@ import type { CmsSiteSettings, PortableText } from "@/lib/validators/marketing";
  *   empty or absent one falls back entirely. Index-wise merging is how you get "the editor deleted the
  *   second phone number and the third inherited the second's value".
  * - **`admissionsNote` is derived, never merged.** It is computed from whichever `admissionsYear` won,
- *   so the note can never disagree with the year (golden rule 9).
+ *   so the note can never disagree with the year.
  */
 
 /** Trimmed, or `null` if the value was absent or only whitespace. */
@@ -27,7 +27,7 @@ function text(value: string | null | undefined): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-/** The array if it has at least one entry, otherwise `null` — the "wholesale" half of the rule above. */
+/** The array if it has at least one entry, otherwise `null`, the "wholesale" half of the rule above. */
 function list<T>(value: readonly T[] | null | undefined): readonly T[] | null {
   if (!Array.isArray(value) || value.length === 0) return null;
   return value;
@@ -60,8 +60,8 @@ export function mergeSiteSettings(
     },
     hours: {
       entries: hoursEntries ?? fallback.hours.entries,
-      // `hoursNote` is genuinely optional in the design — the note element is not rendered when it is
-      // absent — so an unset note falls back to the shipped one rather than to empty string.
+      // `hoursNote` is genuinely optional in the design, the note element is not rendered when it is
+      // absent, so an unset note falls back to the shipped one rather than to empty string.
       note: text(cms.hoursNote) ?? fallback.hours.note,
     },
     admissionsYear,

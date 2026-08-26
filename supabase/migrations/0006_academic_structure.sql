@@ -86,7 +86,7 @@ alter table public.subjects enable row level security;
 alter table public.class_subjects enable row level security;
 alter table public.enrollments enable row level security;
 
--- reusable pattern applied per table: same-school SELECT, admin ALL with WITH CHECK.
+-- reusable pattern applied per table: same-school SELECT, admin all with WITH CHECK.
 create policy ay_select on public.academic_years for select to authenticated
   using (school_id = public.current_school_id());
 create policy ay_admin on public.academic_years for all to authenticated

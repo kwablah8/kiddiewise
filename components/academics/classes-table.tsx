@@ -56,7 +56,7 @@ interface ClassesTableProps {
   onNewClass: () => void;
 }
 
-/** Classes list — name, level, capacity, class teacher, student/subject counts (06-UI §6). */
+/** Classes list: name, level, capacity, class teacher, student/subject counts (06-UI §6). */
 export function ClassesTable({ onNewClass }: ClassesTableProps) {
   const router = useAppRouter();
   const { data, isLoading, isError, refetch } = useClasses();

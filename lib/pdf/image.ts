@@ -4,7 +4,7 @@
  * Separate from the renderers because loading is async and browser-only, while `renderReceipt` is
  * deliberately synchronous and DOM-free so a layout bug is findable without a browser.
  *
- * NEVER THROWS. A logo that will not load must cost the document its crest, not the download — an
+ * never THROWS. A logo that will not load must cost the document its crest, not the download, an
  * admin is usually doing this with a parent standing at the desk.
  */
 export interface PdfImage {

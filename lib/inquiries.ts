@@ -8,15 +8,15 @@ import type { ClassOptionVM, StudentCreateInput } from "@/lib/validators/people"
 //   new ─▶ reviewing ─▶ accepted ─▶ converted
 //    └────────┴────────▶ rejected ─┐
 //                          ▲───────┘ (reconsidered)
-// Only `converted` is terminal — once an inquiry has become a student record, undoing it here would
+// Only `converted` is terminal: once an inquiry has become a student record, undoing it here would
 // leave that record orphaned from its origin.
 //
-// `rejected` is NOT terminal, and that is deliberate. An admissions decision gets reversed all the
+// `rejected` is not terminal, and that is deliberate. An admissions decision gets reversed all the
 // time: a place frees up, a parent supplies the missing document, someone rejects the wrong row in a
 // busy list. Making it final meant the only way back was to re-enter the whole application by hand,
 // losing the original submission date and everything the parent typed.
 //
-// This table is the single source of truth for BOTH which action buttons the UI offers AND the
+// This table is the single source of truth for both which action buttons the UI offers and the
 // server-side guard in lib/actions/inquiries.ts, so allowing it here is the entire change.
 export const INQUIRY_TRANSITIONS: Record<InquiryStatus, InquiryStatus[]> = {
   new: ["reviewing", "accepted", "rejected"],
@@ -35,7 +35,7 @@ export function nextInquiryStatuses(from: InquiryStatus): InquiryStatus[] {
   return INQUIRY_TRANSITIONS[from];
 }
 
-// Verb + button styling for each reachable target status — drives the list row's quick-actions
+// Verb + button styling for each reachable target status, drives the list row's quick-actions
 // menu and the detail page's action buttons from one place.
 export interface InquiryAction {
   status: InquiryStatus;

@@ -38,7 +38,7 @@ export function teacherClassIds(
  *
  * `attendanceRate` and `recentActivities` are passed IN rather than computed here: both need data
  * outside the academic structure (the attendance table, the activity log), and this function stays
- * pure so it can be unit-tested without a database. Both are optional — omitting them yields the
+ * pure so it can be unit-tested without a database. Both are optional, omitting them yields the
  * honest "not measured" reading of null/empty rather than a misleading zero.
  */
 export function deriveTeacherDashboard(params: {

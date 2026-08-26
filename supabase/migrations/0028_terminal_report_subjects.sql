@@ -1,10 +1,9 @@
--- 0028_terminal_report_subjects.sql — the GES report card's data
--- (docs/superpowers/specs/2026-07-31-staff-terminal-reports-design.md).
+-- 0028_terminal_report_subjects.sql, the GES report card's data.
 --
 -- Three additions: the scoring flags that split a subject into Class Score / Exams Score
 -- (is_exam on assessment types, the school's CA weight), the per-student report-card fields the
 -- class teacher fills (conduct, attitude, interest, promoted-to), and a per-subject SNAPSHOT
--- table — a generated report is a record, so its subject rows are frozen at generation rather
+-- table, a generated report is a record, so its subject rows are frozen at generation rather
 -- than re-derived, exactly like the aggregate figures on terminal_reports.
 
 alter table public.assessment_types
@@ -21,7 +20,7 @@ alter table public.terminal_reports
   add column attitude text,
   add column interest text,
   add column promoted_to text,
-  -- "Number on roll" printed on the card — the class size when the report was generated.
+  -- "Number on roll" printed on the card, the class size when the report was generated.
   add column enrolled_count int;
 
 create table public.terminal_report_subjects (
@@ -44,7 +43,7 @@ create index terminal_report_subjects_report_idx on public.terminal_report_subje
 
 alter table public.terminal_report_subjects enable row level security;
 
--- The class teacher compiles their own class's reports (spec decision 1) — insert/update on the
+-- The class teacher compiles their own class's reports (spec decision 1), insert/update on the
 -- report rows, full row control on the subject snapshot (regeneration replaces it wholesale).
 -- Publishing is just an update to is_published, so decision 2 (teachers publish) needs no extra
 -- policy. Deleting a report stays admin-only.
@@ -85,7 +84,7 @@ create policy trs_teacher_read on public.terminal_report_subjects for select to 
       select 1 from public.terminal_reports tr
       where tr.id = terminal_report_subjects.report_id
         and public.teacher_teaches_class(tr.class_id)));
--- Parents read their child's rows only once the report is PUBLISHED — same gate as the report row.
+-- Parents read their child's rows only once the report is PUBLISHED, same gate as the report row.
 create policy trs_parent_read on public.terminal_report_subjects for select to authenticated
   using (
     school_id = public.current_school_id()

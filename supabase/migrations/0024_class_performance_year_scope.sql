@@ -1,4 +1,4 @@
--- 0024_class_performance_year_scope.sql — scope the dashboard's per-class student count to the
+-- 0024_class_performance_year_scope.sql, scope the dashboard's per-class student count to the
 -- active academic year. Promotion appends one enrollment per year and never rewrites history
 -- (docs/05-USER-FLOWS.md §7), so the unscoped count kept counting promoted-out students against
 -- their old class forever. Mirrors the year scoping applied across lib/data reads.

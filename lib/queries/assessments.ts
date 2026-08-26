@@ -13,8 +13,8 @@ import type { AssessmentFilters } from "@/lib/validators/assessments";
 
 
 // Each action is bound to a const here rather than wrapped inline at `mutationFn`. That is not
-// style: `mutationFn: mutate(actions.x)` is a generic CALL in a contextually-typed position, and
-// TypeScript stops inferring useMutation's variables type through it — it silently falls back to
+// style: `mutationFn: mutate(actions.x)` is a generic call in a contextually-typed position, and
+// TypeScript stops inferring useMutation's variables type through it; it silently falls back to
 // `void`, so every `onSuccess(_result, variables)` below becomes an error. Binding first gives the
 // property a concrete function type and inference works as it did before. Do not inline these.
 const createAssessment = mutate(createAssessmentAction);
@@ -80,7 +80,7 @@ export const useScoreSheet = (assessmentId: string | null) =>
 /**
  * Save marks. Invalidates the whole `assessments` tree rather than one key: the same rows drive the
  * teacher's list (its result count and submitted state), the admin's assessment detail, and the
- * student's academic record — so a narrow invalidation would leave stale figures on screen.
+ * student's academic record, so a narrow invalidation would leave stale figures on screen.
  */
 export function useSaveResults() {
   const qc = useQueryClient();

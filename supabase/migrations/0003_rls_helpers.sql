@@ -1,4 +1,4 @@
--- 0003_rls_helpers.sql — SECURITY DEFINER helpers backing every policy (docs/03-DATABASE §10)
+-- 0003_rls_helpers.sql, SECURITY DEFINER helpers backing every policy (docs/03-DATABASE §10)
 -- Some helpers below reference tables created in LATER migrations (class_subjects, classes,
 -- student_guardians). LANGUAGE sql bodies are validated at CREATE time, so disable that check
 -- for this migration; the tables exist before any policy actually calls these functions.

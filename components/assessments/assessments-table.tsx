@@ -110,7 +110,7 @@ function FilterSelect({ label, value, onChange, options }: {
   return (
     <div className="space-y-1.5">
       <label className="block text-xs font-medium text-[var(--muted-foreground)]">{label}</label>
-      {/* base-ui's onValueChange is `(value: string | null, …) => void` (null on clear) — this
+      {/* base-ui's onValueChange is `(value: string | null, ...) => void` (null on clear); this
           Select is never rendered with a clear affordance, but the callback still has to accept
           it; falling back to the sentinel keeps FilterSelect's own `onChange: (v: string) => void`
           contract simple for its three call sites. */}

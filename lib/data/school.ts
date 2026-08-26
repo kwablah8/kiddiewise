@@ -3,7 +3,7 @@ import { db, unwrapMaybe } from "./_client";
 /**
  * The caller's own school. RLS (`schools_select`) confines this to their tenant, so no id is passed.
  *
- * Exists so nothing in the UI hardcodes the school's name. This is a multi-tenant product — a literal
+ * Exists so nothing in the UI hardcodes the school's name. This is a multi-tenant product, a literal
  * "Kiddiewise School Complex" in a credentials message or an email would be wrong for every school
  * except one, and would silently stay wrong after a rebrand.
  */

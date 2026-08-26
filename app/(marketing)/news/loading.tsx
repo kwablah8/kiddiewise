@@ -3,7 +3,7 @@ import { Section } from "@/components/marketing/section";
 /**
  * Shown while a news read is in flight.
  *
- * This is a narrow window by design — posts are cached for 60 seconds, so a visitor only sees it if
+ * This is a narrow window by design: posts are cached for 60 seconds, so a visitor only sees it if
  * they are the first to arrive after the cache expires. It exists because rule 4 asks for all four
  * states, and because the alternative on a slow Ghanaian mobile connection is a blank white page.
  *

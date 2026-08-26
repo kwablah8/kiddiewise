@@ -26,12 +26,12 @@ import {
 import { useAssignSubject, useStaff, useSubjects } from "@/lib/queries/academics";
 import { assignSubjectSchema, type AssignSubjectInput } from "@/lib/validators/academics";
 
-// Sentinel for the Select's "Unassigned" row — the field itself stores `null`, but the Select
+// Sentinel for the Select's "Unassigned" row: the field itself stores `null`, but the Select
 // needs a concrete string value to compare against (same pattern as `class-form.tsx`).
 const NONE_VALUE = "__unassigned__";
 
 // `assignSubjectSchema` has a `.default(null)` on `teacher_id`, so its input type (what the form
-// collects) differs from its output type (what `assignSubject` requires) — same pattern as
+// collects) differs from its output type (what `assignSubject` requires), same pattern as
 // `class-form.tsx` / `student-form.tsx`.
 type AssignSubjectFormInput = z.input<typeof assignSubjectSchema>;
 
@@ -44,7 +44,7 @@ interface AssignSubjectDialogProps {
 /**
  * Assign-a-subject-(and-optionally-a-teacher)-to-a-class dialog, opened from the class detail
  * Assignments panel (06-UI §6/§7 "Forms"). A duplicate `(class_id, subject_id)` pairing surfaces
- * as an inline error on the subject field — the action throws that exact message. Form state
+ * as an inline error on the subject field, the action throws that exact message. Form state
  * isn't reset on close; the caller remounts this component with a fresh `key` each time it
  * opens (mirrors `LinkGuardianDialog`).
  */
@@ -67,8 +67,8 @@ export function AssignSubjectDialog({ classId, open, onOpenChange }: AssignSubje
     defaultValues: { class_id: classId, subject_id: "", teacher_id: null },
   });
 
-  // `assignSubjectSchema` accepts any non-empty string for `subject_id` — it's the final Server
-  // Action contract, not a form-only rule — so an unselected subject is guarded here by
+  // `assignSubjectSchema` accepts any non-empty string for `subject_id`; it's the final Server
+  // Action contract, not a form-only rule, so an unselected subject is guarded here by
   // disabling submit rather than by a resolver error (same pattern as `LinkGuardianDialog`).
   const selectedSubjectId = useWatch({ control, name: "subject_id" });
 
@@ -86,7 +86,7 @@ export function AssignSubjectDialog({ classId, open, onOpenChange }: AssignSubje
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong. Please try again.";
-      // The action throws this exact message for a duplicate (class_id, subject_id) pairing —
+      // The action throws this exact message for a duplicate (class_id, subject_id) pairing,
       // surface it as an inline field error instead of a generic banner (input is preserved
       // either way since we never call `reset()` here).
       if (message.toLowerCase().includes("already assigned")) {

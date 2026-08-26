@@ -15,7 +15,7 @@ interface StudentFormSheetProps {
 }
 
 /**
- * The Students page's "Add New Student" drawer — the create form in a side sheet instead of
+ * The Students page's "Add New Student" drawer, the create form in a side sheet instead of
  * navigating to `/students/new` (which still exists for the Admissions "Convert to student" flow).
  * The form is only mounted while `open`, so its RHF state starts fresh every time the sheet opens.
  */

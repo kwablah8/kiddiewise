@@ -4,7 +4,7 @@ import type { GradeBandVM, AssessmentTypeVM } from "@/lib/validators/grading";
 // numeric columns arrive as strings over the wire (numeric is arbitrary-precision, so the driver
 // won't silently narrow it to a float). Both VMs contract numbers, so convert at the boundary.
 
-/** The school's grading scale, highest band first — how a grading scale reads. */
+/** The school's grading scale, highest band first, how a grading scale reads. */
 export async function listGradeBands(): Promise<GradeBandVM[]> {
   const rows = unwrapList(
     await db()

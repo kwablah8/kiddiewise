@@ -9,7 +9,7 @@ import { useSubmitInquiry } from "@/lib/queries/inquiries";
 import { inquiryCreateSchema, type InquiryCreateInput } from "@/lib/validators/inquiries";
 import { cn } from "@/lib/utils";
 
-// desired_class is free text on admissions_inquiries (03-DATABASE §8), not a FK to `classes` —
+// desired_class is free text on admissions_inquiries (03-DATABASE §8), not a FK to `classes`,
 // the marketing site is public and unauthenticated, so it offers this fixed stage list rather
 // than querying the school's real (tenant-scoped) class roster.
 const DESIRED_CLASSES = [
@@ -44,7 +44,7 @@ function emptyToNull(value: string): string | null {
 }
 
 interface InquiryFormProps {
-  /** Copy for the submit button and the success card — lets Admissions/Contact each sound distinct. */
+  /** Copy for the submit button and the success card, lets Admissions/Contact each sound distinct. */
   submitLabel?: string;
   successHeading?: string;
   successBody?: string;
@@ -53,8 +53,8 @@ interface InquiryFormProps {
 
 /**
  * The one inquiry form behind both Admissions and Contact (docs/05-USER-FLOWS §10). RHF + Zod
- * (`inquiryCreateSchema`), submitted through `useSubmitInquiry()` — never the action or store
- * directly. Four states: editable (with inline errors on invalid submit, input preserved —
+ * (`inquiryCreateSchema`), submitted through `useSubmitInquiry()`, never the action or store
+ * directly. Four states: editable (with inline errors on invalid submit, input preserved,
  * RHF's default since `reset()` is only called after a real success), submitting
  * (disabled + spinner), and an inline success card.
  */

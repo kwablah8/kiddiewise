@@ -24,7 +24,7 @@ const METHOD_BOXES: { key: PaymentMethod; label: string }[] = [
 ];
 
 /**
- * A leaning bar — the shape the school's letterhead is built from.
+ * A leaning bar, the shape the school's letterhead is built from.
  *
  * Drawn from the top-left corner: across, down-and-back by `skew`, then back along the bottom. A
  * negative `skew` leans the other way, which is how the bottom band mirrors the top one.
@@ -45,7 +45,7 @@ function chevron(
  * the page edge, meeting angled blocks at the other end.
  *
  * `dir` is 1 for the top band (shapes hang downward from `edge`) and -1 for the bottom, which is
- * the same drawing mirrored. Full-bleed by design — the bands run to the paper's edge on the
+ * the same drawing mirrored. Full-bleed by design, the bands run to the paper's edge on the
  * school's own template, and stopping them at the margin would read as a boxed-in header.
  */
 function band(doc: jsPDF, edge: number, dir: 1 | -1): void {
@@ -61,13 +61,13 @@ function band(doc: jsPDF, edge: number, dir: 1 | -1): void {
     chevron(doc, x, dir > 0 ? edge + offset : edge - offset - height, width, height, skew * dir);
 
   // Rules first, running in from the left edge, the longer one outermost. They are drawn long and
-  // then covered by the blocks below — a rule that stopped short of the angle would leave a sliver
+  // then covered by the blocks below, a rule that stopped short of the angle would leave a sliver
   // of white between the two, and one drawn on top would read as a stray line across the block.
   doc.setFillColor(...deep);
   bar(0, 0.6, 120, 1.5);
   bar(0, 3.6, 96, 0.8);
 
-  // The gold block sits furthest out and widest, so the eye reads gold-then-navy at a glance —
+  // The gold block sits furthest out and widest, so the eye reads gold-then-navy at a glance,
   // the order the crest itself uses.
   doc.setFillColor(...accent);
   lean(112, 0, PAGE_WIDTH - 112, 6.4, 7);
@@ -77,7 +77,7 @@ function band(doc: jsPDF, edge: number, dir: 1 | -1): void {
 }
 
 /**
- * The crest, printed pale and large behind the body — the watermark on the school's own template.
+ * The crest, printed pale and large behind the body, the watermark on the school's own template.
  *
  * 6% because this has to survive a school's mono laser: any heavier and the body text sits on a
  * grey field, any lighter and it vanishes. Opacity is reset immediately; a stray graphics state
@@ -101,7 +101,7 @@ function leader(doc: jsPDF, from: number, to: number, y: number): void {
 }
 
 /**
- * Greedy wrap across lines of DIFFERENT widths — the sum in words starts after its label and
+ * Greedy wrap across lines of DIFFERENT widths, the sum in words starts after its label and
  * continues on a full second line that stops short of the "GHc" field.
  *
  * Measures with the caller's current font, so set it before calling.
@@ -150,7 +150,7 @@ function value(doc: jsPDF, text: string, x: number, ruleY: number, maxWidth: num
  * download.
  *
  * The layout is the school's stationery, field for field: its banded letterhead, the crest
- * watermarked behind the body, and the six lines it asks for — received from, the sum in words and
+ * watermarked behind the body, and the six lines it asks for, received from, the sum in words and
  * figures, what the payment was for, which of Cash/Cheque/Momo, and who received it. Values are
  * typeset on the dotted rules where a pen would have written them, so a parent holding one
  * recognises the same slip the office has always issued.
@@ -162,19 +162,19 @@ function value(doc: jsPDF, text: string, x: number, ruleY: number, maxWidth: num
  * jsPDF rather than a print stylesheet: "print to PDF" depends on the operating system's print
  * dialog, which on a school's shared Windows machine is as likely to reach a printer with no paper
  * as a file. A generated document downloads the same way everywhere and can be attached to a
- * WhatsApp message, which is how these actually reach parents. It is the one dependency added
- * outside the locked stack in CLAUDE.md §3.
+ * WhatsApp message, which is how these actually reach parents. jsPDF is the one dependency added
+ * outside the original stack.
  *
  * Client-side, so no server round-trip and nothing to store: the receipt is a rendering of a
  * payment row that already exists, not a second copy of it.
  *
- * A5 landscape, not A4. A fee receipt is a slip — the school's own template fills the top third of
+ * A5 landscape, not A4. A fee receipt is a slip, the school's own template fills the top third of
  * a portrait page and leaves the rest to be cut off, and A5 landscape is that block at its own
  * size, two to an A4 sheet.
  *
  * `logo` arrives ALREADY DECODED (see `./image`) rather than being fetched here, so this stays
  * synchronous and DOM-free. Pass null or omit it and the crest and its watermark are simply
- * absent — a receipt without them still settles a debt.
+ * absent, a receipt without them still settles a debt.
  */
 export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a5" });
@@ -189,7 +189,7 @@ export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF 
 
   // --- Letterhead ----------------------------------------------------------------------------
   // The crest is square (512x512) so a square draw is undistorted, and its white background sits
-  // flush on white paper — no chip needed, unlike the on-screen <Crest> against navy.
+  // flush on white paper, no chip needed, unlike the on-screen <Crest> against navy.
   const crestSize = 13;
   if (logo) {
     doc.addImage(logo.dataUrl, logo.format, MARGIN, 19, crestSize, crestSize);
@@ -257,7 +257,7 @@ export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF 
   doc.text("GHc", ghcX, wordsY);
   const figureX = ghcX + doc.getTextWidth("GHc") + 3;
   leader(doc, figureX, RIGHT, wordsY);
-  // Sits against the "GHc" it belongs to rather than at the far right of the rule — a figure
+  // Sits against the "GHc" it belongs to rather than at the far right of the rule, a figure
   // written on a receipt starts where the field starts, and the dotted tail after it is what keeps
   // a second figure from being appended.
   doc.setFont("helvetica", "bold");
@@ -265,7 +265,7 @@ export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF 
   doc.setTextColor(...strong);
   doc.text(formatAmount(data.amount), figureX + 3, wordsY - 1.8);
 
-  // What the money was for, and which class it was for — a parent with two children here needs the
+  // What the money was for, and which class it was for, a parent with two children here needs the
   // second half of that sentence.
   const forY = 89;
   const forX = label(doc, "For the payment of", MARGIN, forY);
@@ -312,7 +312,7 @@ export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF 
   return doc;
 }
 
-/** The form's tick box, ticked or empty. A check mark, not a fill — a filled box scans as redacted. */
+/** The form's tick box, ticked or empty. A check mark, not a fill, a filled box scans as redacted. */
 function tickBox(doc: jsPDF, x: number, y: number, ticked: boolean): void {
   const width = 5.6;
   const height = 4.4;
@@ -331,7 +331,7 @@ function tickBox(doc: jsPDF, x: number, y: number, ticked: boolean): void {
 /**
  * Render and hand it to the browser as a download.
  *
- * Split from `renderReceipt` so the drawing can be exercised outside a browser — `.save()` and the
+ * Split from `renderReceipt` so the drawing can be exercised outside a browser, `.save()` and the
  * logo fetch are the only parts that need a DOM, and a layout bug should be findable without one.
  */
 export async function downloadReceipt(data: ReceiptData): Promise<void> {

@@ -43,7 +43,7 @@ interface LinkGuardianDialogProps {
   studentId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Parent ids already linked to this student — hidden from the picker. */
+  /** Parent ids already linked to this student, hidden from the picker. */
   excludeParentIds?: string[];
 }
 
@@ -52,7 +52,7 @@ interface LinkGuardianDialogProps {
  * panel (06-UI §6 "Forms"). `useLinkGuardian` invalidates the student detail + parents keys
  * on success, so both the Guardians panel and the parent's children list stay in sync.
  *
- * Form state isn't reset on close — the caller remounts this component with a fresh `key`
+ * Form state isn't reset on close, the caller remounts this component with a fresh `key`
  * each time it opens (see `StudentProfile`), which is what gives every open a clean form
  * without an effect-driven reset.
  */
@@ -83,8 +83,8 @@ export function LinkGuardianDialog({
     },
   });
 
-  // `linkGuardianSchema` accepts any string (incl. empty) for `parent_profile_id` — it's the
-  // final Server Action contract, not a form-only rule — so an unselected parent is guarded
+  // `linkGuardianSchema` accepts any string (incl. empty) for `parent_profile_id`; it's the
+  // final Server Action contract, not a form-only rule, so an unselected parent is guarded
   // here by disabling submit rather than by a resolver error.
   const selectedParentId = useWatch({ control, name: "parent_profile_id" });
 

@@ -9,7 +9,7 @@ import { getGalleryPhotos, getMarketingSettings } from "@/lib/marketing/cms/read
 export const metadata: Metadata = { title: "Gallery" };
 
 /**
- * Gallery — real photos of the campus, classrooms and community (01-REQ "Marketing website": Gallery).
+ * Gallery: real photos of the campus, classrooms and community (01-REQ "Marketing website": Gallery).
  * A masonry grid opens each photo in a focus-trapped lightbox.
  *
  * Photos come from the school's own uploads in the Studio, falling back to the committed set in

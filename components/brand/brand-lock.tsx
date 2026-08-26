@@ -11,13 +11,13 @@ interface BrandLockProps {
   /** Sizing override forwarded to the crest chip. */
   crestClassName?: string;
   /**
-   * Which name to show. "short" is the initialism over the descriptor — the right call in the
+   * Which name to show. "short" is the initialism over the descriptor, the right call in the
    * portal sidebar and other tight chrome, where the full name simply does not fit.
    *
    * "full" spells the school out and drops the descriptor, because "Learners International" is a
    * fragment of "SNAB Learners International School" and printing both says the same words twice.
-   * The split is by audience, not surface: anywhere a parent or visitor can arrive cold — the
-   * marketing header, the auth screens, the parent shell — spells the name out, because they may
+   * The split is by audience, not surface: anywhere a parent or visitor can arrive cold, the
+   * marketing header, the auth screens, the parent shell, spells the name out, because they may
    * never have seen "SLIS" written down. Staff chrome (the portal sidebar, the admin mobile bar)
    * keeps the short lock: an administrator already knows where they are, and the sidebar does not
    * have the room anyway.
@@ -28,7 +28,7 @@ interface BrandLockProps {
 /**
  * The identity lock: crest + "SLIS" over "Learners International".
  *
- * Six surfaces show this exact pairing — marketing header, marketing footer, portal sidebar, the
+ * Six surfaces show this exact pairing: marketing header, marketing footer, portal sidebar, the
  * auth screens' desktop panel and mobile band, and the parent shell. Keeping it here stops the
  * name/descriptor pair being retyped (and drifting) in each one.
  */
@@ -49,8 +49,8 @@ export function BrandLock({
           className={cn(
             "text-[1.05rem] font-semibold tracking-[-0.01em]",
             light ? "text-white" : "text-[var(--text)]",
-            // The full name is 31 characters, so it wraps onto two lines rather than truncating —
-            // "SNAB Learners Internationa…" would be worse than no change at all. `max-w` caps how
+            // The full name is 31 characters, so it wraps onto two lines rather than truncating,
+            // "SNAB Learners Internationa..." would be worse than no change at all. `max-w` caps how
             // far it can push the nav; `leading-tight` keeps the two lines reading as one mark.
             full ? "max-w-[13rem] leading-tight text-balance" : "truncate",
           )}
@@ -60,7 +60,7 @@ export function BrandLock({
         {!compact && !full && (
           <span
             className={cn(
-              // Full white on dark, NOT a dimmed tint: on the marketing header this line sits over
+              // Full white on dark, not a dimmed tint: on the marketing header this line sits over
               // a photographic hero, where anything translucent loses legibility against the image.
               "mt-1 truncate font-mono text-[9px] tracking-[0.22em] uppercase",
               light ? "text-white" : "text-[var(--muted-foreground)]",

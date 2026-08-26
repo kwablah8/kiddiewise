@@ -5,7 +5,7 @@ import type { StructureResolver } from "sanity/structure";
  *
  * Sanity's default is a flat list of every document type, which for a non-technical editor reads as
  * three pieces of jargon. This replaces it with the three things the school does: change a detail,
- * write a post, add photos. `siteSettings` opens straight into the document — a list containing one
+ * write a post, add photos. `siteSettings` opens straight into the document, a list containing one
  * item is a click that teaches nothing.
  */
 export const structure: StructureResolver = (S) =>

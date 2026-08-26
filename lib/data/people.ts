@@ -17,7 +17,7 @@ import type {
 import type { GradeBandVM } from "@/lib/validators/grading";
 import type { SubjectResultVM } from "@/lib/validators/parent";
 
-// A student's class is NOT a column on `students` — it comes from their active enrollment, so a
+// A student's class is not a column on `students`; it comes from their active enrollment, so a
 // promotion is one enrollment write rather than an update to the student row. Guardians likewise
 // come from `student_guardians`. Both are embedded here so a list is one round trip.
 const LIST_SELECT = `
@@ -142,7 +142,7 @@ function toDetailVM(s: StudentDetailRow): StudentDetailVM {
 }
 
 // The filter params arrive as loose strings from URL/select state, so they are narrowed against the
-// real enums here rather than trusted. An unrecognised value is ignored, not sent to Postgres — a
+// real enums here rather than trusted. An unrecognised value is ignored, not sent to Postgres, a
 // bad `?status=` in the address bar should show an unfiltered list, not a 400.
 const ENROLLMENT_STATUSES = studentListItemVM.shape.enrollment_status.options;
 const GENDERS = studentListItemVM.shape.gender.options;
@@ -169,7 +169,7 @@ export async function listStudents(
   if (genderFilter) q = q.eq("gender", genderFilter);
   if (search.trim()) {
     // Matches either name part or the admission number, the three things an admin types into the
-    // search box. `%` and `,` are stripped because both are `or()` filter syntax, not text.
+    // search box. `%` and `, ` are stripped because both are `or()` filter syntax, not text.
     const term = search.trim().replace(/[%,]/g, "");
     q = q.or(
       `first_name.ilike.%${term}%,last_name.ilike.%${term}%,admission_no.ilike.%${term}%`,
@@ -180,12 +180,12 @@ export async function listStudents(
   const mapped = rows.map(toListItemVM);
 
   // Filtered after mapping: class comes from the embedded enrollment, and PostgREST cannot filter a
-  // parent row on an embedded column without turning the join into an inner join — which would also
+  // parent row on an embedded column without turning the join into an inner join, which would also
   // drop unenrolled students from the unfiltered list.
   return class_id ? mapped.filter((s) => s.class_id === class_id) : mapped;
 }
 
-/** Stat cards for the Students page — derived from the FULL roster via the pure, tested helper. */
+/** Stat cards for the Students page: derived from the FULL roster via the pure, tested helper. */
 export async function getStudentStats(): Promise<StudentStatsVM> {
   const all = await listStudents();
   return computeStudentStats(all);
@@ -204,7 +204,7 @@ export async function getStudent(id: string): Promise<StudentDetailVM | null> {
  * terminal report, if any.
  *
  * A student sits several assessments per subject per term, but the screen shows one row per
- * subject — so the per-subject score is the MEAN of that subject's submitted scores, expressed as a
+ * subject, so the per-subject score is the MEAN of that subject's submitted scores, expressed as a
  * percentage of each assessment's own max_score (assessments are not all out of 100). The grade and
  * remark are then derived from the school's own bands, never read from the stored per-result grade,
  * so editing the grading scale re-grades every view at once.
@@ -251,7 +251,7 @@ export async function getStudentAcademics(studentId: string): Promise<StudentAca
 
   if (!report) return { term_name: termName, subjects, report: null };
 
-  // The report's own average is the source of truth once published — it was computed against the
+  // The report's own average is the source of truth once published; it was computed against the
   // full term, which may include subjects outside this term's submitted set.
   const average = report.average_score === null ? null : Math.round(Number(report.average_score));
   const overall = average !== null ? scoreToGrade(average, 100, bands) : null;

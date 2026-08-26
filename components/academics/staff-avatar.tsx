@@ -9,7 +9,7 @@ interface StaffAvatarProps {
   className?: string;
 }
 
-/** Initials avatar for staff — StaffVM carries no photo field (06-UI §6 "Profile chip"). */
+/** Initials avatar for staff, StaffVM carries no photo field (06-UI §6 "Profile chip"). */
 export function StaffAvatar({ firstName, lastName, size = "default", className }: StaffAvatarProps) {
   return (
     <Avatar size={size} className={cn("shrink-0", className)}>

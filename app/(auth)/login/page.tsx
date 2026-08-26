@@ -19,7 +19,7 @@ import { homePathForRole, isPathAllowedForRole } from "@/lib/auth/access";
 /**
  * Is `next` a path that stays inside this app?
  *
- * `isPathAllowedForRole` only checks which SUBTREE a path belongs to — it answers "may an admin open
+ * `isPathAllowedForRole` only checks which SUBTREE a path belongs to; it answers "may an admin open
  * this?", not "is this even a local path?", so `//evil.com` sails through it (it is not under /teacher
  * or /parent, so an admin is "allowed") and `router.replace("//evil.com")` would hard-navigate a just-
  * authenticated user off-site to a phishing clone. Require a single-slash absolute path and reject
@@ -61,7 +61,7 @@ export default function LoginPage() {
     });
 
     if (error || !auth.user) {
-      // Deliberately not distinguishing "no such account" from "wrong password" — that difference
+      // Deliberately not distinguishing "no such account" from "wrong password", that difference
       // tells an attacker which emails are registered.
       setSubmitError("That email and password don't match. Please try again.");
       return;
@@ -98,7 +98,7 @@ export default function LoginPage() {
       return;
     }
 
-    // Still holding a temporary password — the middleware will hold them on /update-password until
+    // Still holding a temporary password, the middleware will hold them on /update-password until
     // they replace it, so send them straight there instead of to a portal they can't use yet.
     if (profile.must_change_password) {
       router.replace("/update-password");
@@ -107,7 +107,7 @@ export default function LoginPage() {
     }
 
     // Honour ?next= from the middleware's redirect, but only when that path is one this role may
-    // actually open — otherwise a stale or crafted link would bounce them straight back out.
+    // actually open, otherwise a stale or crafted link would bounce them straight back out.
     //
     // Read from `window.location` rather than `useSearchParams()` on purpose: that hook opts the
     // whole page out of prerendering unless it sits inside a Suspense boundary, and the value is only
@@ -169,7 +169,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => setShowPassword((visible) => !visible)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              // The `before:` block is an invisible 44px touch target centred on the 32px button —
+              // The `before:` block is an invisible 44px touch target centred on the 32px button,
               // most people signing in here are on a phone, and 32px is well under the comfortable
               // minimum. Done with a pseudo-element rather than a bigger button so the icon's
               // optical position inside the input does not shift.
@@ -235,7 +235,7 @@ export default function LoginPage() {
 
       {process.env.NODE_ENV === "development" && (
         <div className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-3 text-xs text-[var(--muted-foreground)]">
-          {/* <p className="font-medium text-[var(--text)]">Demo accounts — password Password123!</p> */}
+          {/* <p className="font-medium text-[var(--text)]">Demo accounts, password Password123!</p> */}
           <p className="mt-1">Admin — admin@slis.test</p>
           <p>Teacher — teacher@slis.test</p>
           <p>Parent — parent@slis.test</p>

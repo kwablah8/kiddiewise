@@ -7,7 +7,7 @@ import type { NewsSummary } from "@/lib/marketing/news";
 
 interface NewsCardProps {
   post: NewsSummary;
-  /** Position in the list — drives the `reveal` entrance stagger, matching the programs grid. */
+  /** Position in the list: drives the `reveal` entrance stagger, matching the programs grid. */
   index: number;
 }
 
@@ -19,7 +19,7 @@ interface NewsCardProps {
  * hover) fighting over `transform` on one element lets the still-active view()-timeline animation win
  * permanently and silently kills the lift. See `components/marketing/home/programs.tsx`.
  *
- * A post with no cover photo gets a gold rule and extra breathing room instead of an empty grey box —
+ * A post with no cover photo gets a gold rule and extra breathing room instead of an empty grey box,
  * the excerpt is doing the work in that case, so it is given the space.
  */
 export function NewsCard({ post, index }: NewsCardProps) {

@@ -26,13 +26,13 @@ import {
 } from "@/lib/validators/academics";
 
 // `subjectCreateSchema` has a `.default(null)` on `code`, so its input type (what the form
-// collects) differs from its output type (what create/update require) — same pattern as
+// collects) differs from its output type (what create/update require), same pattern as
 // `student-form.tsx` / `class-form.tsx`.
 type SubjectFormInput = z.input<typeof subjectCreateSchema>;
 
 interface SubjectFormDialogProps {
   mode: "create" | "edit";
-  /** Required when `mode === "edit"` — the row already loaded by the subjects table/list. */
+  /** Required when `mode === "edit"`, the row already loaded by the subjects table/list. */
   subject?: SubjectVM;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -40,7 +40,7 @@ interface SubjectFormDialogProps {
 
 /**
  * Create/edit dialog for a subject (name, code). Duplicate name (case-insensitive, unique per
- * school) surfaces as an inline field error rather than a generic banner — the action throws
+ * school) surfaces as an inline field error rather than a generic banner, the action throws
  * that exact message. Form state isn't reset on close; the caller remounts with a fresh `key`
  * on every open (mirrors `LinkGuardianDialog`).
  */
@@ -79,7 +79,7 @@ export function SubjectFormDialog({ mode, subject, open, onOpenChange }: Subject
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong. Please try again.";
-      // The create/update action throws this exact message for a duplicate name — surface it
+      // The create/update action throws this exact message for a duplicate name, surface it
       // as an inline field error instead of a generic banner (input is preserved either way
       // since we never call `reset()` here).
       if (message.toLowerCase().includes("already exists")) {

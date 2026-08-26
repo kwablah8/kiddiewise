@@ -5,7 +5,7 @@ import { queryKeys } from "./keys";
 import * as data from "@/lib/data/daily-reports";
 import * as actions from "@/lib/actions/daily-reports";
 
-// Bound to consts so useMutation infers the variables type — see lib/queries/people.ts.
+// Bound to consts so useMutation infers the variables type, see lib/queries/people.ts.
 const saveParentDailyReport = mutate(actions.saveParentDailyReport);
 const saveTeacherDailyReport = mutate(actions.saveTeacherDailyReport);
 
@@ -23,7 +23,7 @@ export const useClassDailyStatus = (classId: string | null, date: string) =>
     enabled: !!classId && !!date,
   });
 
-// One prefix invalidation covers the per-child report AND the class status list — a save flips
+// One prefix invalidation covers the per-child report and the class status list, a save flips
 // the submitted flag the other portal's list renders.
 export function useSaveParentDailyReport() {
   const qc = useQueryClient();

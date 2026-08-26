@@ -164,6 +164,17 @@ Per child: attendance history and attendance percentage.
 Per child: examination results, grades, and teacher comments. Access to terminal reports for
 the term.
 
+### Fees
+Per child: what the school expects for the active academic year (per term or full year, including
+any arrears carried forward), what has been paid, the balance left, and any extra fees assigned
+(bus, feeding, uniform…). Every recorded payment is listed with a downloadable receipt — the
+school's own Official Receipt form, identical to the one the office prints, so a parent who mislays
+the paper slip can produce the school's document rather than a screenshot. Payment history is not
+year-scoped: a receipt from a previous year stays retrievable.
+
+Online payment is explicitly **out of scope** (no payment gateway in the MVP). This screen reports
+the position the office has recorded; it never collects money.
+
 Parents have **read-only** access, scoped to their own linked children.
 
 ---

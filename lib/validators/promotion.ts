@@ -4,7 +4,7 @@ import { z } from "zod";
  * End-of-year promotion.
  *
  * The four decisions an admin can make about a student, and the shape of the review table they make
- * them in. See `docs/05-USER-FLOWS.md` §7 — the rule that matters is that promotion never rewrites
+ * them in. See `docs/05-USER-FLOWS.md` §7, the rule that matters is that promotion never rewrites
  * where a child WAS, it only records where they go next.
  */
 
@@ -21,7 +21,7 @@ export const PROMOTION_DECISION_LABEL: Record<PromotionDecision, string> = {
 /**
  * One student on the review table, with the three figures a head teacher actually decides on.
  *
- * All three are DERIVED at read time, never stored (golden rule 9): the year average from published
+ * All three are derived at read time, never stored: the year average from published
  * terminal reports, attendance from the attendance table, the balance from the fee-position view. A
  * stored copy would be a second version of a number the rest of the app already computes, and it
  * would be wrong the moment a late payment or a corrected mark lands.
@@ -44,7 +44,7 @@ export const promoteStudentsSchema = z.object({
   source_year_id: z.string().min(1),
   target_year_id: z.string().min(1),
   /**
-   * Where promoted students land. Required even when every decision is repeat or graduate —
+   * Where promoted students land. Required even when every decision is repeat or graduate,
    * the form always has a destination selected, and validating it here means the action never has
    * to guess what an absent value meant.
    */

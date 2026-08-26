@@ -1,4 +1,4 @@
--- 0013_views_rpc.sql — dashboard aggregates (docs/03-DATABASE.md §12)
+-- 0013_views_rpc.sql, dashboard aggregates (docs/03-DATABASE.md §12)
 -- All functions run with the caller's rights (security invoker) so RLS still applies.
 
 create or replace function public.dashboard_stats()

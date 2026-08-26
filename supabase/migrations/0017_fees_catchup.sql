@@ -1,20 +1,20 @@
 -- 0017_fees_catchup.sql
 -- The Fees module shipped three concepts the schema never modelled: fee scope as a term enum
 -- (Full Year / First / Second / Third rather than a single term FK), per-student scholarships and
--- arrears, and a whole Extra Fees surface (bus, feeding, uniform…) with its own definitions and
+-- arrears, and a whole Extra Fees surface (bus, feeding, uniform...) with its own definitions and
 -- per-student assignments. This migration makes the schema match what lib/validators/fees.ts
 -- already contracts.
 --
 -- It also removes two stored duplicates. `invoices.amount_paid` and `invoices.status` restated
--- facts that `payments` already owns, which is exactly what golden rule 9 forbids — the UI already
--- derives both. They are dropped here and derived in 0018 instead.
+-- facts that `payments` already owns, and the UI already derives both. They are dropped here and
+-- derived in 0018 instead.
 
 create type fee_term as enum ('full_year','first','second','third');
 create type scholarship_type as enum ('none','partial','full','bursary');
 create type extra_fee_frequency as enum ('one_time','termly','monthly','annual');
 
 -- ---------------------------------------------------------------------------
--- fee_items — a reusable fee definition for a class + year (+ term scope)
+-- fee_items, a reusable fee definition for a class + year (+ term scope)
 -- ---------------------------------------------------------------------------
 alter table public.fee_items
   add column fee_term     fee_term not null default 'full_year',
@@ -24,7 +24,7 @@ alter table public.fee_items
   add column is_mandatory boolean not null default true,
   -- Replaced by fee_term: a full-year fee spans every term, so a single term FK could not
   -- express it. School-wide (class-less) charges are now modelled as extra_fee_items below,
-  -- which is where the UI actually exposes an "All classes" scope — so class_id is required here.
+  -- which is where the UI actually exposes an "All classes" scope, so class_id is required here.
   drop column term_id,
   alter column class_id set not null;
 
@@ -33,7 +33,7 @@ alter table public.fee_items
   add constraint fee_items_late_fee_nonneg check (late_fee is null or late_fee >= 0);
 
 -- ---------------------------------------------------------------------------
--- invoices — one student's fee position for a (year, fee_term) scope
+-- invoices, one student's fee position for a (year, fee_term) scope
 -- ---------------------------------------------------------------------------
 alter table public.invoices
   add column fee_term         fee_term not null default 'full_year',
@@ -47,7 +47,7 @@ alter table public.invoices
   add column scholarship_type scholarship_type not null default 'none',
   -- Null for a full-year invoice, which belongs to no single term.
   alter column term_id drop not null,
-  -- Derived from `payments` in 0018 (golden rule 9) — never stored.
+  -- Derived from `payments` in 0018, never stored.
   drop column amount_paid,
   drop column status;
 
@@ -60,7 +60,7 @@ alter table public.invoices
   add constraint invoices_student_year_term_key unique (student_id, academic_year_id, fee_term);
 
 -- ---------------------------------------------------------------------------
--- Extra fees — optional charges outside the core class fee
+-- Extra fees, optional charges outside the core class fee
 -- ---------------------------------------------------------------------------
 create table public.extra_fee_items (
   id uuid primary key default gen_random_uuid(),
@@ -91,7 +91,7 @@ create index extra_fee_assignments_school_id_idx on public.extra_fee_assignments
 create index extra_fee_assignments_student_idx on public.extra_fee_assignments(student_id);
 
 -- ---------------------------------------------------------------------------
--- payments — now the single source of truth for money received against EITHER
+-- payments, now the single source of truth for money received against EITHER
 -- a class-fee invoice or an extra-fee assignment
 -- ---------------------------------------------------------------------------
 alter table public.payments
@@ -107,7 +107,7 @@ create index payments_invoice_idx on public.payments(invoice_id);
 create index payments_extra_assignment_idx on public.payments(extra_fee_assignment_id);
 
 -- ---------------------------------------------------------------------------
--- RLS — same shape as 0011: admins manage, parents read their own child's rows
+-- RLS, same shape as 0011: admins manage, parents read their own child's rows
 -- ---------------------------------------------------------------------------
 alter table public.extra_fee_items enable row level security;
 alter table public.extra_fee_assignments enable row level security;
@@ -130,7 +130,7 @@ create policy pay_parent_read on public.payments for select to authenticated
   using (school_id = public.current_school_id() and public.parent_of_student(student_id));
 
 -- 0015's `grant ... on all tables in schema public` applied only to the tables that existed when
--- it ran — it is not a standing rule. Tables added later need their own grants or every request
+-- it ran; it is not a standing rule. Tables added later need their own grants or every request
 -- is denied at the privilege layer before RLS is even consulted.
 grant all on public.extra_fee_items, public.extra_fee_assignments to service_role;
 grant select, insert, update, delete

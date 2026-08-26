@@ -1,6 +1,6 @@
 import type { FeesOverviewVM } from "@/lib/validators/fees";
 
-// Minimal shapes the summary needs — satisfied by the mock store records and, post-Supabase, by a
+// Minimal shapes the summary needs: satisfied by the mock store records and, post-Supabase, by a
 // fee/payment aggregate. `expected` is the net amount owed for the term (after any discount).
 export interface FeeRecordForSummary {
   expected: number;
@@ -13,7 +13,7 @@ export interface ExtraFeeForSummary {
 }
 
 /** Derive the Overview figures from raw fee + extra-fee records. Pure so it's unit-testable and the
- *  same numbers back every card (golden rule 9). `collection_rate` is a whole percent of the total
+ *  same numbers back every card. `collection_rate` is a whole percent of the total
  *  due (expected + arrears) that has been paid; a record counts as fully paid when its paid amount
  *  covers its due, pending when nothing is paid, partial otherwise. */
 export function summarizeFees(
@@ -62,5 +62,34 @@ export function summarizeFees(
     partial,
     pending,
     total_records: records.length,
+  };
+}
+
+/** What one family owes, class fees and extra fees folded together. */
+export interface FeeTotals {
+  due: number;
+  paid: number;
+  outstanding: number;
+}
+
+/**
+ * Fold a `FeesOverviewVM`'s two halves into a single set of figures.
+ *
+ * `summarizeFees` keeps class fees and extra fees apart because the admin Overview reports them
+ * apart, a school reconciles termly fees against a different expectation than a uniform levy. A
+ * parent has one wallet, so their screen leads with the combined number. Derived here rather than
+ * added up inside a component, so the parent portal and any future statement print
+ * the same total.
+ *
+ * `outstanding` adds the two balances instead of computing `due - paid`, and the difference is not
+ * cosmetic: a payment recorded against a school-fee invoice does not settle a separate uniform fee.
+ * Netting them would tell a parent who overpaid their fees that they owe nothing for the uniform,
+ * while the school's ledger still shows it unpaid.
+ */
+export function combineFeeTotals(overview: FeesOverviewVM): FeeTotals {
+  return {
+    due: overview.total_expected + overview.total_arrears + overview.extra_total,
+    paid: overview.total_paid + overview.extra_paid,
+    outstanding: overview.outstanding + overview.extra_balance,
   };
 }

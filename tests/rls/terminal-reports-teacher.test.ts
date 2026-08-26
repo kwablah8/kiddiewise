@@ -1,6 +1,6 @@
 /**
- * tr_class_teacher_write / trs_* (migration 0028): the class TEACHER — not just any teacher of the
- * class — compiles their class's terminal reports, and parents see subject rows only once the
+ * tr_class_teacher_write / trs_* (migration 0028): the class TEACHER, not just any teacher of the
+ * class, compiles their class's terminal reports, and parents see subject rows only once the
  * report is published. seedTwoSchools makes teacherA a subject teacher of classA_taught; the
  * beforeAll promotes them to its class teacher, which is the relationship these policies gate on.
  */

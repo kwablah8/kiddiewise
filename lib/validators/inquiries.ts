@@ -1,15 +1,15 @@
 import { z } from "zod";
 
-// inquiry_status enum (03-DATABASE §3) — mirrors the DB enum exactly.
+// inquiry_status enum (03-DATABASE §3), mirrors the DB enum exactly.
 export const inquiryStatus = z.enum(["new", "reviewing", "accepted", "rejected", "converted"]);
 export type InquiryStatus = z.infer<typeof inquiryStatus>;
 
 // Write input for the marketing Admissions/Contact forms (03-DATABASE §8 `admissions_inquiries`,
 // 05-USER-FLOWS §10). Mirrors the table's writable columns; `id`/`school_id`/`status`/
 // `created_at` are assigned server-side, not collected from the visitor.
-// This is the ONE write an unauthenticated visitor can make (inq_anon_insert), so every field is
+// This is the one write an unauthenticated visitor can make (inq_anon_insert), so every field is
 // length-capped: without a ceiling, anyone on the internet could POST multi-megabyte strings straight
-// into the table — storage abuse and a denial-of-service on the admin's admissions inbox. Names and
+// into the table, storage abuse and a denial-of-service on the admin's admissions inbox. Names and
 // class are short; the free-text message is generous but bounded. `.trim()` keeps whitespace-only
 // values from passing `.min(1)`.
 export const inquiryCreateSchema = z.object({
@@ -22,7 +22,7 @@ export const inquiryCreateSchema = z.object({
 });
 export type InquiryCreateInput = z.infer<typeof inquiryCreateSchema>;
 
-// Stored/returned shape — the future Admin → Admissions slice reads this.
+// Stored/returned shape, the future Admin → Admissions slice reads this.
 export const inquiryVM = inquiryCreateSchema.extend({
   id: z.string(),
   status: inquiryStatus,

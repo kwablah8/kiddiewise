@@ -5,34 +5,30 @@ import { cn } from "@/lib/utils";
 import { MEDIA } from "@/lib/marketing/media";
 
 /**
- * FlyerPoster — the school's admission flyer, shown as a printed poster.
+ * FlyerPoster: the school's admission flyer, shown as a printed poster.
  *
- * The flyer is the school's own artwork, published verbatim by request: every word on it (the school
- * year, the early-bird discount, the facilities list) lives inside a raster and so is invisible to
- * search engines and screen readers. Two things mitigate that, both deliberate:
+ * It is the school's own artwork, published verbatim at their request, so every word on it sits
+ * inside a raster and is invisible to search engines and screen readers. `MEDIA.flyer.alt` therefore
+ * describes what the flyer says rather than the fact that it is a flyer, and the two facts that do
+ * the converting, the school year and the early-bird discount, are also published as real text
+ * beside every placement (`admissionsNote` and `earlyBird` from `getMarketingSettings()`). The school
+ * edits those in the Studio while this image stays a committed asset, so check the two still agree
+ * when next year's artwork lands.
  *
- *  - `MEDIA.flyer.alt` describes what the flyer *says*, not that it is a flyer.
- *  - The facts that do the conversion work — the year and the discount — are also published as real
- *    text in the copy beside every placement (`admissionsNote`, `earlyBird` from
- *    `getMarketingSettings()` — the school edits those two in the Studio, while this image stays a
- *    committed asset, so check they still agree when next year's artwork lands).
+ * The width cap is load-bearing rather than styling. The source is 1023px wide, so 28rem is about as
+ * large as the poster can go and still render 2x from real pixels; past that the dense small type
+ * goes soft. Pair it with a fixed grid track (`lg:grid-cols-[28rem_1fr]`), because an `auto` track
+ * sizes to content and shrank the poster well below the cap.
  *
- * The width cap is load-bearing, not styling: the source is 1023px wide, so 28rem (448px) is about
- * as large as the poster can go and still have a 2× screen render from real pixels rather than
- * upscaled ones — past that, the flyer's dense small type goes soft.
- *
- * Pair it with a fixed grid track (`lg:grid-cols-[28rem_1fr]`), not an `auto` one: an `auto` track
- * sizes to content and shrank the poster well below this cap.
- *
- * The image is intentionally NOT a link. Wrapping it would make the alt text the link's accessible
- * name — a paragraph-long name for a "download" action — so the download is its own labelled link
- * instead. It is a text link rather than a button so it never competes with the section's CTA.
+ * The image is deliberately not a link: wrapping it would make that paragraph of alt text the
+ * accessible name of a download action. The download is a separate labelled text link, not a button,
+ * so it never competes with the section's call to action.
  */
 
 type PosterBand = "brand" | "light";
 
 const FRAME: Record<PosterBand, string> = {
-  // Gold hairline on the blue band — the site's own accent-on-brand relationship, so the poster
+  // Gold hairline on the blue band: the site's own accent-on-brand relationship, so the poster
   // reads as framed rather than as a bright rectangle dropped on blue.
   brand: "ring-[color-mix(in_srgb,var(--m-accent),transparent_72%)] shadow-black/40",
   light: "ring-black/[0.08] shadow-black/15",
@@ -46,7 +42,7 @@ const LINK: Record<PosterBand, string> = {
 };
 
 interface FlyerPosterProps {
-  /** The tone of the band it sits on — picks the frame and download-link treatment. */
+  /** The tone of the band it sits on, picks the frame and download-link treatment. */
   on?: PosterBand;
   className?: string;
 }

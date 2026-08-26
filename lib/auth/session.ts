@@ -8,7 +8,7 @@ import type { AppRole } from "@/lib/auth/access";
  * know who is calling goes through here.
  *
  * `profiles` is the app's identity record; `auth.users` only proves the credential. The role and
- * school_id that scope every query live on the profile, so "signed in" means BOTH exist — an auth
+ * school_id that scope every query live on the profile, so "signed in" means both exist, an auth
  * user without a profile row is treated as signed out rather than as a user with no permissions.
  */
 
@@ -17,7 +17,7 @@ export async function getProfile(): Promise<Profile | null> {
   const supabase = await createClient();
 
   // getUser() revalidates the JWT against the auth server. getSession() only decodes the cookie,
-  // which a hostile client controls — never use it to make an authorization decision.
+  // which a hostile client controls, never use it to make an authorization decision.
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -36,10 +36,10 @@ export async function requireProfile(): Promise<Profile> {
 
 /**
  * The caller's profile, asserting one of `roles`. Bounced to their own portal home rather than
- * /login when signed in as the wrong role — being logged in but on the wrong page is a navigation
+ * /login when signed in as the wrong role, being logged in but on the wrong page is a navigation
  * mistake, not an authentication failure.
  *
- * This is a convenience for pages, NOT the security boundary — RLS is (golden rule 2). A missed
+ * This is a convenience for pages, not the security boundary; RLS is. A missed
  * call here shows the wrong chrome; it does not leak another school's or role's data.
  */
 export async function requireRole(...roles: AppRole[]): Promise<Profile> {
@@ -54,7 +54,7 @@ export async function requireRole(...roles: AppRole[]): Promise<Profile> {
 /**
  * The active academic year and term for the caller's school. Writes that need a term (attendance,
  * assessments) and reads that scope to "this term" both need it, and it is a property of the
- * school rather than of the request — so it is resolved here rather than passed through the UI.
+ * school rather than of the request, so it is resolved here rather than passed through the UI.
  */
 export async function getActiveContext(): Promise<{
   schoolId: string;

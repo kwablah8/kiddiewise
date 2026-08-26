@@ -27,7 +27,7 @@ import { cardShellClass } from "@/lib/ui";
 /**
  * Admin list of announcements, including drafts.
  *
- * Admins see unpublished rows here because `ann_read` lets them (migration 0010) — a draft is
+ * Admins see unpublished rows here because `ann_read` lets them (migration 0010), a draft is
  * invisible to parents and teachers, but the office needs to find the one it started yesterday.
  * The Draft / Published pill is the most important column on the screen: an announcement nobody
  * can read looks identical to a published one without it.
@@ -93,7 +93,7 @@ export function AnnouncementsTab() {
       key: "date",
       header: "Date",
       hideOnMobile: true,
-      // The published date when there is one, otherwise when it was written — a draft has no
+      // The published date when there is one, otherwise when it was written, a draft has no
       // published_at, and an empty cell would read as missing data rather than "not yet".
       render: (a) => (
         <span className="text-[var(--muted-foreground)]">

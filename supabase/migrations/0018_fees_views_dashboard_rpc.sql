@@ -1,6 +1,6 @@
 -- 0018_fees_views_dashboard_rpc.sql
 -- Derived reads for the surfaces 0017 restructured, plus the dashboard delta RPC the stat-card
--- trend pills have been waiting on (flagged as a SEAM in lib/data/dashboard.ts).
+-- trend pills have been waiting on.
 --
 -- `security_invoker = true` is load-bearing on both views. Without it a view runs with its
 -- OWNER's rights (postgres), which bypasses RLS on every underlying table and would hand any
@@ -9,7 +9,7 @@
 
 -- ---------------------------------------------------------------------------
 -- One row per student fee position, with paid/balance/status derived from
--- `payments` rather than stored (golden rule 9 — see 0017's dropped columns).
+-- `payments` rather than stored (see 0017's dropped columns).
 -- ---------------------------------------------------------------------------
 create view public.student_fee_positions with (security_invoker = true) as
 select
@@ -80,7 +80,7 @@ left join (
 -- Month-over-month deltas behind the dashboard stat-card trend pills.
 --
 -- students/staff/revenue are RELATIVE percent changes (this month vs last).
--- attendance is a PERCENTAGE-POINT difference, because it is already a rate — reporting
+-- attendance is a PERCENTAGE-POINT difference, because it is already a rate, reporting
 -- "attendance up 4%" when it moved 92% → 96% would be wrong twice over.
 -- Every branch guards division by zero and returns 0 rather than null, so the UI never has to
 -- special-case a school's first month of operation.
@@ -145,7 +145,7 @@ language sql stable security invoker set search_path = public as $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- Sidebar badge counts — one round trip instead of three.
+-- Sidebar badge counts, one round trip instead of three.
 -- ---------------------------------------------------------------------------
 create or replace function public.sidebar_counts()
 returns table(students bigint, staff bigint, new_inquiries bigint)

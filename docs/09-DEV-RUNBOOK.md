@@ -396,18 +396,20 @@ invitation** also exists and needs SMTP; locally those emails land in Mailpit (�
 
 | Area | Status |
 |---|---|
-| Schema + RLS (21 migrations · 26 tables · 2 views · 8 app-facing functions (+7 RLS helpers)) | ✅ Migrated and tested |
-| Auth (login, reset, role routing, server-side guards) | ✅ Real Supabase Auth |
-| Portal access — temporary passwords + invite links, forced first change | ✅ No provider needed |
-| Demo seed | ✅ `pnpm db:seed` |
-| `lib/data/*` reads · `lib/actions/*` writes | ✅ PostgREST + Server Actions |
-| `lib/mock/` seam | ✅ Deleted |
-| Teacher: attendance · score entry | ✅ Writes and propagates to the parent portal |
-| Admin: terminal reports (generate → remark → publish) | ✅ |
-| Test suites (93 unit · 13 RLS · 16 integration) | ✅ Green |
-| Promotion (decisions → next-year enrollments → year switch re-scopes every read) | ✅ `tests/rls/promotion-rollover.test.ts` |
-| Announcements/events authoring | ✅ |
-| School settings, Storage | ⏳ See `docs/08-ROADMAP.md` §Remaining work |
+| Schema and RLS (35 migrations, 26 tables, 2 views, 8 app-facing functions plus 7 RLS helpers) | Migrated and tested |
+| Auth (login, reset, role routing, server-side guards) | Done, real Supabase Auth |
+| Portal access: temporary passwords, invite links, forced first change | Done, no email provider needed |
+| Demo seed | Done, `pnpm db:seed` |
+| `lib/data/*` reads and `lib/actions/*` writes | Done, PostgREST and Server Actions |
+| Teacher attendance and score entry | Done, writes and propagates to the parent portal |
+| Admin terminal reports (generate, remark, publish) | Done |
+| Parent fees, balances and receipts | Done |
+| Promotion (decisions, next-year enrollments, year switch re-scopes every read) | Done, see `tests/rls/promotion-rollover.test.ts` |
+| Announcements and events authoring | Done |
+| Unit tests (198) | Green |
+| RLS tests (11 files) | Green except the two that assert migration 0032, which is unapplied on staging |
+| Integration tests | Fail wherever the demo tenant has drifted from `seed:demo`; they assert exact counts |
+| School settings, Storage | Not built, see `docs/08-ROADMAP.md` |
 
 The full breakdown of what is left, grouped
 by whether it blocks a usable MVP, is in `docs/08-ROADMAP.md` §"Remaining work".

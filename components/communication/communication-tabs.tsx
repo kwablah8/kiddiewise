@@ -17,7 +17,7 @@ const LABELS: Record<Tab, string> = {
 /**
  * Two tabs rather than two sidebar entries.
  *
- * Announcements and events are the same job — telling the school something — and an admin who has
+ * Announcements and events are the same job, telling the school something, and an admin who has
  * just written one often wants the other. Two nav rows would separate them by a click and grow a
  * sidebar that is already thirteen items long.
  */

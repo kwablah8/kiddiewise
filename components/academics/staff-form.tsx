@@ -31,7 +31,7 @@ import type { IssuedCredentials } from "@/lib/temp-password";
 import { staffCreateSchema, type StaffCreateInput, type StaffVM } from "@/lib/validators/academics";
 
 // `staffCreateSchema` has `.default(...)`s on the optional fields, so its input type (what the
-// form collects) differs from its output type (what create/update require) — same pattern as
+// form collects) differs from its output type (what create/update require), same pattern as
 // `student-form.tsx` / `class-form.tsx`.
 type StaffFormInput = z.input<typeof staffCreateSchema>;
 
@@ -61,7 +61,7 @@ interface StaffFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /**
-   * Receives the temporary credentials a create just issued, so the CALLER can show them.
+   * Receives the temporary credentials a create just issued, so the caller can show them.
    *
    * They cannot be shown from inside this dialog: the page remounts it with a fresh `key` on every
    * open and closes it on success, which would destroy the only copy of the password. The caller
@@ -73,7 +73,7 @@ interface StaffFormDialogProps {
 /**
  * Create/edit dialog for a staff record. Captures role (teacher / administrator), identity,
  * employment and contact details. `staff_no` is auto-assigned server-side on create with a
- * role-aware prefix (TCH-/ADM-) — never a form field — and shown read-only on edit. Teachers'
+ * role-aware prefix (TCH-/ADM-), never a form field, and shown read-only on edit. Teachers'
  * classes/subjects are assigned separately on a class's page (a hint points there). Form state
  * isn't reset on close; the caller remounts with a fresh `key` on every open.
  */
@@ -216,7 +216,7 @@ function StaffFormFields({
       if (mode === "create") {
         // The action creates the auth account with a generated temporary password and returns it.
         // staff_no is auto-assigned server-side, never client input. No success toast here: the
-        // credentials dialog the caller opens IS the confirmation, and a toast on top of it would
+        // credentials dialog the caller opens is the confirmation, and a toast on top of it would
         // compete with the one thing the admin must not miss.
         onCreated?.(await createStaff.mutateAsync(values));
       } else if (staffId) {
@@ -247,7 +247,7 @@ function StaffFormFields({
           </DialogHeader>
 
           <div className="mt-4 max-h-[62vh] space-y-6 overflow-y-auto pr-1">
-            {/* staff_no is never an input — auto-assigned on create, immutable after. Shown
+            {/* staff_no is never an input, auto-assigned on create, immutable after. Shown
                 read-only here only in edit mode. */}
             {mode === "edit" && initialData && (
               <FieldRow>

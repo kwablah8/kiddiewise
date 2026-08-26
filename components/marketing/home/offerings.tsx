@@ -4,9 +4,9 @@ import { Section } from "@/components/marketing/section";
 import { SITE } from "@/lib/marketing/site";
 
 /**
- * A small, curated accent palette — one warm colour per card — that gives the section a
+ * A small, curated accent palette, one warm colour per card, that gives the section a
  * children's-school feel while still harmonising with the blue/gold brand. These are decorative
- * accent hues (soft card fill + border, gradient sticker-style icon tile, tinted check), NOT brand
+ * accent hues (soft card fill + border, gradient sticker-style icon tile, tinted check), not brand
  * tokens, so they live here rather than in globals; the brand blue (#4169e1) anchors one of the
  * four. `card` is the card fill + border, `tile` the icon gradient, `check` the tick colour,
  * `ring` the check chip's hairline.
@@ -51,11 +51,11 @@ const OFFERING_STYLE: Record<string, { icon: LucideIcon; accent: Accent }> = {
 const FALLBACK = { icon: Sun, accent: "blue" as Accent };
 
 /**
- * "What we offer" — the co-curricular life beyond the Creche→JHS academic ladder. Sits directly
+ * "What we offer", the co-curricular life beyond the Creche→JHS academic ladder. Sits directly
  * after HomePrograms; a `warm` band keeps the page's alternating tone rhythm (white → warm →
- * brand). Every card is real, client-confirmed content from `SITE.offerings` — no invented
+ * brand). Every card is real, client-confirmed content from `SITE.offerings`, no invented
  * facilities or events. Each card carries its own soft accent fill and a slightly-tilted "sticker"
- * icon tile for a playful, school-like feel. No resting or hover shadows on the cards — colour and
+ * icon tile for a playful, school-like feel. No resting or hover shadows on the cards, colour and
  * shape carry the section. The entrance `reveal` lives on the outer article and the small hover
  * animation on the inner card, so the two never fight over `transform` (as HomePrograms does).
  */
@@ -72,7 +72,7 @@ export function HomeOfferings() {
         >
           More than lessons — a full day of growing.
         </h2>
-        {/* Playful multi-colour underline — a small school-like flourish under the heading. */}
+        {/* Playful multi-colour underline, a small school-like flourish under the heading. */}
         <span
           aria-hidden="true"
           className="mt-5 flex h-1.5 w-28 gap-1.5"

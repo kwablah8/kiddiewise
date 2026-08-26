@@ -9,7 +9,7 @@ interface TrendPillProps {
 }
 
 /**
- * "↗ +12% from last month" — success/danger tint, arrow pairs with the sign (06-UI §9).
+ * "↗ +12% from last month", success/danger tint, arrow pairs with the sign (06-UI §9).
  * A zero value is neither good nor bad, so it gets its own neutral (muted gray) tone rather
  * than defaulting into the success tint.
  */

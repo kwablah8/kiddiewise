@@ -49,7 +49,7 @@ describe("parent sees only linked children", () => {
     // Regression: 0008 gave `assessments` admin and teacher policies only. Parents could read
     // `results` but not `assessments`, and because the portal joins them with an INNER join, the
     // results page rendered "No results published yet" no matter what teachers submitted. Asserting
-    // the two tables separately passed — the bug lived in the join, so the join is asserted here.
+    // the two tables separately passed, the bug lived in the join, so the join is asserted here.
     const c = await signInAs(s.parentAEmail);
     const { data, error } = await c
       .from("results")

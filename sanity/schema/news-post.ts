@@ -1,12 +1,12 @@
 import { defineArrayMember, defineField, defineType } from "sanity";
 
 /**
- * A public news post — term dates, event write-ups, notices for prospective parents.
+ * A public news post: term dates, event write-ups, notices for prospective parents.
  *
- * This is NOT the portal's `announcements` table. That one is admin-authored, tenant-scoped by RLS and
+ * This is not the portal's `announcements` table. That one is admin-authored, tenant-scoped by RLS and
  * read by parents and teachers who are signed in. This is outward-facing, written in the school's
  * marketing voice, indexed by search engines, and readable by anyone. Different audiences, no sync,
- * no duplicated fact (CLAUDE.md golden rule 9).
+ * no duplicated fact.
  */
 export const newsPost = defineType({
   name: "newsPost",

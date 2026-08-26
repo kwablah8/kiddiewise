@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * Client half of the 404 screen (app/not-found.tsx stays a server component so it can export
- * metadata). Surfaces the requested path — honest + orienting, and a genuine help while many
- * section routes are still being built — and a "Go back" affordance alongside the dashboard link.
+ * metadata). Surfaces the requested path, honest + orienting, and a genuine help while many
+ * section routes are still being built, and a "Go back" affordance alongside the dashboard link.
  */
 export function NotFoundActions() {
   const router = useRouter();

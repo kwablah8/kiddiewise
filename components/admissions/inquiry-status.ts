@@ -1,7 +1,7 @@
 import type { StatusTone } from "@/components/data/status-pill";
 import type { InquiryStatus } from "@/lib/validators/inquiries";
 
-// Tone per inquiry status (06-UI §11 — always paired with the real word by StatusPill).
+// Tone per inquiry status (06-UI §11, always paired with the real word by StatusPill).
 // `new` needs attention (warning); `reviewing` is in-progress (neutral); `accepted`/`converted`
 // are positive outcomes (success); `rejected` is the negative outcome (danger).
 const STATUS_TONE: Record<InquiryStatus, StatusTone> = {

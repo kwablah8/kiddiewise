@@ -12,13 +12,13 @@ import { getMarketingSettings } from "@/lib/marketing/cms/read";
 export const metadata: Metadata = { title: "Admissions" };
 
 /**
- * Admissions — the funnel's main conversion page (01-REQ "Marketing website": process,
+ * Admissions, the funnel's main conversion page (01-REQ "Marketing website": process,
  * requirements, contact). Hero -> process steps -> requirements -> the school's own admission flyer
  * -> the inquiry form, which writes into `admissions_inquiries` (05-USER-FLOWS §10).
  *
  * A levels-and-ages section opened this page until the flyer landed. The flyer's own "Our levels"
  * panel states the same five levels and the same age ranges from `SITE.programs`, on this very
- * screen, and Home and About both still carry the section — so listing them a third time here only
+ * screen, and Home and About both still carry the section, so listing them a third time here only
  * delayed the form. Cut, leaving the flyer as this page's level listing.
  */
 export default async function AdmissionsPage() {

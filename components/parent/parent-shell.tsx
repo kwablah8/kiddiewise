@@ -19,7 +19,7 @@ interface ParentShellProps {
   children: ReactNode;
 }
 
-/** Lightweight top-bar shell for the read-only parent portal (spec §4.2) — wordmark, child switcher,
+/** Lightweight top-bar shell for the read-only parent portal (spec §4.2), wordmark, child switcher,
  *  and a name + sign-out. No admin sidebar. */
 export function ParentShell({ profile, children }: ParentShellProps) {
   const { signOut } = useSession();

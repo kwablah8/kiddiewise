@@ -6,7 +6,7 @@
  * go, which matters for a piece of plumbing whose failure mode is "content silently stops updating".
  *
  * These strings must match the `tags` passed to each `fetch` in `./read.ts` exactly. A typo here does
- * not throw — it just means a publish never reaches the site — so they are covered by tests.
+ * not throw; it just means a publish never reaches the site, so they are covered by tests.
  */
 
 /**
@@ -31,13 +31,13 @@ export function newsPostTag(slug: string): string {
 
 /**
  * Tags to expire for a payload. An unrecognised `_type` yields `[]`, which the route reports as a
- * successful no-op rather than an error — otherwise Sanity would retry a webhook we simply do not care
+ * successful no-op rather than an error, otherwise Sanity would retry a webhook we simply do not care
  * about until it gave up.
  */
 export function tagsFor(payload: SanityWebhookPayload): readonly string[] {
   switch (payload._type) {
     case "newsPost":
-      // Both: the list page's tag AND this post's own, since a publish can change either.
+      // Both: the list page's tag and this post's own, since a publish can change either.
       return payload.slug
         ? [CMS_TAGS.newsPost, newsPostTag(payload.slug)]
         : [CMS_TAGS.newsPost];

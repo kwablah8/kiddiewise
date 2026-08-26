@@ -6,7 +6,7 @@ import { FlyerPoster } from "@/components/marketing/flyer-poster";
 import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
 /**
- * The homepage's closing action band — and the flyer's home on this page.
+ * The homepage's closing action band, and the flyer's home on this page.
  *
  * The flyer lives here rather than in a section of its own because its own call to action is
  * "enroll now": it belongs at the point where the page asks for the action, after the story, the

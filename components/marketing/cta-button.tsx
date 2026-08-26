@@ -9,21 +9,21 @@ const ctaVariants = cva(
   {
     variants: {
       variant: {
-        // Gold — the primary SLIS conversion action. Dark-navy ink on gold reads 11.3:1, and the
+        // Gold: the primary SLIS conversion action. Dark-navy ink on gold reads 11.3:1, and the
         // navy focus ring stays visible on gold (a gold ring would vanish). Transparent ring
         // offset so it never prints a white collar over the blue hero / scrolled header.
         gold:
           "bg-[var(--m-accent)] text-[var(--m-accent-ink)] shadow-sm hover:bg-[color-mix(in_srgb,var(--m-accent),black_8%)] hover:shadow-md focus-visible:ring-[var(--m-accent-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
-        // Royal-blue solid — a strong action on white / warm bands.
+        // Royal-blue solid, a strong action on white / warm bands.
         brand:
           "bg-[var(--m-brand)] text-white shadow-sm hover:bg-[var(--m-brand-deep)] hover:shadow-md focus-visible:ring-[color-mix(in_srgb,var(--m-brand),white_25%)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
-        // White solid — the strong action sitting on a blue band.
+        // White solid, the strong action sitting on a blue band.
         "solid-light":
           "bg-white text-[var(--m-brand)] shadow-sm hover:bg-white/90 hover:shadow-md focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
-        // Outlined light — a quiet secondary on blue / dark bands.
+        // Outlined light, a quiet secondary on blue / dark bands.
         "ghost-light":
           "border border-white/35 text-white hover:border-white/70 hover:bg-white/10 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
-        // Outlined dark — a quiet secondary on white / warm bands.
+        // Outlined dark, a quiet secondary on white / warm bands.
         "outline-dark":
           "border border-[var(--border)] bg-transparent text-[var(--text)] hover:border-[color-mix(in_srgb,var(--m-brand),white_40%)] hover:bg-[color-mix(in_srgb,var(--m-brand),transparent_96%)] focus-visible:ring-[var(--m-brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-white",
       },

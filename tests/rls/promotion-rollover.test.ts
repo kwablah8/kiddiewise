@@ -1,7 +1,7 @@
 /**
  * End-of-year rollover: promotion writes NEXT year's enrollments and never rewrites history
  * (docs/05-USER-FLOWS.md §7), so a promoted student carries one enrollment row per year. Every
- * "current class" read must therefore disambiguate by the ACTIVE academic year — without that
+ * "current class" read must therefore disambiguate by the active academic year, without that
  * scoping, the students page and the class rosters keep resolving to the old year's placement
  * after the school rolls over, which is the bug this file pins down.
  *
@@ -23,8 +23,10 @@ vi.mock("@/lib/supabase/client", () => ({
 import { listStudents } from "@/lib/data/people";
 import { getRoster } from "@/lib/data/attendance";
 import { listClasses } from "@/lib/data/academics";
+import { getFeesOverview, listExtraFeeAssignments } from "@/lib/data/fees";
 
 let s: Seeded;
+let extraAssignmentId: string;
 
 beforeAll(async () => {
   s = await seedTwoSchools();
@@ -46,9 +48,34 @@ beforeAll(async () => {
 
   adminClient = await signInAs(s.adminAEmail);
 
+  // An extra fee assigned to the student who is about to be promoted. Extra fees carry no academic
+  // year of their own, so `extra_fee_positions` must pick one enrollment to name the student's
+  // class, migration 0032 scopes that join to the active year. Without it, a promoted student (who
+  // holds one active enrollment per year) yields one row PER YEAR: the fee renders twice and every
+  // extra-fee total doubles. Seeded before the rollover below so the student ends up holding both.
+  const { data: item, error: itemErr } = await svc
+    .from("extra_fee_items")
+    .insert({ school_id: s.schoolA, name: "Feeding", amount: 600 })
+    .select("id")
+    .single();
+  if (itemErr) throw new Error(`extra_fee_items: ${itemErr.message}`);
+
+  const { data: assignment, error: assignErr } = await svc
+    .from("extra_fee_assignments")
+    .insert({
+      school_id: s.schoolA,
+      extra_fee_item_id: item!.id,
+      student_id: s.studentA1,
+      amount: 600,
+    })
+    .select("id")
+    .single();
+  if (assignErr) throw new Error(`extra_fee_assignments: ${assignErr.message}`);
+  extraAssignmentId = assignment!.id;
+
   // The promotion write, exactly as lib/actions/promotion.ts performs it: studentA1 moves from
   // Basic 1 (classA_taught) into Basic 2 (classA_untaught) for the new year. studentA2 gets no
-  // decision — they must stay behind in the old year until an admin decides.
+  // decision; they must stay behind in the old year until an admin decides.
   const { error: promoteErr } = await adminClient.from("enrollments").upsert(
     {
       school_id: s.schoolA,
@@ -104,5 +131,23 @@ describe("after promotion and a year switch, reads follow the active year", () =
     const basic2 = classes.find((c) => c.id === s.classA_untaught);
     expect(basic1?.student_count).toBe(0);
     expect(basic2?.student_count).toBe(1);
+  });
+
+  // Migration 0032's guarantee, which had no test until a duplicate-key crash on the parent portal's
+  // Fees tab exposed it. Both portals read extra fees through these two functions, so pinning it
+  // here covers the admin Extra Fees tab and the parent's "Other fees" table at once.
+  it("an extra fee on a promoted student is ONE row, at their new class", async () => {
+    const rows = await listExtraFeeAssignments();
+    const mine = rows.filter((r) => r.id === extraAssignmentId);
+    expect(mine).toHaveLength(1);
+    expect(mine[0]!.class_name).toBe("Basic 2");
+  });
+
+  it("does not double a promoted student's extra-fee total", async () => {
+    // The money consequence of the row above, asserted separately: a duplicated row inflates what
+    // the school thinks it is owed and what the parent is told they owe.
+    const overview = await getFeesOverview();
+    expect(overview.extra_records).toBe(1);
+    expect(overview.extra_total).toBe(600);
   });
 });

@@ -23,7 +23,7 @@ would sign off on — clean, modular, maintainable, and boring in the best way.
   camelCase for functions/variables; UPPER_SNAKE for constants.
 - **Feature-first organisation:** group by domain (students, attendance, results…), not by
   file type. Shared primitives live in `components/ui`, cross-cutting logic in `lib/`.
-- **Where things live** (see `CLAUDE.md` §5) — one responsibility per layer:
+- **Where things live** (see the layout section of `README.md`), one responsibility per layer:
   - `lib/validators/` — Zod schemas: source of truth for shapes (view-models **and** write
     inputs). Types are `z.infer`red, never hand-written.
   - `lib/data/` — **reads**: PostgREST queries returning view-models, doing all joins/derivation
@@ -115,7 +115,7 @@ validators (Zod contracts)
 
 ## 6. Dependencies
 
-- The stack in `CLAUDE.md` §3 is the allowed set. **Adding a dependency requires a written
+- The stack listed in `README.md` is the allowed set. **Adding a dependency requires a written
   reason** in the relevant doc and sign-off.
 - Prefer platform primitives (Supabase, Next.js, the standard library) over new packages.
 - No unmaintained, oversized, or single-use dependencies for things we can write in a few
@@ -140,11 +140,11 @@ validators (Zod contracts)
 
 - **Small, focused commits** with clear messages (conventional-commit style encouraged:
   `feat:`, `fix:`, `chore:`, `docs:`).
-- **Feature branches**, PRs reviewed against the golden rules in `CLAUDE.md` §4 and the
-  definition of done in §8.
-- Schema changes are **migrations only** — never hand-edit the database via the dashboard.
-- Keep `CLAUDE.md` and `/docs` truthful: if reality diverges from a doc, update the doc in
-  the same change.
+- **Feature branches**, PRs reviewed against the conventions in `README.md` and the definition
+  of done below.
+- Schema changes are **migrations only**. Never hand-edit the database through the dashboard.
+- Keep `README.md` and `/docs` truthful: if reality diverges from a doc, update the doc in the
+  same change.
 
 ---
 
@@ -161,4 +161,4 @@ validators (Zod contracts)
 
 A feature is done only when: data model + RLS migration applied; Zod schema + generated
 types in place; all four UI states implemented; tenancy verified (no cross-school leakage);
-responsive; typed with no `any`; and consistent with the design system. See `CLAUDE.md` §8.
+responsive; typed with no `any`; and consistent with the design system.

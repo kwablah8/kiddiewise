@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+import {
+  extraFeeAssignmentVM,
+  feesOverviewVM,
+  paymentVM,
+  studentFeeVM,
+} from "@/lib/validators/fees";
+
 // Dashboard child card. attendance_pct + latest_result are nullable: their real values arrive with
 // Slices 2–3 (attendance + results); Slice 1 returns null and the card renders a gentle placeholder.
 export const childSummaryVM = z.object({
@@ -61,7 +68,7 @@ export const attendanceSummaryVM = z.object({
 export type AttendanceSummaryVM = z.infer<typeof attendanceSummaryVM>;
 
 // Results (Slice 3): a per-subject term score with its derived grade/remark and the teacher's note.
-// Only submitted results reach the parent — the read filters on `results.is_submitted`, so a
+// Only submitted results reach the parent: the read filters on `results.is_submitted`, so a
 // teacher's work-in-progress marks are never visible.
 export const subjectResultVM = z.object({
   subject: z.string(),
@@ -79,7 +86,7 @@ export const childResultsVM = z.object({
 export type ChildResultsVM = z.infer<typeof childResultsVM>;
 
 // The published terminal report for a term. Only published reports are ever returned (the
-// `tr_parent_read` policy checks is_published, and the read filters on it too) — an unpublished or
+// `tr_parent_read` policy checks is_published, and the read filters on it too), an unpublished or
 // absent report resolves to null.
 /** One frozen subject row of the child's report card, as published by the school. */
 export const childReportSubjectVM = z.object({
@@ -103,7 +110,7 @@ export const terminalReportVM = z.object({
   published: z.boolean(),
   overall_average: z.number().nullable(),
   overall_grade: z.string().nullable(),
-  /** The card's "Total Score" line — the sum of the subject totals, not an average. */
+  /** The card's "Total Score" line: the sum of the subject totals, not an average. */
   total_score: z.number().nullable(),
   class_teacher_remark: z.string(),
   /** The head's line on the card. Written by the admin, published with the rest of it. */
@@ -131,7 +138,38 @@ export const terminalReportVM = z.object({
   interest: z.string().nullable(),
   promoted_to: z.string().nullable(),
   // When school reopens after this term, if the school has set it. The line parents look for first
-  // after the grades — they plan childcare, travel and fees around it.
+  // after the grades; they plan childcare, travel and fees around it.
   reopening_date: z.string().nullable(),
 });
 export type TerminalReportVM = z.infer<typeof terminalReportVM>;
+
+// ---------------------------------------------------------------------------
+// Fees
+// ---------------------------------------------------------------------------
+
+/**
+ * A child's fee position as the parent portal shows it.
+ *
+ * Composed from the ADMIN fee view-models on purpose, rather than a parent-shaped copy of them: the
+ * same `student_fee_positions` view, the same `summarizeFees` arithmetic and the same payment rows
+ * back both screens, so what a parent is told they owe and what the office's Fees screen shows for
+ * that child cannot drift apart. Parents remain read-only, RLS grants them SELECT
+ * on `invoices` / `payments` / `extra_fee_assignments` for their own children and nothing more.
+ */
+export const childFeesVM = z.object({
+  /** The academic year `class_fees` belongs to. Null when the school has no active year set. */
+  year_name: z.string().nullable(),
+  /** The derived figures behind the summary card, see `lib/fees/summary.ts`. */
+  overview: feesOverviewVM,
+  /** One row per invoice raised for the active year: a full-year invoice, or one per term. */
+  class_fees: z.array(studentFeeVM),
+  /** Assigned extra fees, uniform, exam, PTA levy. These carry no academic year of their own. */
+  extra_fees: z.array(extraFeeAssignmentVM),
+  /**
+   * Every payment recorded for this child, newest first, deliberately not scoped to the active
+   * year. A receipt from a previous year is still the parent's proof of payment, so the history has
+   * to outlive the year it was collected in.
+   */
+  payments: z.array(paymentVM),
+});
+export type ChildFeesVM = z.infer<typeof childFeesVM>;

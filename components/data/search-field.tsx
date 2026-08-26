@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  *
  * Extracted from the students table, which had the only one, so the other eight lists could gain
  * search without each re-inventing the icon offset and the input height. One implementation also
- * means one place to fix the affordance — an admin should recognise it instantly on every screen
+ * means one place to fix the affordance, an admin should recognise it instantly on every screen
  * rather than hunting for wherever that particular table put its filter.
  *
  * Presentational only: it holds no state and does no filtering. Callers decide whether the query
@@ -26,7 +26,7 @@ export function SearchField({
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
-  /** Accessible name. Required — "Search" alone is useless when a page has more than one list. */
+  /** Accessible name. Required, "Search" alone is useless when a page has more than one list. */
   label: string;
   className?: string;
 }) {

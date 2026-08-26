@@ -11,7 +11,7 @@ export const cardShellClass =
  * Visible focus ring for hand-rolled interactive chrome on the dark navy sidebar (06-UI §11).
  *
  * Gold rather than white: it reads 9.09:1 on the sidebar's top navy and 13.22:1 on its bottom, so
- * it is more visible than the white/70 it replaced AND it is the brand accent — the keyboard path
+ * it is more visible than the white/70 it replaced and it is the brand accent, the keyboard path
  * through the app is one of the few places a focus ring gets to carry identity.
  */
 export const navFocusRingClass =

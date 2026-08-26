@@ -12,7 +12,7 @@ import type {
  *
  * Driven by the ENROLMENT, like the register and the mark sheet: every actively-enrolled student
  * appears, whether or not a report has been generated for them. A sheet that only listed generated
- * rows would hide exactly the students an admin needs to notice — the ones still missing a report.
+ * rows would hide exactly the students an admin needs to notice, the ones still missing a report.
  *
  * Where a report EXISTS, its stored figures are shown, because a report is a snapshot and the admin
  * must see what was actually recorded. Where it does not, the figures are computed live so the admin
@@ -22,8 +22,8 @@ export async function getReportSheet(
   classId: string,
   termId: string,
 ): Promise<TerminalReportSheetVM | null> {
-  // The term resolves first because the roster is scoped to the year that term belongs to — NOT
-  // the active year — so last term's sheet keeps showing that year's cohort after a rollover.
+  // The term resolves first because the roster is scoped to the year that term belongs to, not
+  // the active year, so last term's sheet keeps showing that year's cohort after a rollover.
   const term = unwrapMaybe<{ id: string; name: string; academic_year_id: string }>(
     await db().from("terms").select("id, name, academic_year_id").eq("id", termId).maybeSingle(),
     "term",
@@ -80,7 +80,7 @@ export async function getReportSheet(
   const studentIds = students.map((s) => s.id);
 
   // Live figures for students with no report yet. Fetched for everyone in one go rather than per
-  // student — a class of 40 would otherwise be 80 round trips.
+  // student, a class of 40 would otherwise be 80 round trips.
   const [resultsRes, attendanceRes] = await Promise.all([
     db()
       .from("results")
@@ -125,10 +125,10 @@ export async function getReportSheet(
       student_last_name: s.last_name,
       admission_no: s.admission_no,
       subject_count: live.subject_count,
-      // Stored figures win where a report exists — that is the snapshot the school committed to.
+      // Stored figures win where a report exists; that is the snapshot the school committed to.
       total_score: stored ? numberOrNull(stored.total_score) : live.total_score,
       average_score: stored ? numberOrNull(stored.average_score) : live.average_score,
-      // Frozen figures only — a preview can't show them because they are taken across the class at
+      // Frozen figures only, a preview can't show them because they are taken across the class at
       // generation, and half of them (the level rank) across classes that may not be generated yet.
       passes: stored?.passes ?? null,
       class_average: stored ? numberOrNull(stored.class_average) : null,
@@ -145,7 +145,7 @@ export async function getReportSheet(
       interest: stored?.interest ?? null,
       promoted_to: stored?.promoted_to ?? null,
       enrolled_count: stored?.enrolled_count ?? null,
-      // Frozen at generation. Empty until then — the dialog derives nothing live, because the
+      // Frozen at generation. Empty until then: the dialog derives nothing live, because the
       // subject table is the part of the card the school signs off on.
       subjects: (stored?.terminal_report_subjects ?? [])
         .map((sub) => ({
@@ -169,7 +169,7 @@ export async function getReportSheet(
   });
 
   // Positions are recomputed live for ungenerated rows so the preview is coherent, but a generated
-  // report keeps the position it was given — otherwise a published rank would drift as marks change.
+  // report keeps the position it was given, otherwise a published rank would drift as marks change.
   const positioned = assignPositions(draft);
 
   const rows: TerminalReportRowVM[] = positioned

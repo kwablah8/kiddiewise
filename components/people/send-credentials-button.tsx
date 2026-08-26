@@ -22,7 +22,7 @@ import type { IssuedCredentials } from "@/lib/temp-password";
  * Confirmed rather than immediate, because the label undersells what the button does: "send
  * credentials" sounds like re-sending details the school already has, when it actually REVOKES the
  * password the person is currently using. For someone who has already taken ownership of their
- * account that is a lockout, and the old password cannot be restored — it is a bcrypt hash. One
+ * account that is a lockout, and the old password cannot be restored; it is a bcrypt hash. One
  * sentence of warning is cheap; an unannounced reset costs a phone call to whoever it hit.
  *
  * Shared by the staff and parents tables rather than written twice: they are the same operation on

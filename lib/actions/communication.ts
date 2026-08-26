@@ -18,14 +18,14 @@ import { z } from "zod";
 /**
  * Announcement and event writes.
  *
- * Only admins reach these — `ann_admin` and `ev_admin` (migration 0010) are the enforcement, and
+ * Only admins reach these: `ann_admin` and `ev_admin` (migration 0010) are the enforcement, and
  * they check the role in the database rather than trusting anything sent from the browser.
  */
 
 /**
  * `published_at` is stamped by the server, never sent by the client, and only on the transition
  * INTO published. Re-saving an already-published announcement must not silently move it to the top
- * of every parent's list — the school published it once, and that is when it happened.
+ * of every parent's list, the school published it once, and that is when it happened.
  */
 function publishedStamp(isPublished: boolean | undefined, wasPublished: boolean) {
   if (isPublished === undefined) return {};

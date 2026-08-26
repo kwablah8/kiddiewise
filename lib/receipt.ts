@@ -2,15 +2,15 @@ import { BRAND } from "@/lib/brand";
 import type { PaymentMethod, PaymentVM } from "@/lib/validators/fees";
 
 /**
- * Receipt numbering and shaping. Pure — no jsPDF, no DOM — so the rules are unit-tested and the
+ * Receipt numbering and shaping. Pure: no jsPDF and no DOM, so the rules are unit-tested and the
  * PDF renderer stays a thin drawing layer over them.
  */
 
 /**
  * The number printed on the receipt, derived from the payment's id.
  *
- * NOT a sequential register. A true receipt book numbers 0001, 0002, 0003 with no gaps, and an
- * auditor uses that continuity to prove nothing was torn out — that needs a database sequence and a
+ * not a sequential register. A true receipt book numbers 0001, 0002, 0003 with no gaps, and an
+ * auditor uses that continuity to prove nothing was torn out, that needs a database sequence and a
  * guarantee that a failed request never burns a number, which this does not attempt.
  *
  * What it does guarantee is what a reprint needs: the same payment always produces the same number,
@@ -74,7 +74,7 @@ function wholeInWords(n: number): string {
     .map((part, i) => {
       const chunk = underThousand(part.value);
       const words = part.scale ? `${chunk} ${SCALES[part.scale] ?? ""}`.trim() : chunk;
-      // "One thousand AND five" — English puts the conjunction before a trailing remainder below a
+      // "One thousand and five", English puts the conjunction before a trailing remainder below a
       // hundred, and only there. "One thousand and one hundred" would be wrong.
       const conjunction = i > 0 && part.scale === 0 && part.value < 100 ? "and " : "";
       return conjunction + words;
@@ -83,11 +83,11 @@ function wholeInWords(n: number): string {
 }
 
 /**
- * The amount as the "Being the sum of" line reads it — words, because that is what a receipt book
+ * The amount as the "Being the sum of" line reads it, words, because that is what a receipt book
  * asks for and what makes a figure impossible to alter after the fact.
  *
  * Ends in "only" for the same reason a cheque does: it closes the line so nothing can be appended.
- * Rounded to the pesewa first — a receipt states a settled amount, never a third decimal.
+ * Rounded to the pesewa first: a receipt states a settled amount, never a third decimal.
  */
 export function amountInWords(amount: number): string {
   const pesewasTotal = Math.round(amount * 100);
@@ -112,28 +112,43 @@ export interface ReceiptData {
   amount: number;
   method: string;
   /**
-   * The raw method behind `method`'s label. The school's form offers three tick boxes — Cash,
-   * Cheque, Momo — and matching a box against a display string would break the moment a label is
+   * The raw method behind `method`'s label. The school's form offers three tick boxes, Cash,
+   * Cheque, Momo, and matching a box against a display string would break the moment a label is
    * reworded.
    */
   methodKey: PaymentMethod;
   reference: string | null;
   paidAt: string;
+  /** The officer who received the money, as recorded on the payment. */
   issuedBy: string;
   /**
    * Where the crest is fetched from at render time. Resolved here rather than in the renderer so the
-   * rule stays pure and testable — and so the Storage upload, when it lands, needs no change to
+   * rule stays pure and testable, and so the Storage upload, when it lands, needs no change to
    * `lib/pdf/*`.
    */
   logoSrc: string;
 }
 
-/** Assemble everything the receipt prints, from a payment row plus who is issuing it. */
+/**
+ * The "Received by" line when the recorder is unknown, a payment whose `recorded_by` profile was
+ * since deleted. The school as an institution received the money either way, so the line stays
+ * filled rather than printing a blank where a signature belongs.
+ */
+const UNKNOWN_RECORDER = "the school office";
+
+/**
+ * Assemble everything the receipt prints from a payment row.
+ *
+ * "Received by" comes from the payment's own `recorded_by_name`, not from whoever is signed in.
+ * That distinction is the whole point of a receipt: it attests that a named officer took the money
+ * on a given day. Reading the current session instead would put the wrong name on every reprint,
+ * a second admin reprinting a colleague's receipt, or a parent downloading their own copy from the
+ * parent portal, which would otherwise read "Received by: <the parent>".
+ */
 export function buildReceipt(params: {
   payment: PaymentVM;
   schoolName: string;
   methodLabel: string;
-  issuedBy: string;
   /** The tenant's own `schools.logo_url`, or null when they haven't uploaded one. */
   logoUrl: string | null;
 }): ReceiptData {
@@ -148,7 +163,7 @@ export function buildReceipt(params: {
     methodKey: params.payment.method,
     reference: params.payment.reference,
     paidAt: params.payment.paid_at,
-    issuedBy: params.issuedBy,
+    issuedBy: params.payment.recorded_by_name ?? UNKNOWN_RECORDER,
     // The tenant's own upload wins; the bundled crest covers a school that hasn't uploaded one.
     logoSrc: params.logoUrl ?? BRAND.crest.src,
   };

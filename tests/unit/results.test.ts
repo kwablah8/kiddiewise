@@ -65,7 +65,7 @@ describe("aggregateSubjectResults", () => {
     );
     expect(out[0]!.teacher_comment).toBe("Newer note");
 
-    // Reversed input must not change the answer — the comparison is on the timestamp, not arrival.
+    // Reversed input must not change the answer: the comparison is on the timestamp, not arrival.
     const reversed = aggregateSubjectResults(
       [
         row({ teacher_comment: "Newer note", recorded_at: "2026-06-01T00:00:00Z" }),

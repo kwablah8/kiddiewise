@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 /**
- * Announcements and events — the two things a school pushes out to everyone.
+ * Announcements and events, the two things a school pushes out to everyone.
  *
- * They look similar and are deliberately NOT modelled the same way, because the database already
+ * They look similar and are deliberately not modelled the same way, because the database already
  * treats them differently and pretending otherwise would be a lie the UI has to maintain:
  *
  *   - an announcement is TARGETED and DRAFTABLE. `ann_read` (migration 0010) only returns published
@@ -38,7 +38,7 @@ export const announcementCreateSchema = z.object({
   title: z.string().trim().min(1, "Give the announcement a title").max(200, "Keep the title under 200 characters"),
   body: z.string().trim().min(1, "Write what you want people to read").max(10000, "That's longer than an announcement should be"),
   audience: announcementAudience.default("everyone"),
-  /** Saving unpublished keeps it a draft — nobody outside the office can see it. */
+  /** Saving unpublished keeps it a draft, nobody outside the office can see it. */
   is_published: z.boolean().default(false),
 });
 export type AnnouncementCreateInput = z.infer<typeof announcementCreateSchema>;

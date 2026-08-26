@@ -7,7 +7,7 @@ import type { TeacherDashboardVM } from "@/lib/validators/teacher";
  *
  * RLS already narrows `students` and `attendance` to the classes this teacher is assigned to, but
  * `classes` and `class_subjects` are readable school-wide (any staff member may see the timetable).
- * So the shape of "mine" is decided by `deriveTeacherDashboard` filtering on teacherId — RLS is the
+ * So the shape of "mine" is decided by `deriveTeacherDashboard` filtering on teacherId; RLS is the
  * boundary for the sensitive rows, the derivation is what makes the page personal.
  */
 export async function getTeacherDashboard(teacherId: string): Promise<TeacherDashboardVM> {
@@ -30,11 +30,11 @@ export async function getTeacherDashboard(teacherId: string): Promise<TeacherDas
 
   const myClassIds = teacherClassIds(teacherId, classes, assignments);
 
-  // Only fetch the dependent rows once we know which classes are the teacher's — an empty set means
+  // Only fetch the dependent rows once we know which classes are the teacher's, an empty set means
   // a newly hired teacher with no assignments, and there is nothing to ask for.
   const classIdList = [...myClassIds];
 
-  // Class sizes count the ACTIVE year's enrollments — promotion leaves last year's rows in place,
+  // Class sizes count the active year's enrollments, promotion leaves last year's rows in place,
   // and without the year scope every promoted-out student would still be counted here.
   const rosterQuery = () => {
     let q = db().from("enrollments").select("class_id").eq("status", "active").in("class_id", classIdList);
@@ -63,7 +63,7 @@ export async function getTeacherDashboard(teacherId: string): Promise<TeacherDas
   const students = enrollments.map((e) => ({ class_id: e.class_id }));
 
   // Attendance rate across the teacher's own classes this term. Null (not zero) when nothing has
-  // been marked yet — "no register taken" and "nobody attended" are very different facts.
+  // been marked yet, "no register taken" and "nobody attended" are very different facts.
   const attendanceRate =
     attendance.length === 0
       ? null
@@ -89,7 +89,7 @@ export async function getTeacherDashboard(teacherId: string): Promise<TeacherDas
   });
 }
 
-/** The classes this teacher may mark or grade — the class picker on attendance and grading. */
+/** The classes this teacher may mark or grade, the class picker on attendance and grading. */
 export async function listTeacherClasses(
   teacherId: string,
 ): Promise<{ id: string; name: string; level: string }[]> {

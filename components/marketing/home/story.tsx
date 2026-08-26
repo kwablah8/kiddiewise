@@ -3,7 +3,7 @@ import { SITE } from "@/lib/marketing/site";
 import { MEDIA } from "@/lib/marketing/media";
 
 /**
- * "Watch our story" — the school's own promo video, lazily loaded (`preload="none"`, so the
+ * "Watch our story", the school's own promo video, lazily loaded (`preload="none"`, so the
  * ~MB file only downloads on play) behind a poster frame, muted by default, with native controls.
  */
 export function HomeStory() {

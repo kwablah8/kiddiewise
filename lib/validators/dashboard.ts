@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-// Mirrors the real `dashboard_stats(school_id)` RPC (docs/03-DATABASE §12) exactly — four bare
-// totals, no comparison figures — so integration is a clean swap, not a seam break.
+// Mirrors the real `dashboard_stats(school_id)` RPC (docs/03-DATABASE §12) exactly, four bare
+// totals, no comparison figures, so integration is a clean swap, not a seam break.
 export const dashboardStatsVM = z.object({
   total_students: z.number(),
   total_staff: z.number(),
@@ -13,7 +13,7 @@ export const dashboardStatsVM = z.object({
 // into dashboardStatsVM because it answers a different question and comes from a different RPC.
 //
 // `students`, `staff` and `revenue` are signed RELATIVE percent changes vs last month. `attendance`
-// is a PERCENTAGE-POINT difference, because it is already a rate — reporting "attendance up 4%" when
+// is a PERCENTAGE-POINT difference, because it is already a rate, reporting "attendance up 4%" when
 // it moved 92% → 96% would be wrong twice over. Feeds the stat-card trend pills
 // (`06-UI §5/§6`, `01-REQ Admin §Dashboard`).
 export const dashboardTrendsVM = z.object({

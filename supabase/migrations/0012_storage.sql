@@ -1,4 +1,4 @@
--- 0012_storage.sql — buckets + policies (docs/02-ARCHITECTURE.md §7)
+-- 0012_storage.sql, buckets + policies (docs/02-ARCHITECTURE.md §7)
 insert into storage.buckets (id, name, public) values
   ('avatars','avatars', false),
   ('school-logos','school-logos', true),

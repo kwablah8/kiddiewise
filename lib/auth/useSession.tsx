@@ -20,7 +20,7 @@ import type { Profile } from "@/lib/types";
  *
  * Two effects, deliberately not one: the auth listener only records WHO is signed in, and a second
  * effect fetches their profile. Supabase warns against awaiting inside an `onAuthStateChange`
- * callback — the client serialises auth operations, so a query awaited in the callback can deadlock
+ * callback, the client serialises auth operations, so a query awaited in the callback can deadlock
  * against the very token refresh that triggered it. Splitting them keeps the callback synchronous.
  */
 
@@ -52,7 +52,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const supabase = createClient();
-    // onAuthStateChange fires INITIAL_SESSION on subscribe, so this covers the first read too —
+    // onAuthStateChange fires INITIAL_SESSION on subscribe, so this covers the first read too,
     // no separate getUser() call, and therefore no race between the two.
     const {
       data: { subscription },
@@ -62,7 +62,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       // React Query keys are not per-user, and its cache outlives a sign-out (the QueryClient is
       // created once in app/providers.tsx). On a shared front-desk machine that means the next person
       // to sign in would briefly see the previous user's children, results and fees rendered from
-      // stale cache. Drop every cached query whenever the signed-in identity actually changes —
+      // stale cache. Drop every cached query whenever the signed-in identity actually changes,
       // sign-out (-> null) and account switch (one id -> another) alike. clear() is synchronous, so
       // this stays safe inside the auth callback (which must not await). The first INITIAL_SESSION
       // (undefined -> id|null) seeds the owner without clearing an already-empty cache.
@@ -85,7 +85,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     let active = true;
     (async () => {
       const supabase = createClient();
-      // Retry a failed profile read before giving up. Previously ANY error here (a dropped request on
+      // Retry a failed profile read before giving up. Previously any error here (a dropped request on
       // a flaky Ghanaian school connection, a momentary Supabase blip) resolved to `data: null`, which
       // the guard reads as "no profile" and bounces a legitimately-signed-in user to /login mid-task.
       // Only a SUCCESSFUL read with no row is a real "not provisioned"; a transient failure keeps the
@@ -117,7 +117,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [router, queryClient]);
 
   // An auth user with no profile row can't be scoped to a school or a role, so there is nothing
-  // safe to render — it stays null and the guard sends them to /login.
+  // safe to render; it stays null and the guard sends them to /login.
   const isCurrent = typeof userId === "string" && fetched?.forUserId === userId;
 
   const value: SessionContextValue = {

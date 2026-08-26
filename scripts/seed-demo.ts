@@ -1,14 +1,14 @@
 /**
- * Demo tenant seed — run with `pnpm seed:demo` after `pnpm db:reset`.
+ * Demo tenant seed, run with `pnpm seed:demo` after `pnpm db:reset`.
  *
  * Why this is a script and not `supabase/seed.sql`: login requires rows in `auth.users`, and
  * inserting those directly in SQL means hand-writing a dozen internal columns that shift between
- * Supabase versions — a `db:reset` that breaks on upgrade. The Admin API does it properly.
+ * Supabase versions, a `db:reset` that breaks on upgrade. The Admin API does it properly.
  *
  * Idempotent: it clears the demo tenant's rows (and its auth users) before re-inserting, so it can
  * be re-run without a full `db:reset`.
  *
- * It deliberately does NOT bypass the schema's rules — it writes through the service role, which
+ * It deliberately does not bypass the schema's rules; it writes through the service role, which
  * skips RLS but still honours every constraint, so a seed that succeeds proves the shape is sound.
  */
 import { config } from "dotenv";
@@ -16,7 +16,7 @@ import { config } from "dotenv";
 // Which env file to read. Defaults to local, so `pnpm seed:demo` keeps meaning "seed my laptop".
 // Point it at another file to seed a hosted project: `ENV_FILE=.env.staging pnpm seed:demo`.
 // Swapping `.env.local` itself would work too, but forgetting to swap it back aims a destructive
-// seed at the wrong database — the guard below exists for the same reason.
+// seed at the wrong database, the guard below exists for the same reason.
 const ENV_FILE = process.env.ENV_FILE ?? ".env.local";
 config({ path: ENV_FILE });
 
@@ -68,7 +68,7 @@ export const DEMO_PASSWORD = "Password123!";
 
 // ---------------------------------------------------------------------------
 // Dates. Everything is computed relative to today so the seeded term is always
-// IN PROGRESS — a term that starts next month has no attendance history, which
+// IN PROGRESS: a term that starts next month has no attendance history, which
 // would leave the dashboard and teacher portal looking broken rather than empty.
 // ---------------------------------------------------------------------------
 const today = new Date();
@@ -84,7 +84,7 @@ const TERM_END = iso(shift(60));
 const YEAR_START = iso(shift(-90));
 const YEAR_END = iso(shift(275));
 
-/** The last `count` weekdays up to and including today — school doesn't sit on weekends. */
+/** The last `count` weekdays up to and including today, school doesn't sit on weekends. */
 function recentSchoolDays(count: number): string[] {
   const out: string[] = [];
   for (let i = 0; out.length < count; i++) {
@@ -119,7 +119,7 @@ async function insert<T extends keyof Database["public"]["Tables"]>(
   }
 }
 
-/** Insert and hand back the generated ids — needed when a child table references the new rows. */
+/** Insert and hand back the generated ids, needed when a child table references the new rows. */
 async function insertReturning<T extends keyof Database["public"]["Tables"]>(
   table: T,
   rows: TablesInsert<T>[],
@@ -185,7 +185,7 @@ const PARENTS: ParentDef[] = [
   { key: "p8", first: "Akua", last: "Kusi", email: "akua.kusi@example.com", phone: "+233 24 111 2229", occupation: "Pharmacist" },
 ];
 
-// The report card prints `code` in its "Short Code" column, so every subject carries one — the
+// The report card prints `code` in its "Short Code" column, so every subject carries one, the
 // column is three or four characters wide and a blank there looks like missing data.
 const SUBJECTS = [
   { key: "math", name: "Mathematics", code: "MAT" },
@@ -199,7 +199,7 @@ const SUBJECTS = [
 ];
 
 // The nine-point scale on the school's report card, printed verbatim in the card's grading key.
-// The bands are FRACTIONAL (80–89.9, not 80–89) because that is how the paper form writes them —
+// The bands are FRACTIONAL (80–89.9, not 80–89) because that is how the paper form writes them,
 // scoreToGrade matches the exact percentage before it falls back to rounding, so 89.9 stays a 2.
 // Hoisted so the seeded report cards are graded against the very scale the seed installs.
 const GRADE_BANDS = [
@@ -233,7 +233,7 @@ const CITIES = ["Accra", "Tema", "Kumasi", "Koforidua"];
 const TOWNS = ["Oyarifa", "Adenta", "Madina", "Ashaley Botwe"];
 
 // ---------------------------------------------------------------------------
-// Teardown — clear the demo tenant so the script is re-runnable
+// Teardown, clear the demo tenant so the script is re-runnable
 // ---------------------------------------------------------------------------
 async function wipe(): Promise<void> {
   // Child-to-parent order. Most FKs cascade from students/schools, but being explicit keeps the
@@ -256,13 +256,13 @@ async function wipe(): Promise<void> {
   await db.from("terms").delete().eq("school_id", SCHOOL_ID);
   await db.from("academic_years").delete().eq("school_id", SCHOOL_ID);
 
-  // Collect this tenant's user ids BEFORE deleting the profiles that identify them.
+  // Collect this tenant's user ids before deleting the profiles that identify them.
   const { data: tenantProfiles } = await db.from("profiles").select("id").eq("school_id", SCHOOL_ID);
   const tenantUserIds = new Set((tenantProfiles ?? []).map((p) => p.id));
 
   await db.from("profiles").delete().eq("school_id", SCHOOL_ID);
 
-  // Auth users are matched TWO ways, because each alone leaves cruft behind:
+  // Auth users are matched two ways, because each alone leaves cruft behind:
   //   - by id, from the profiles above: catches accounts whose email has since been changed, or
   //     renamed in this script (the @kiddiewise.test → @slis.test switch would otherwise orphan
   //     every old account, and `seed:demo` without a full reset would then not clean them up).
@@ -292,7 +292,7 @@ async function main(): Promise<void> {
     name: "SNAB Learners International School",
     slug: "slis",
     email: "snab.learner@gmail.com",
-    // The flyer's real numbers, and the address as TWO lines — the report card's letterhead prints
+    // The flyer's real numbers, and the address as two lines, the report card's letterhead prints
     // each line of `address` on its own row, the way it sits on the school's headed paper.
     phone: "0256855366 / 0244210139",
     address: "Oyarifa, near the Ghana Flag\nBehind Rehoboth Estate, Accra",
@@ -336,8 +336,8 @@ async function main(): Promise<void> {
   for (const s of STAFF) staffId[s.key] = await makeUser(s.email);
   for (const p of PARENTS) parentId[p.key] = await makeUser(p.email);
 
-  // Every row carries the SAME key set. In a bulk insert PostgREST unifies the columns across all
-  // rows and sends NULL wherever a row omitted one — it does not fall back to the column default.
+  // Every row carries the same key set. In a bulk insert PostgREST unifies the columns across all
+  // rows and sends NULL wherever a row omitted one; it does not fall back to the column default.
   // So a staff row without `occupation` and a parent row without `is_active` would both write NULL,
   // and the not-null default on is_active would fail rather than apply.
   await insert("profiles", [
@@ -382,7 +382,7 @@ async function main(): Promise<void> {
   ]);
 
   // Seeded accounts are given a real, working password directly (DEMO_PASSWORD), so they are already
-  // the holder's own — not admin-issued temporary credentials awaiting a first sign-in. Stamping
+  // the holder's own, not admin-issued temporary credentials awaiting a first sign-in. Stamping
   // password_changed_at says so, which is what the Parents screen reads to show "Active".
   await db
     .from("profiles")
@@ -476,7 +476,7 @@ async function main(): Promise<void> {
     const isMale = i % 2 === 0;
     const first = isMale ? FIRST_NAMES_M[i % FIRST_NAMES_M.length]! : FIRST_NAMES_F[i % FIRST_NAMES_F.length]!;
     const last = LAST_NAMES[i % LAST_NAMES.length]!;
-    // 24 active, 1 withdrawn, 1 transferred — so status filters and stat cards have real variety.
+    // 24 active, 1 withdrawn, 1 transferred, so status filters and stat cards have real variety.
     const status: Database["public"]["Enums"]["enrollment_status"] =
       i === 24 ? "withdrawn" : i === 25 ? "transferred" : "active";
     const classKey = classKeys[i % classKeys.length]!;
@@ -520,8 +520,8 @@ async function main(): Promise<void> {
     status: "active",
   })));
 
-  // parent@ (p1) guardians EXACTLY the first two students, so the parent portal opens on a
-  // multi-child account with a predictable child count. The rest round-robin over p2… only —
+  // parent@ (p1) guardians exactly the first two students, so the parent portal opens on a
+  // multi-child account with a predictable child count. The rest round-robin over p2... only,
   // including p1 in that rotation would silently hand it extra children as the roster grows.
   const otherParents = PARENTS.filter((p) => p.key !== "p1");
   const links: TablesInsert<"student_guardians">[] = [];
@@ -548,7 +548,7 @@ async function main(): Promise<void> {
   for (const c of CLASSES) {
     // All four core subjects, so a generated report card has a full subject table rather than two
     // marked rows and two blanks. The end-of-term paper is what fills the card's Exam Score column
-    // (assessment_types.is_exam — migration 0028), so without it the split has only one half.
+    // (assessment_types.is_exam, migration 0028), so without it the split has only one half.
     for (const sub of ["math", "eng", "sci", "soc"] as const) {
       for (const [title, type, offset] of [
         ["Week 4 Class Test", "Class Test", -40],
@@ -579,7 +579,7 @@ async function main(): Promise<void> {
 
 
   const results: TablesInsert<"results">[] = [];
-  // Kept alongside the insert so the terminal reports below are computed from the SAME marks the
+  // Kept alongside the insert so the terminal reports below are computed from the same marks the
   // app would read back, rather than from a second set of invented numbers.
   const markedScores: {
     studentId: string;
@@ -603,7 +603,7 @@ async function main(): Promise<void> {
         score,
         // grade/remark stay null on purpose: they are derived from the school's bands at read time
         // (lib/results.ts), so storing them would be a second copy that goes stale the moment a band
-        // is edited. `teacher_comment` is different — that is the teacher's own words, not derived.
+        // is edited. `teacher_comment` is different; that is the teacher's own words, not derived.
         grade: null,
         remark: null,
         teacher_comment:
@@ -624,7 +624,7 @@ async function main(): Promise<void> {
   for (const day of days) {
     for (const s of activeStudents) {
       const r = rand();
-      // ~92% present, 4% late, 4% absent — a believable Ghanaian day school.
+      // ~92% present, 4% late, 4% absent, a believable Ghanaian day school.
       const status: Database["public"]["Enums"]["attendance_status"] =
         r < 0.92 ? "present" : r < 0.96 ? "late" : "absent";
       attendance.push({
@@ -645,7 +645,7 @@ async function main(): Promise<void> {
   // other classes legitimately show "not published yet".
   //
   // Figures are made internally CONSISTENT with the rest of the seed rather than invented: attendance
-  // is counted from the rows inserted above, and positions come from `assignPositions` — the same
+  // is counted from the rows inserted above, and positions come from `assignPositions`, the same
   // tested helper the app uses. Random averages with no position left the Terminal Reports screen
   // showing a column of dashes on a fresh install, which reads as a bug rather than as seed data.
   const CA_WEIGHT = 30;
@@ -659,8 +659,8 @@ async function main(): Promise<void> {
   const b1 = activeStudents.filter((s) => s.classKey === "b1");
 
   // Every card figure comes out of the same pure helpers `generateReports` uses, so the seeded
-  // reports are indistinguishable from ones the app produced — including the class comparison
-  // columns, which only mean anything when they are computed across the WHOLE class at once.
+  // reports are indistinguishable from ones the app produced, including the class comparison
+  // columns, which only mean anything when they are computed across the whole class at once.
   const b1Cards = b1.map((s) => {
     const subjects = computeSubjectComponents(
       markedScores
@@ -827,7 +827,7 @@ async function main(): Promise<void> {
   });
   await insert("payments", payments);
 
-  // Extra fees — one school-wide set, assigned to a subset of students.
+  // Extra fees: one school-wide set, assigned to a subset of students.
   const extraDefs = [
     { name: "School Bus", description: "Return daily transport", amount: 500, frequency: "termly" as const, classKey: null },
     { name: "Feeding", description: "Hot lunch programme", amount: 600, frequency: "termly" as const, classKey: null },

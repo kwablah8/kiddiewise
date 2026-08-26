@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 /**
  * Sanity serves every uploaded asset from one host, `cdn.sanity.io`, and `next/image` refuses remote
- * hosts that are not declared here — so without this block a news cover or a Sanity gallery photo
+ * hosts that are not declared here, so without this block a news cover or a Sanity gallery photo
  * renders as a broken image with no console error worth reading.
  *
  * The pattern is scoped to OUR project's asset prefix rather than the whole host, so the image
@@ -16,7 +16,7 @@ const sanityProjectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 /**
  * Baseline security headers, applied to every route.
  *
- * Deliberately NOT a Content-Security-Policy yet: a strict CSP has to be reconciled with Next's inline
+ * Deliberately not a Content-Security-Policy yet: a strict CSP has to be reconciled with Next's inline
  * runtime, the Supabase SDK, and especially the embedded Sanity Studio at /studio (which loads workers
  * and eval), and getting it wrong ships a blank page. That is its own focused task. What is here are
  * the headers that carry real protection with no such risk:

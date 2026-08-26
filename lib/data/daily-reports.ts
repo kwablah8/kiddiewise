@@ -10,7 +10,7 @@ import {
 import { z } from "zod";
 
 /**
- * Daily reports are the JOIN of two writer-scoped tables on (student_id, date) — see migration
+ * Daily reports are the JOIN of two writer-scoped tables on (student_id, date), see migration
  * 0026. RLS decides who resolves rows at all: a parent reaches only their own children, a teacher
  * only students enrolled in classes they teach, so neither read re-checks the relationship here.
  */
@@ -60,7 +60,7 @@ export async function getDailyReport(studentId: string, date: string): Promise<D
 
 /**
  * The teacher's roster for one class and day, with each child's fill state. Driven by the
- * ACTIVE year's enrolment like the attendance register — promotion leaves last year's rows in
+ * active year's enrolment like the attendance register, promotion leaves last year's rows in
  * place, and yesterday's cohort must not appear on today's sheet.
  */
 export async function getClassDailyStatus(

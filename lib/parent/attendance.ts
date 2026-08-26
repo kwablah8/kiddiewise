@@ -1,6 +1,6 @@
 import type { AttendanceRecordVM, AttendanceSummaryVM } from "@/lib/validators/parent";
 
-/** Summarise a child's attendance. `pct` is the attendance rate — the days the child showed up
+/** Summarise a child's attendance. `pct` is the attendance rate, the days the child showed up
  *  (present OR late) over the total recorded days, rounded to a whole percent; `null` when there
  *  are no records. Pure so it can be unit-tested and reused wherever a summary is needed. */
 export function summarizeAttendance(

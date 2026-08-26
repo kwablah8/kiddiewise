@@ -1,6 +1,6 @@
 /**
  * Score-band business logic shared by any component that renders a performance label
- * (06-UI §11 "never color alone" — every band pairs a tone with a real text label).
+ * (06-UI §11 "never color alone", every band pairs a tone with a real text label).
  */
 
 import type { GradeBandVM } from "@/lib/validators/grading";
@@ -20,7 +20,7 @@ export function performanceBand(score: number | null): { label: string; tone: Pe
 //
 // The EXACT percentage is tried first, then the rounded one. Both passes are needed because the two
 // ways schools write a scale need opposite treatment:
-//   - fractional bands (0–34.9, 35–39.9, … 90–100): 89.9% is a grade 2, and rounding it to 90 would
+//   - fractional bands (0–34.9, 35–39.9, ... 90–100): 89.9% is a grade 2, and rounding it to 90 would
 //     promote a child into the top band they missed;
 //   - contiguous integer bands (70–79, 80–100): 79.5% matches nothing at all, and rounding is what
 //     closes the gap the school left between the two.
@@ -42,7 +42,7 @@ export function assessmentTypeWeightTotal(types: { weight: number }[]): number {
 }
 
 // Guidance for the grading-scale editor: overlapping bands and incomplete 0–100 coverage. The UI
-// shows these as soft warnings — it never blocks on them.
+// shows these as soft warnings; it never blocks on them.
 export function gradeBandWarnings(bands: GradeBandVM[]): string[] {
   const warnings: string[] = [];
   const sorted = [...bands].sort((a, b) => a.min_score - b.min_score);

@@ -66,7 +66,7 @@ export function AppShell({ profile, children }: AppShellProps) {
           >
             <Menu className="size-5" aria-hidden="true" />
           </button>
-          {/* The mobile bar is the ONLY place staff see the identity on a phone — the navy sidebar
+          {/* The mobile bar is the only place staff see the identity on a phone, the navy sidebar
               is off-canvas until they open it — so it carries the crest, not just a word. */}
           <BrandLock tone="dark" compact crestClassName="size-8 rounded-lg" />
         </header>

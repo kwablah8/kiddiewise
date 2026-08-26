@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
  * Confirmation for a delete on this screen.
  *
  * Announcements and events are the two things here that vanish from parents' and teachers' portals
- * the instant they go, with no undo and no audit trail to recover from — so both ask first, in the
+ * the instant they go, with no undo and no audit trail to recover from, so both ask first, in the
  * same words.
  */
 export function ConfirmDeleteDialog({

@@ -5,7 +5,7 @@ const SELECT =
   "id, applicant_name, parent_name, parent_email, parent_phone, desired_class, message, status, created_at";
 
 /**
- * Every inquiry, newest first — admins triage the most recent at the top. The whole set is returned
+ * Every inquiry, newest first, admins triage the most recent at the top. The whole set is returned
  * because the Admissions screen filters by status and search client-side for instant tab switching;
  * an admissions inbox is small enough that paging it would cost more than it saves.
  */

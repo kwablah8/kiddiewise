@@ -28,7 +28,7 @@ describe("inquiry transitions", () => {
     // rejected in a busy list. Without this the only way back was re-keying the whole application.
     expect(canTransitionInquiry("rejected", "accepted")).toBe(true);
     expect(canTransitionInquiry("rejected", "reviewing")).toBe(true);
-    // Still not a shortcut into the student roster — that has to go through accepted.
+    // Still not a shortcut into the student roster, that has to go through accepted.
     expect(canTransitionInquiry("rejected", "converted")).toBe(false);
   });
   it("forbids skipping straight from new to converted", () => {

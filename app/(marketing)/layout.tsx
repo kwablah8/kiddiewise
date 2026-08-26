@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Public marketing shell (docs/06-UI §8) — its OWN layout: header + footer, no auth guard, no
+ * Public marketing shell (docs/06-UI §8): its OWN layout: header + footer, no auth guard, no
  * app sidebar. Still a distinct visual system from the authenticated portals (editorial rhythm,
  * full-bleed photography, rounded CTAs), but it now shares their palette as well as the Geist
  * typeface: `data-brand="slis"` moved up to <html> in app/layout.tsx, so the SLIS blue/gold tokens

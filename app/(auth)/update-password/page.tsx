@@ -14,16 +14,16 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 /**
- * Recovery links arrive as `#access_token=…&refresh_token=…&type=recovery`.
+ * Recovery links arrive as `#access_token=...&refresh_token=...&type=recovery`.
  *
- * These tokens MUST be adopted explicitly. The cookie-based SSR client does not consume an implicit
+ * These tokens must be adopted explicitly. The cookie-based SSR client does not consume an implicit
  * -flow fragment on its own, so without this the page would update whichever account is already
- * signed in on the browser — which is a real hijack, not a nuisance: an admin invites a parent from
+ * signed in on the browser, which is a real hijack, not a nuisance: an admin invites a parent from
  * the office computer, the parent opens the link there, and the parent ends up setting the ADMIN's
  * password. Adopting the link's session first makes the page always act on the link's owner.
  */
-// "ready"  — arrived via a one-time link (invite / forgot password)
-// "forced" — signed in with an admin-issued temporary password and must replace it
+// "ready", arrived via a one-time link (invite / forgot password)
+// "forced", signed in with an admin-issued temporary password and must replace it
 type LinkState = "checking" | "ready" | "forced" | "no-token";
 
 export default function UpdatePasswordPage() {
@@ -57,10 +57,10 @@ export default function UpdatePasswordPage() {
         return "ready";
       }
 
-      // No tokens in the URL. There is exactly ONE case where the existing session may be used: the
+      // No tokens in the URL. There is exactly one case where the existing session may be used: the
       // holder signed in with an admin-issued temporary password and is REQUIRED to replace it. That
       // is safe because they proved knowledge of that credential to get here, and the middleware sent
-      // them. Any other session is refused — accepting it is precisely the hijack described above.
+      // them. Any other session is refused, accepting it is precisely the hijack described above.
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -106,7 +106,7 @@ export default function UpdatePasswordPage() {
     // RPC because `authenticated` deliberately has no UPDATE grant on those columns (migration 0020).
     const { error: flagError } = await supabase.rpc("complete_password_change");
     if (flagError) {
-      // The password DID change, so failing here must not read as "nothing happened" — say what is
+      // The password DID change, so failing here must not read as "nothing happened", say what is
       // true and let them continue.
       setErrorMessage(
         "Your password was changed, but we couldn't finish setting up your account. Please sign in again.",
@@ -130,7 +130,7 @@ export default function UpdatePasswordPage() {
     );
   }
 
-  // The form is deliberately unreachable without a valid link — never fall back to the current
+  // The form is deliberately unreachable without a valid link, never fall back to the current
   // session, or this page becomes a way to change someone else's password.
   if (linkState === "no-token") {
     return (

@@ -1,7 +1,7 @@
 /**
  * Bespoke 404 art for the school-management app. A magnifying glass (`--primary` blue ring, navy
  * brand-gradient handle) searching a "record card" whose avatar + name/detail lines deliberately
- * echo the Students/Staff table rows (06-UI §6) — the metaphor is a record search that returns
+ * echo the Students/Staff table rows (06-UI §6), the metaphor is a record search that returns
  * nothing. Pure inline SVG on design tokens: no external asset, no new dependency. Decorative;
  * the heading carries the meaning for assistive tech.
  */
@@ -64,7 +64,7 @@ export function NotFoundIllustration({ className }: { className?: string }) {
       <rect x="54" y="114" width="44" height="6" rx="3" fill="var(--text)" opacity="0.1" />
       <rect x="106" y="114" width="36" height="6" rx="3" fill="var(--text)" opacity="0.1" />
 
-      {/* magnifying glass over the corner — empty lens = no match */}
+      {/* magnifying glass over the corner, empty lens = no match */}
       <circle cx="150" cy="120" r="30" fill="var(--surface)" />
       <circle cx="150" cy="120" r="30" fill="var(--primary)" opacity="0.08" />
       <rect x="140" y="117.5" width="20" height="5" rx="2.5" fill="var(--primary)" opacity="0.55" />

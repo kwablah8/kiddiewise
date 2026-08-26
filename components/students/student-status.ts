@@ -2,7 +2,7 @@ import type { StatusTone } from "@/components/data/status-pill";
 import type { StudentListItemVM } from "@/lib/validators/people";
 
 /**
- * Tone for each `enrollment_status` value (06-UI §11 — status is never color alone, the
+ * Tone for each `enrollment_status` value (06-UI §11, status is never color alone, the
  * `StatusPill` always pairs this with the real word). `active` is the only "good" steady
  * state so it gets `success`; `graduated` is a deliberate/positive exit but distinct from
  * "currently enrolled" so it reads as `neutral` rather than competing with `active` for the

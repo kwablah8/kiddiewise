@@ -1,7 +1,7 @@
 /**
  * activity_log powers two feeds: the admin dashboard's "Recent Activities" (school-wide) and the
  * teacher dashboard's own recent actions. 0010 gave every role self-insert (`al_insert_self`) but
- * only admins a SELECT policy — so a teacher's own feed read silently returned nothing. 0027 adds
+ * only admins a SELECT policy, so a teacher's own feed read silently returned nothing. 0027 adds
  * the self-read; these tests pin both directions.
  */
 import { beforeAll, describe, expect, it } from "vitest";

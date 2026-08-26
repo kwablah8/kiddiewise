@@ -33,7 +33,7 @@ export function AttendanceMarker({ teacherId }: { teacherId: string }) {
   const [classId, setClassId] = useState<string | null>(null);
   const [date, setDate] = useState<string>(todayISO());
   // Edit overrides for the current class+date only; cleared whenever class or date changes. The shown
-  // status is `pending[id] ?? entry.status` (the loaded roster is the base) — no effect needed.
+  // status is `pending[id] ?? entry.status` (the loaded roster is the base), no effect needed.
   const [pending, setPending] = useState<Record<string, AttendanceStatus>>({});
 
   const { data: roster, isLoading, isError, refetch } = useRoster(classId, date);

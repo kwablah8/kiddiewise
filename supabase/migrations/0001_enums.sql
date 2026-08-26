@@ -1,4 +1,4 @@
--- 0001_enums.sql — enum types (docs/03-DATABASE §3)
+-- 0001_enums.sql, enum types (docs/03-DATABASE §3)
 create type user_role as enum ('super_admin','school_admin','teacher','parent');
 create type gender as enum ('male','female','other');
 create type enrollment_status as enum ('active','inactive','graduated','withdrawn','transferred');

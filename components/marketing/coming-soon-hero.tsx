@@ -8,7 +8,7 @@ interface ComingSoonHeroProps {
 }
 
 /**
- * Shared hero for the not-yet-built public pages (About / News / Gallery — authored for real in
+ * Shared hero for the not-yet-built public pages (About / News / Gallery, authored for real in
  * M4 Unit C). Keeps the shell's dark-hero-at-the-top contract so the translucent header reads
  * correctly, and stays visually of a piece with Home while the real content is written later.
  */

@@ -11,11 +11,11 @@ import { saveResultsSchema, type SaveResultsInput } from "@/lib/validators/asses
  *
  * `entered_by` is the caller, never client input. RLS (`res_teacher_rw` via
  * `teacher_teaches(class_id, subject_id)`) rejects the write unless this teacher takes that subject in
- * that class — so the assessment→teacher relationship isn't re-checked here.
+ * that class, so the assessment→teacher relationship isn't re-checked here.
  *
- * `grade` and `remark` are deliberately NOT written. Every screen derives them from the school's
+ * `grade` and `remark` are deliberately not written. Every screen derives them from the school's
  * current bands at read time (lib/results.ts), so storing them would be a second copy that goes stale
- * the moment the grading scale is edited — exactly what golden rule 9 forbids. The upside is real:
+ * the moment the grading scale is edited. The upside is real:
  * correcting a band re-grades every existing mark at once instead of needing a backfill.
  */
 export async function saveResults(
@@ -44,7 +44,7 @@ export async function saveResults(
       );
     }
 
-    // A blank score means "not marked yet" — for a student who was absent, or a sheet the teacher is
+    // A blank score means "not marked yet": for a student who was absent, or a sheet the teacher is
     // filling in over several sittings. No row is written, so the sheet keeps showing them as unmarked
     // rather than recording a zero they didn't earn.
     const marked = entries.filter((e) => e.score !== null);
@@ -83,7 +83,7 @@ export async function saveResults(
           score: e.score!,
           // Explicitly nulled, not merely omitted. An upsert leaves untouched columns as they were, so
           // a row previously carrying grade 'D' for a score of 53 would keep saying 'D' after the score
-          // is corrected to 91 — a row contradicting itself. Every screen derives the grade from the
+          // is corrected to 91, a row contradicting itself. Every screen derives the grade from the
           // current bands, so the only correct stored value is none.
           grade: null,
           remark: null,
@@ -93,13 +93,13 @@ export async function saveResults(
           updated_at: now,
         })),
         // The unique constraint from 0008. Re-saving corrects the existing mark instead of duplicating
-        // it, which is what makes a mark sheet editable — teachers routinely fix a transcription slip.
+        // it, which is what makes a mark sheet editable, teachers routinely fix a transcription slip.
         { onConflict: "assessment_id,student_id" },
       ),
       "results",
     );
 
-    // Only submission is feed-worthy — draft saves happen every few minutes while a sheet is
+    // Only submission is feed-worthy, draft saves happen every few minutes while a sheet is
     // being filled and would drown the dashboard.
     if (submit) {
       await logActivity(

@@ -6,7 +6,7 @@ import { seedTwoSchools, signInAs, type Seeded } from "./helpers";
 // narrowed by a column REVOKE, so this is the only privilege-layer way to stop the escalation).
 // RLS's `profiles_self_update` policy lets a user UPDATE their own row, so without the column
 // lock a signed-in user could mint themselves a super_admin or move themselves into another
-// school — this proves that hole is closed all the way through PostgREST, not just in theory.
+// school; this proves that hole is closed all the way through PostgREST, not just in theory.
 
 let s: Seeded;
 beforeAll(async () => {

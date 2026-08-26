@@ -67,19 +67,19 @@ const RELATIONSHIP_OPTIONS = [
   { value: "other", label: "Other" },
 ] as const;
 
-// Sentinel for the Select's "no class" row — the field itself stores `null`, but base-ui
+// Sentinel for the Select's "no class" row: the field itself stores `null`, but base-ui
 // Select items need a concrete string value to compare against.
 const NONE_VALUE = "__none__";
 
 // base-ui's <Select.Value> only auto-resolves a value's label once its matching <Select.Item>
-// has actually mounted inside the popup (i.e. after the user has opened it) — so a value set
+// has actually mounted inside the popup (i.e. after the user has opened it), so a value set
 // via `defaultValues` (never opened yet) would otherwise render its raw enum string. Looking
 // the label up ourselves sidesteps that timing dependency entirely.
 function labelFor(options: readonly { value: string; label: string }[], value: string): string {
   return options.find((o) => o.value === value)?.label ?? value;
 }
 
-/** Free-text textarea matching `Input`'s token-based styling — no shared ui/textarea primitive exists yet. */
+/** Free-text textarea matching `Input`'s token-based styling, no shared ui/textarea primitive exists yet. */
 function FieldTextarea({ className, ...props }: ComponentProps<"textarea">) {
   return (
     <textarea
@@ -103,7 +103,7 @@ interface StudentFormProps {
   mode: "create" | "edit";
   /** Required when `mode === "edit"`. */
   studentId?: string;
-  /** Create mode only — prefill this form from an accepted admissions inquiry (Convert flow). */
+  /** Create mode only, prefill this form from an accepted admissions inquiry (Convert flow). */
   fromInquiryId?: string;
   /** Called instead of navigating after a successful save (e.g. to close a hosting Sheet). */
   onDone?: () => void;
@@ -113,7 +113,7 @@ interface StudentFormProps {
 
 /**
  * One shared form for create + edit (06-UI §6 "Forms"). Only how the record is loaded and where
- * the submit routes to differ by mode — the fields are identical. In create mode, an optional
+ * the submit routes to differ by mode, the fields are identical. In create mode, an optional
  * `fromInquiryId` loads an inquiry and pre-fills the fields (Admissions → Convert to student).
  */
 export function StudentForm({
@@ -135,7 +135,7 @@ export function StudentForm({
 
 /**
  * Loads the inquiry (+ class options) being converted, then renders the shared create fields with
- * computed prefill — mirroring EditStudentForm's load-then-render shape. On a load failure it falls
+ * computed prefill, mirroring EditStudentForm's load-then-render shape. On a load failure it falls
  * back to a blank form with a toast, so Convert never dead-ends.
  */
 function CreateFromInquiryForm({
@@ -240,11 +240,11 @@ interface StudentFormFieldsProps {
   mode: "create" | "edit";
   studentId?: string;
   initialData?: StudentDetailVM;
-  /** Create mode — override the empty defaults with values mapped from an inquiry. */
+  /** Create mode, override the empty defaults with values mapped from an inquiry. */
   prefill?: Partial<StudentCreateInput>;
-  /** Create mode — when set, the linked inquiry is marked `converted` after a successful save. */
+  /** Create mode: when set, the linked inquiry is marked `converted` after a successful save. */
   convertInquiryId?: string;
-  /** Create mode — inquiry parent contact shown as a read-only note by the Guardians section. */
+  /** Create mode, inquiry parent contact shown as a read-only note by the Guardians section. */
   parentNote?: InquiryParentNote;
   /** Called instead of navigating after a successful save (e.g. to close a hosting Sheet). */
   onDone?: () => void;
@@ -273,7 +273,7 @@ function StudentFormFields({
   const linkGuardian = useLinkGuardian();
   const setInquiryStatus = useSetInquiryStatus();
 
-  // Guardians already linked (edit mode only) — shown as pre-checked + locked, since the
+  // Guardians already linked (edit mode only): shown as pre-checked + locked, since the
   // seam has no "unlink" action yet (only `useLinkGuardian`). Removing a guardian is a Unit C
   // (Link Parent dialog) concern.
   const alreadyLinkedIds = initialData?.guardians.map((g) => g.parent_profile_id) ?? [];
@@ -346,7 +346,7 @@ function StudentFormFields({
   });
 
   // `useWatch` (not `formInstance.watch()`) so the React Compiler can still memoize this
-  // component — `watch()` returns a function it can't safely track.
+  // component, `watch()` returns a function it can't safely track.
   const firstName = useWatch({ control, name: "first_name" });
   const lastName = useWatch({ control, name: "last_name" });
   const photoUrl = useWatch({ control, name: "photo_url" });
@@ -356,7 +356,7 @@ function StudentFormFields({
   function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    // SEAM: real upload to Storage later — this only creates a local, in-memory preview URL.
+    // TODO: upload to Storage. This only creates a local, in-memory preview URL.
     const url = URL.createObjectURL(file);
     setValue("photo_url", url, { shouldDirty: true });
   }
@@ -379,7 +379,7 @@ function StudentFormFields({
   async function onSubmit(values: StudentCreateInput) {
     setSubmitError(null);
     // Guard the inline new guardian's email client-side: newGuardianSchema doesn't enforce `.email()`
-    // (its fields are all optional), but createParent (parentCreateSchema) does — so an invalid
+    // (its fields are all optional), but createParent (parentCreateSchema) does, so an invalid
     // address would otherwise reach the action and surface as a raw ZodError banner. Show it inline.
     const ng = values.new_guardian;
     if (ng?.first_name && ng?.last_name && ng?.email && !z.string().email().safeParse(ng.email).success) {
@@ -390,10 +390,10 @@ function StudentFormFields({
       if (mode === "create") {
         const { id } = await createStudent.mutateAsync(values);
         await linkNewGuardians(id, values.guardian_ids);
-        // SEAM: create-student + mark-converted are two non-atomic writes here. On the mock a
-        // partial failure only softens the toast, but at Supabase integration this pair must be
-        // one transaction (or made idempotent on the inquiry id) so a mid-flow failure can't leave
-        // a student created with the inquiry still `accepted` (re-convertible → duplicate student).
+        // TODO: creating the student and marking the inquiry converted are two separate writes,
+        // so a failure between them leaves a student created with the inquiry still `accepted`,
+        // which can be converted again into a duplicate student. Make the pair one transaction, or
+        // make it idempotent on the inquiry id.
         if (convertInquiryId) {
           try {
             await setInquiryStatus.mutateAsync({ id: convertInquiryId, status: "converted" });
@@ -401,7 +401,7 @@ function StudentFormFields({
               description: `${values.first_name} ${values.last_name} was added and the inquiry marked converted.`,
             });
           } catch {
-            // The inquiry wasn't in a convertible state — the student is still created; don't fail.
+            // The inquiry wasn't in a convertible state, the student is still created; don't fail.
             toast.success("Student added", {
               description: `${values.first_name} ${values.last_name} was created, but the inquiry couldn't be marked converted.`,
             });
@@ -425,7 +425,7 @@ function StudentFormFields({
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong. Please try again.";
-      // The create/update action throws this exact message for a duplicate admission_no —
+      // The create/update action throws this exact message for a duplicate admission_no,
       // surface it as an inline field error instead of a generic banner (input is preserved
       // either way since we never call `reset()` here).
       if (message.toLowerCase().includes("admission number")) {

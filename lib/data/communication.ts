@@ -7,7 +7,7 @@ import type { AnnouncementVM, EventVM } from "@/lib/validators/communication";
  * One read each, used by all three portals. That is possible because RLS does the filtering:
  * `ann_read` returns only published announcements whose audience matches the reader's role, so an
  * admin sees drafts and everything else, a teacher sees published teacher/everyone rows, and a
- * parent sees published parent/everyone rows — from the SAME query. Re-filtering by role here would
+ * parent sees published parent/everyone rows, from the same query. Re-filtering by role here would
  * imply the client was the thing enforcing it, and would drift from the policy the moment either
  * changed.
  */
@@ -40,7 +40,7 @@ export async function listEvents(): Promise<EventVM[]> {
  * Events still to come, for the dashboard panels.
  *
  * Filtered on the server rather than in the browser so a school with years of history does not ship
- * every past sports day to a parent's phone. `start_at` in the future — an event that started this
+ * every past sports day to a parent's phone. `start_at` in the future, an event that started this
  * morning is still today's news, so the boundary is the start of today rather than "now".
  */
 export async function listUpcomingEvents(limit = 5): Promise<EventVM[]> {

@@ -56,7 +56,7 @@ export interface RankableRow {
  * report cards read, and the alternative (dense ranking, where the next is 3rd) would understate how
  * many children are ahead of them.
  *
- * A student with no average is left UNRANKED (null) rather than placed last — they have not been
+ * A student with no average is left UNRANKED (null) rather than placed last; they have not been
  * assessed, which is different from having done badly.
  */
 export function assignPositions<T extends RankableRow>(rows: readonly T[]): (T & { position: number | null })[] {
@@ -79,7 +79,7 @@ export function assignPositions<T extends RankableRow>(rows: readonly T[]): (T &
   return rows.map((r) => ({ ...r, position: positionByStudent.get(r.student_id) ?? null }));
 }
 
-/** The overall grade for a report — the average put through the school's bands. */
+/** The overall grade for a report, the average put through the school's bands. */
 export function overallGrade(
   average: number | null,
   bands: GradeBandVM[],
@@ -92,13 +92,13 @@ export interface ComponentResultInput {
   subject: string | null;
   score: number;
   max_score: number;
-  /** From the result's assessment type — the GES split's dividing line. */
+  /** From the result's assessment type, the GES split's dividing line. */
   is_exam: boolean;
 }
 
 export interface SubjectComponents {
   subject_name: string;
-  /** The template's "Short Code" column — CAD, ENG, MAT. Null for a subject with no code set. */
+  /** The template's "Short Code" column: CAD, ENG, MAT. Null for a subject with no code set. */
   short_code: string | null;
   class_score: number | null;
   exam_score: number | null;
@@ -111,7 +111,7 @@ export interface SubjectRosterEntry {
   code: string | null;
 }
 
-/** The report card carries one decimal throughout — 877.7, not 878. */
+/** The report card carries one decimal throughout: 877.7, not 878. */
 export const round1 = (n: number): number => Math.round(n * 10) / 10;
 
 /**
@@ -119,12 +119,12 @@ export const round1 = (n: number): number => Math.round(n * 10) / 10;
  * the school's CA weight, the end-of-term examination scaled to the remainder, summed into the
  * Total column (spec 2026-07-31 §1).
  *
- * A missing component is NULL, never zero — a child whose exam sheet hasn't been marked yet has a
+ * A missing component is NULL, never zero, a child whose exam sheet hasn't been marked yet has a
  * blank cell, not half their marks confiscated. The total is whatever components exist, so a
  * CA-only subject tops out at the CA weight, which is exactly what the paper form would show.
  *
  * The ROSTER (the class's `class_subjects`) drives which rows exist, not the marks. The school's
- * template prints an empty line for a subject nobody has been marked in yet — the paper form lists
+ * template prints an empty line for a subject nobody has been marked in yet, the paper form lists
  * what the class is taught, and a subject silently missing from a card reads as "not offered"
  * rather than "not marked". Marks for a subject outside the roster still appear, because a mark
  * that exists is a fact about the child regardless of how the timetable was configured.
@@ -176,7 +176,7 @@ export interface SpreadStats {
 }
 
 /**
- * The spread of a set of scores — used twice on the card: across one subject's totals (the three
+ * The spread of a set of scores, used twice on the card: across one subject's totals (the three
  * per-row columns) and across the class's overall averages (the summary line).
  *
  * Unscored entries are excluded rather than counted as zero, so a class where half the exam sheets
@@ -193,7 +193,7 @@ export function spreadStats(scores: readonly (number | null)[]): SpreadStats {
 }
 
 /**
- * "Number Of Passes" — how many of the child's subjects reached the school's pass mark.
+ * "Number Of Passes", how many of the child's subjects reached the school's pass mark.
  *
  * Counted over MARKED subjects only. An unmarked subject is not a failure; counting it as one
  * would make an incomplete mark sheet look like a struggling child.
@@ -208,7 +208,7 @@ export function countPasses(
 /**
  * Attendance as it appears on a report card.
  *
- * `present` counts late arrivals as attended — a child who came in late was at school that day, and a
+ * `present` counts late arrivals as attended, a child who came in late was at school that day, and a
  * report card that says otherwise will be contested by the parent, correctly.
  */
 export function attendanceTotals(

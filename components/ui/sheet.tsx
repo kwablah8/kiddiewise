@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 /**
- * Side sheet — a slide-in panel for detail/edit surfaces that shouldn't own a whole route. Built on
+ * Side sheet, a slide-in panel for detail/edit surfaces that shouldn't own a whole route. Built on
  * the same Base UI Dialog primitive as `dialog.tsx` (so focus trap, scroll lock and Escape all come
  * for free); the difference is purely presentational: the popup is anchored to a screen edge and
  * slides in rather than zooming from the centre. Full-width on phones, capped on larger screens.

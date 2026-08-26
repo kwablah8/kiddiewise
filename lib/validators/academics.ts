@@ -14,7 +14,7 @@ export const termVM = z.object({
   id: z.string(), academic_year_id: z.string(), name: z.string(),
   ordinal: z.number().int().min(1).max(3),
   start_date: z.string(), end_date: z.string(), is_active: z.boolean(),
-  // When school reopens after this term — printed on its reports. Null until confirmed; a
+  // When school reopens after this term, printed on its reports. Null until confirmed; a
   // placeholder date on a report card is worse than a blank one. See migration 0023.
   reopening_date: z.string().nullable(),
 });
@@ -39,7 +39,7 @@ export type ClassVM = z.infer<typeof classVM>;
 export const subjectVM = z.object({
   id: z.string(), name: z.string(), code: z.string().nullable(), class_count: z.number(),
   // False when the school has stopped teaching it. Kept rather than deleted so existing marks and
-  // class assignments still resolve — see migration 0022.
+  // class assignments still resolve, see migration 0022.
   is_active: z.boolean(),
 });
 export type SubjectVM = z.infer<typeof subjectVM>;
@@ -64,14 +64,14 @@ export const staffVM = z.object({
   qualification: z.string().nullable(),
   is_active: z.boolean(),
   class_count: z.number(), subject_count: z.number(),   // derived from class_subjects + class_teacher
-  // Same credential lifecycle as a parent — staff are handed a generated temporary password at
+  // Same credential lifecycle as a parent, staff are handed a generated temporary password at
   // creation and must replace it on first sign-in. Derived from the profile's password columns.
   portal_status: portalAccessStatus,
 });
 export type StaffVM = z.infer<typeof staffVM>;
 
 // class_subjects row as shown on a class's assignments panel (and, joined the other way, on a
-// staff member's derived "assigned classes/subjects" panel — hence `class_name` alongside
+// staff member's derived "assigned classes/subjects" panel, hence `class_name` alongside
 // `subject_name`).
 export const assignmentVM = z.object({
   id: z.string(), class_id: z.string(), class_name: z.string(),
@@ -102,7 +102,7 @@ export type TermCreateInput = z.infer<typeof termCreateSchema>;
 
 export const academicYearUpdateSchema = academicYearCreateSchema.partial().extend({ id: z.string().min(1) });
 export type AcademicYearUpdateInput = z.infer<typeof academicYearUpdateSchema>;
-// A term cannot move to another year — that would drag its attendance and assessments with it.
+// A term cannot move to another year, that would drag its attendance and assessments with it.
 export const termUpdateSchema = termCreateSchema
   .omit({ academic_year_id: true })
   .partial()
@@ -142,10 +142,10 @@ export const staffCreateSchema = z.object({
   qualification: z.string().nullable().default(null),
 });
 export type StaffCreateInput = z.infer<typeof staffCreateSchema>;
-// NOT `staffCreateSchema.partial()`: the create schema's `.default(null)`s would turn an omitted
-// key into an explicit null, and updateStaff writes what it's given — a status-only toggle
+// not `staffCreateSchema.partial()`: the create schema's `.default(null)`s would turn an omitted
+// key into an explicit null, and updateStaff writes what it's given, a status-only toggle
 // (`{ id, is_active }`) would silently wipe every other column. Here an omitted key stays
-// undefined, which the action reads as "leave that column alone". `role` is deliberately absent —
+// undefined, which the action reads as "leave that column alone". `role` is deliberately absent,
 // changing someone's role is not an edit, it's a re-provisioning decision this app doesn't offer.
 export const staffUpdateSchema = z.object({
   id: z.string(),

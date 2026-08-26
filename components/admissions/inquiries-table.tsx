@@ -36,7 +36,7 @@ const FILTERS: { value: FilterValue; label: string }[] = [
   { value: "converted", label: "Converted" },
 ];
 
-/** Admissions inquiry list — segmented status filter with counts, search, table, row triage. */
+/** Admissions inquiry list: segmented status filter with counts, search, table, row triage. */
 export function InquiriesTable() {
   const [filter, setFilter] = useState<FilterValue>("all");
   const [search, setSearch] = useState("");

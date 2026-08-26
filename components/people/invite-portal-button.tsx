@@ -22,7 +22,7 @@ import { useInvitePortal } from "@/lib/queries/people";
  * with parents over WhatsApp, so pasting a link into a chat is both the likeliest channel and the one
  * where the admin can see it arrived. Email is there for the people who use email.
  *
- * Nothing is sent until the admin picks a route — opening this dialog is not itself an invitation.
+ * Nothing is sent until the admin picks a route, opening this dialog is not itself an invitation.
  */
 export function InvitePortalButton({
   profileId,

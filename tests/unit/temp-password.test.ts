@@ -33,14 +33,14 @@ describe("generateTempPassword", () => {
 
   it("draws from a space large enough that two parents can't be issued the same password", () => {
     // Asserted against the space, not against a sample. An earlier version tried "300 draws produce
-    // 300 unique values", which is a birthday-paradox coin flip — it flaked at ~2% and the flake was
+    // 300 unique values", which is a birthday-paradox coin flip; it flaked at ~2% and the flake was
     // the real signal: the space was only ~2 million. This assertion cannot flake and pins the
     // property that actually matters.
     expect(TEMP_PASSWORD_COMBINATIONS).toBeGreaterThan(50_000_000);
   });
 
   it("produces unique values over a school-year intake", () => {
-    // With a ~74M space, the chance of a duplicate in 300 draws is ~0.06% — small enough to assert.
+    // With a ~74M space, the chance of a duplicate in 300 draws is ~0.06%, small enough to assert.
     const seen = new Set(Array.from({ length: 300 }, generateTempPassword));
     expect(seen.size).toBe(300);
   });
@@ -132,7 +132,7 @@ describe("derivePortalStatus", () => {
   });
 
   it("lets an outstanding temporary password override a stale password_changed_at", () => {
-    // `markTempCredential` clears password_changed_at, so this combination shouldn't arise — but if
+    // `markTempCredential` clears password_changed_at, so this combination shouldn't arise, but if
     // it ever did, "the admin currently knows a working password" is the fact that must win. Reading
     // it as Active would tell the office the account was already the holder's own.
     expect(

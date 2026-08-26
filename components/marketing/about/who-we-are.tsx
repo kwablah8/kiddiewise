@@ -7,12 +7,12 @@ import { getMarketingSettings } from "@/lib/marketing/cms/read";
 import { PostBody } from "@/components/marketing/news/post-body";
 
 /**
- * "Who we are" — the real, safe facts only: one campus, Creche through JHS, in Oyarifa, a
+ * "Who we are", the real, safe facts only: one campus, Creche through JHS, in Oyarifa, a
  * community that gathers in person (as the community photos show). No founding date, enrollment
  * figure or named history is asserted (M4 honesty guard).
  *
  * The founding story is the one place on this site where the code deliberately had nothing to say: a
- * dashed callout asked the school to supply it. That callout is now the EMPTY STATE of a real field —
+ * dashed callout asked the school to supply it. That callout is now the EMPTY STATE of a real field,
  * once someone writes "Our story" in the Studio, the invitation is replaced by their words. Until then
  * it still reads exactly as before, so nothing is invented in the meantime.
  */

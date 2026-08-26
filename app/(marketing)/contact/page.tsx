@@ -8,7 +8,7 @@ import { SITE } from "@/lib/marketing/site";
 export const metadata: Metadata = { title: "Contact" };
 
 /**
- * Contact — address/phone/email + a map placeholder alongside the same inquiry form used on
+ * Contact, address/phone/email + a map placeholder alongside the same inquiry form used on
  * Admissions (01-REQ "Marketing website": Contact). Both write into `admissions_inquiries` via
  * the shared mock seam.
  */

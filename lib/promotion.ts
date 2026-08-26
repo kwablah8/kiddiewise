@@ -3,8 +3,8 @@ import type { PromotionDecision, PromotionResultVM } from "@/lib/validators/prom
 /**
  * Pure promotion rules, shared by the confirmation dialog and the server action.
  *
- * The dialog has to tell the admin exactly what is about to happen BEFORE they commit — "12
- * promoted to JHS 2, 2 repeating, 1 graduating" — and the action reports what did happen after.
+ * The dialog has to tell the admin exactly what is about to happen before they commit, "12
+ * promoted to JHS 2, 2 repeating, 1 graduating", and the action reports what did happen after.
  * Those two sentences must agree, so both count with the same function rather than each doing its
  * own arithmetic.
  */
@@ -56,7 +56,7 @@ export function describePromotion(
   return `${list}, for ${targetYearName}.`;
 }
 
-/** Whether the run would write anything at all — drives the confirm button's disabled state. */
+/** Whether the run would write anything at all, drives the confirm button's disabled state. */
 export function hasWork(summary: PromotionResultVM): boolean {
   return summary.promoted + summary.repeated + summary.graduated > 0;
 }

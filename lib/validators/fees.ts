@@ -4,7 +4,7 @@ import { z } from "zod";
 export const feeTerm = z.enum(["full_year", "first", "second", "third"]);
 export type FeeTerm = z.infer<typeof feeTerm>;
 
-// GHS 10,000,000 — orders of magnitude above any real termly fee, but a hard ceiling that turns a
+// GHS 10, 000, 000, orders of magnitude above any real termly fee, but a hard ceiling that turns a
 // fat-fingered or hostile amount (and Infinity, which `.positive()` alone lets through) into a
 // validation error instead of a corrupt ledger row.
 const MAX_AMOUNT = 10_000_000;
@@ -71,10 +71,15 @@ export const paymentVM = z.object({
   reference: z.string().nullable(),
   paid_at: z.string(),
   fee_label: z.string(),
+  // Who took the money, from `payments.recorded_by`. The receipt's "Received by" line reads from
+  // this rather than from whoever is signed in: a reprint, by a second admin, or by the parent
+  // from their own portal, must still name the officer who actually received the cash. Null when
+  // the recorder's profile has since been deleted (the FK is `on delete set null`).
+  recorded_by_name: z.string().nullable(),
 });
 export type PaymentVM = z.infer<typeof paymentVM>;
 
-// The derived Overview figures (golden rule 9 — computed by lib/fees/summary.ts, never stored).
+// The derived Overview figures: computed by lib/fees/summary.ts, never stored.
 export const feesOverviewVM = z.object({
   total_expected: z.number(),
   total_paid: z.number(),
@@ -106,7 +111,7 @@ export const feeStructureCreateSchema = z.object({
 export type FeeStructureCreateInput = z.infer<typeof feeStructureCreateSchema>;
 
 // Edit contract. A full replace rather than a partial patch: the dialog renders and submits every
-// field, so optional-everything would be ceremony with a live footgun — a field accidentally left
+// field, so optional-everything would be ceremony with a live footgun, a field accidentally left
 // out of the patch keeps its old value and the compiler says nothing.
 export const feeStructureUpdateSchema = feeStructureCreateSchema.extend({
   id: z.string().min(1, "Required"),
@@ -121,6 +126,14 @@ export interface FeesFilter {
   class_id?: string;
   academic_year_id?: string;
   term?: FeeTerm;
+  /**
+   * One student's fees only, what the parent portal reads through. Not a security boundary: a
+   * parent is already confined to their own children by RLS (`inv_parent_read`, `pay_parent_read`,
+   * `efa_parent_read`), and this narrows that set to the one child whose page is open. It exists so
+   * the parent portal derives its figures from the same reads the admin Fees screens use, instead
+   * of a second implementation of the same arithmetic.
+   */
+  student_id?: string;
 }
 
 // ---- Class Fees ----
@@ -149,7 +162,7 @@ export const studentFeeVM = z.object({
   student_id: z.string(),
   student_name: z.string(),
   class_name: z.string(),
-  // The invoice's scope, carried so the Record Payment dialog can settle THIS invoice rather than
+  // The invoice's scope, carried so the Record Payment dialog can settle this invoice rather than
   // guessing the student's full-year one.
   fee_term: feeTerm,
   expected: z.number(),
@@ -221,9 +234,9 @@ export type ExtraFeeStructureCreateInput = z.infer<typeof extraFeeStructureCreat
 // ---- Record Payment ----
 export const recordPaymentSchema = z.object({
   student_id: z.string().min(1, "Required"),
-  // Which of the student's invoices this payment settles. A student can hold a full-year invoice AND
+  // Which of the student's invoices this payment settles. A student can hold a full-year invoice and
   // per-term invoices at once, so the scope of the row the admin clicked must travel with the payment
-  // — otherwise the action cannot tell them apart. The Class Fees row (StudentFeeVM) already carries
+  //, otherwise the action cannot tell them apart. The Class Fees row (StudentFeeVM) already carries
   // `fee_term`; the action re-resolves the invoice under the caller's RLS from student + active year +
   // this scope, so nothing here is trusted beyond the enum. Defaults to full_year for older callers.
   fee_term: feeTerm.default("full_year"),

@@ -27,7 +27,7 @@ describe("isPublicPath", () => {
   });
 
   it("lets the embedded Sanity Studio through this app's session guard", () => {
-    // "Public" here means our middleware does not gate it — Sanity authenticates it instead. Without
+    // "Public" here means our middleware does not gate it; Sanity authenticates it instead. Without
     // this, an unauthenticated editor is bounced to /login and a signed-in teacher is bounced to their
     // own portal by the role check, which sits AFTER this call in lib/supabase/middleware.ts.
     expect(isPublicPath("/studio")).toBe(true);
@@ -35,6 +35,22 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/studio/structure/newsPost")).toBe(true);
     expect(isPublicPath("/studio/structure/newsPost;abc123")).toBe(true);
     expect(isPublicPath("/studio/vision")).toBe(true);
+  });
+
+  it("lets the school's own static assets through the session guard", () => {
+    // The regression: the promo video is served from public/slis, but `.mp4` is absent from the
+    // middleware matcher's image-extension exclusion, so the session guard RAN on the video request
+    // and bounced anonymous visitors to /login. The <video> element got an HTML login page instead of
+    // media bytes. The poster still rendered, it is a .jpg, which the matcher DOES skip, so the
+    // section looked fine and pressing play did nothing.
+    //
+    // It was broken for signed-in teachers and parents too: /slis/... is outside their subtree, so
+    // the role check further down lib/supabase/middleware.ts rejected it as well. Only admins, who
+    // own "everything else", could play it, which is why it survived development.
+    expect(isPublicPath("/slis/video/promo.mp4")).toBe(true);
+    expect(isPublicPath("/slis/video/promo-poster.jpg")).toBe(true);
+    expect(isPublicPath("/slis/flyer-admission-2026-2027.jpg")).toBe(true);
+    expect(isPublicPath("/slis/photos/campus-courtyard.jpg")).toBe(true);
   });
 
   it("lets Sanity's publish webhook through the session guard", () => {
@@ -46,10 +62,13 @@ describe("isPublicPath", () => {
   });
 
   it("does not leak protection via a prefix collision", () => {
-    // /newsletter is not /news/…, and /admissions-inbox is not /admissions.
+    // /newsletter is not /news/..., and /admissions-inbox is not /admissions.
     expect(isPublicPath("/newsletter")).toBe(false);
     expect(isPublicPath("/admissions-inbox")).toBe(false);
     expect(isPublicPath("/studios")).toBe(false);
+    // /slis/ is a static-asset prefix, not a route: the bare path and a lookalike stay protected.
+    expect(isPublicPath("/slisx/secret")).toBe(false);
+    expect(isPublicPath("/slis")).toBe(false);
   });
 
   it("protects an unknown path by default", () => {

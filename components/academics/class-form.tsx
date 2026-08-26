@@ -29,7 +29,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { useClass, useCreateClass, useStaff, useUpdateClass } from "@/lib/queries/academics";
 import { classCreateSchema, type ClassCreateInput, type ClassVM } from "@/lib/validators/academics";
 
-// Sentinel for the Select's "no class teacher" row — the field itself stores `null`, but the
+// Sentinel for the Select's "no class teacher" row, the field itself stores `null`, but the
 // Select needs a concrete string value to compare against (same pattern as `student-form.tsx`).
 const NONE_VALUE = "__none__";
 
@@ -37,7 +37,7 @@ const NONE_VALUE = "__none__";
 // (what the form actually collects, incl. raw strings from number inputs before Zod coerces
 // them) differs from its output type (what `createClass`/`updateClass` require). RHF needs
 // both: defaultValues satisfy the input shape, but `onSubmit` receives the resolver's parsed
-// *output* — same pattern as `student-form.tsx`.
+// *output*, same pattern as `student-form.tsx`.
 type ClassFormInput = z.input<typeof classCreateSchema>;
 
 interface ClassFormDialogProps {

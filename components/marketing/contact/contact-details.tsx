@@ -11,7 +11,7 @@ const fullAddress = `${SITE.location.lines.join(", ")}, ${SITE.location.area}`;
  * Contact details card: address/phone/email/hours + a map placeholder (01-REQ "Contact").
  *
  * Phone, email and hours are editable by the school, so `ROWS` is built per render rather than once at
- * module load — a module-scope constant would freeze whatever the values were when the process started
+ * module load, a module-scope constant would freeze whatever the values were when the process started
  * and never pick up an edit.
  */
 export async function ContactDetails() {
@@ -89,7 +89,7 @@ export async function ContactDetails() {
         </div>
       </dl>
 
-      {/* SEAM: real map embed later (or a Storage-hosted static map image) */}
+      {/* TODO: real map embed, or a static map image served from Storage */}
       <PhotoSlot
         label={`Map — ${fullAddress}`}
         aspect="4 / 3"

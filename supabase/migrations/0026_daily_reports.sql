@@ -1,10 +1,10 @@
--- 0026_daily_reports.sql — the pupil's daily report (SNAB "Child's Daily Report" form).
+-- 0026_daily_reports.sql, the pupil's daily report (SNAB "Child's Daily Report" form).
 --
--- One report per student per day, filled from BOTH sides: the parent's morning section (sleep,
+-- One report per student per day, filled from both sides: the parent's morning section (sleep,
 -- breakfast, medication, pickup) and the teacher's day section (toileting, nap, activities,
--- meals, mood, homework). TWO tables rather than one wide row, deliberately: RLS is the security
--- boundary (golden rule 2) and Postgres cannot scope column writes per caller within one row —
--- a single table would let a hostile parent client overwrite the teacher's section via PostgREST.
+-- meals, mood, homework). two tables rather than one wide row, deliberately: RLS is the security
+-- boundary and Postgres cannot scope column writes per caller within one row, so a single table
+-- would let a hostile parent client overwrite the teacher's section via PostgREST.
 -- Split, each side's write policies own their table outright, and a day's report is the join of
 -- the two on (student_id, date).
 
@@ -53,7 +53,7 @@ create table public.daily_reports_teacher (
   date date not null,
 
   -- Variable-length diapering/toileting log: [{ "time": "", "wet": bool, "dry": bool,
-  -- "description": "" }, …]. A child sub-table would buy nothing — entries are only ever read
+  -- "description": "" }, ...]. A child sub-table would buy nothing, entries are only ever read
   -- and written as part of their day's report.
   toileting jsonb not null default '[]'::jsonb,
   nap_start text, nap_wake text,

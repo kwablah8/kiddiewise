@@ -19,18 +19,18 @@ import {
 /**
  * Fees.
  *
- * `paid`, `balance` and `status` are never stored — they are derived from `payments` by the
+ * `paid`, `balance` and `status` are never stored; they are derived from `payments` by the
  * `student_fee_positions` / `extra_fee_positions` views (migration 0018). Migration 0017 dropped the
  * `invoices.amount_paid` and `invoices.status` columns that used to duplicate them, so there is now
- * exactly one answer to "how much has this student paid" (golden rule 9).
+ * exactly one answer to "how much has this student paid".
  *
  * The Overview cards are summed by the pure, unit-tested `summarizeFees` helper rather than by a
- * second SQL aggregate — same reason: one implementation of the arithmetic, not two that can drift.
+ * second SQL aggregate, same reason: one implementation of the arithmetic, not two that can drift.
  */
 
 // Postgres cannot prove a view column is NOT NULL, so every column on these two views is typed
 // nullable even where the underlying table guarantees a value. Rather than assert that away, each
-// read normalises into these concrete shapes with a documented fallback — a numeric that somehow
+// read normalises into these concrete shapes with a documented fallback, a numeric that somehow
 // arrives null is a zero, and a row with no id could not be rendered or acted on at all.
 interface PositionRow {
   id: string;
@@ -78,9 +78,9 @@ const EMPTY_OVERVIEW: FeesOverviewVM = {
   total_records: 0,
 };
 
-// Read EVERY matching row, not just PostgREST's first page (default 1000). getFeesOverview sums these
+// Read every matching row, not just PostgREST's first page (default 1000). getFeesOverview sums these
 // client-side across the whole school, so a truncated read would silently understate the expected /
-// collected / outstanding totals a school reconciles its cash against — money is wrong with nothing on
+// collected / outstanding totals a school reconciles its cash against, money is wrong with nothing on
 // screen to say so. Page until a short read. (A SQL aggregate RPC would be leaner for a very large
 // school; correctness first, and the same paged read also keeps the Class Fees table complete.)
 async function readAllPaged<T>(
@@ -110,6 +110,7 @@ async function fetchPositions(filter: FeesFilter): Promise<PositionRow[]> {
       if (filter.class_id) q = q.eq("class_id", filter.class_id);
       if (filter.academic_year_id) q = q.eq("academic_year_id", filter.academic_year_id);
       if (filter.term) q = q.eq("fee_term", filter.term);
+      if (filter.student_id) q = q.eq("student_id", filter.student_id);
       return q.range(from, to);
     },
     "student fee positions",
@@ -142,11 +143,12 @@ async function fetchPositions(filter: FeesFilter): Promise<PositionRow[]> {
 async function fetchExtraPositions(filter: FeesFilter): Promise<ExtraPositionRow[]> {
   const rows = await readAllPaged(
     (from, to) => {
-      // Extra fees are scoped by class only — they carry no year/term of their own.
+      // Extra fees are scoped by class only; they carry no year/term of their own.
       let q = db()
         .from("extra_fee_positions")
         .select("id, student_name, class_id, class_name, fee_name, amount, paid, balance, status");
       if (filter.class_id) q = q.eq("class_id", filter.class_id);
+      if (filter.student_id) q = q.eq("student_id", filter.student_id);
       return q.range(from, to);
     },
     "extra fee positions",
@@ -219,7 +221,7 @@ export async function listFeeStructures(filter: FeesFilter = {}): Promise<FeeStr
 
 /** The payments ledger, newest first. Covers both class fees and extra fees. */
 export async function listPayments(filter: FeesFilter = {}): Promise<PaymentVM[]> {
-  // The class column shows where the student is NOW, so the embed is scoped to the active year —
+  // The class column shows where the student is NOW, so the embed is scoped to the active year,
   // a promoted student carries one enrollment per year and the unscoped embed would pick last
   // year's class.
   const yearId = await activeYearId();
@@ -229,10 +231,14 @@ export async function listPayments(filter: FeesFilter = {}): Promise<PaymentVM[]
       `id, student_id, amount, method, reference, paid_at,
        students(first_name, last_name, enrollments(status, class_id, classes(name))),
        invoices(fee_term),
-       extra_fee_assignments(extra_fee_items(name))`,
+       extra_fee_assignments(extra_fee_items(name)),
+       recorder:profiles!payments_recorded_by_fkey(first_name, last_name)`,
     )
     .order("paid_at", { ascending: false });
   if (yearId) q = q.eq("students.enrollments.academic_year_id", yearId);
+  // The parent portal reads this same function for one child (lib/data/parent.ts#getChildFees), so
+  // the ledger is shaped in exactly one place for both portals.
+  if (filter.student_id) q = q.eq("student_id", filter.student_id);
 
   const rows = unwrapList(await q, "payments");
 
@@ -252,12 +258,17 @@ export async function listPayments(filter: FeesFilter = {}): Promise<PaymentVM[]
         method: p.method as PaymentMethod,
         reference: p.reference,
         paid_at: p.paid_at,
-        // What the payment settled — the extra fee's name, or the class fee's term scope.
+        // What the payment settled: the extra fee's name, or the class fee's term scope.
         fee_label:
           p.extra_fee_assignments?.extra_fee_items?.name ??
           (p.invoices
             ? `${FEE_TERM_LABEL[p.invoices.fee_term as FeeTerm]} school fees`
             : "School fees"),
+        // Null when `recorded_by` was cleared by a profile deletion, and, for a PARENT reading
+        // this, also when the recorder is another parent's profile, which `profiles_select`
+        // (migration 0030) will not return. In practice the recorder is always an admin, whom a
+        // parent may read; the receipt falls back to "the school office" either way.
+        recorded_by_name: p.recorder ? `${p.recorder.first_name} ${p.recorder.last_name}` : null,
       } satisfies PaymentVM,
     ];
   });

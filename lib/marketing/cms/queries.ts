@@ -3,7 +3,7 @@ import { defineQuery } from "next-sanity";
 /**
  * Every GROQ query the marketing site runs, in one file.
  *
- * Image projections all return the same five keys — `ref`, `alt`, `width`, `height`, `lqip` — because
+ * Image projections all return the same five keys, `ref`, `alt`, `width`, `height`, `lqip`, because
  * `toMediaAsset()` in `./image.ts` turns exactly that shape into the `MediaAsset` contract the existing
  * components already render. `ref` (rather than a resolved `asset->url`) is deliberate: the URL builder
  * needs the reference to apply the editor's hotspot and to request a size, and a bare `url` cannot be
@@ -15,13 +15,13 @@ import { defineQuery } from "next-sanity";
  */
 
 /**
- * The technical facts about an image asset — and NOTHING about its description.
+ * The technical facts about an image asset, and NOTHING about its description.
  *
  * `alt` is deliberately absent. It lives in a different place per document type: on the image object
- * for a news cover (`coverImage.alt`), but on the DOCUMENT for a gallery photo, whose `image` field has
+ * for a news cover (`coverImage.alt`), but on the document for a gallery photo, whose `image` field has
  * no subfields at all. A single projection that assumed `alt` sat inside the image silently returned
  * `null` for every gallery photo, which failed validation, emptied the list, and sent `/gallery` back to
- * the committed files — a bug that looked exactly like "Sanity isn't working". Keeping alt out of here
+ * the committed files, a bug that looked exactly like "Sanity isn't working". Keeping alt out of here
  * forces each query to say where its description comes from.
  */
 const ASSET_PROJECTION = `
@@ -77,7 +77,7 @@ export const NEWS_POST_QUERY = defineQuery(`
     "coverImage": coverImage{${ASSET_PROJECTION}, alt},
     // Image blocks embedded mid-article need the same five keys as a cover, or they reach the
     // renderer as a bare asset reference with no dimensions and cause layout shift. Text blocks pass
-    // through untouched — Portable Text's own grammar is not ours to reshape.
+    // through untouched; Portable Text's own grammar is not ours to reshape.
     body[]{
       ...,
       _type == "image" => {${ASSET_PROJECTION}, alt}

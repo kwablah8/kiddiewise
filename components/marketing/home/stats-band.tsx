@@ -3,8 +3,8 @@ import { SITE } from "@/lib/marketing/site";
 import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
 /**
- * The values band — honest, non-numeric content drawn straight from the school's motto. It
- * deliberately asserts NO enrollment, class-size or pass-rate figures: none are confirmed for the
+ * The values band: honest, non-numeric content drawn straight from the school's motto. It
+ * deliberately asserts no enrollment, class-size or pass-rate figures: none are confirmed for the
  * real school, and the M4 plan's honesty guard forbids inventing them.
  */
 const VALUES: readonly { name: string; blurb: string }[] = [

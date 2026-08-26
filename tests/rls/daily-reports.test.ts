@@ -1,6 +1,6 @@
 /**
  * Daily reports (migration 0026) are split into a parent-written and a teacher-written table
- * precisely so RLS can hold the line between the two authors — these tests are that line.
+ * precisely so RLS can hold the line between the two authors, these tests are that line.
  * PostgREST rejects out-of-policy INSERTs loudly but filters out-of-policy UPDATEs silently
  * (0 rows), so negative update cases assert the row is unchanged rather than expecting an error.
  */
@@ -99,7 +99,7 @@ describe("teacher side of the daily report", () => {
     expect(data).toHaveLength(1);
     expect(data![0]!.breakfast).toBe("all");
 
-    // Silently filtered by RLS — assert the row survived untouched.
+    // Silently filtered by RLS, assert the row survived untouched.
     await parent
       .from("daily_reports_teacher")
       .update({ breakfast: "none" })

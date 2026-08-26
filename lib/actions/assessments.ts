@@ -55,7 +55,7 @@ export async function createAssessment(input: AssessmentCreateInput): Promise<Ac
 
 /**
  * Edit an assessment's descriptive fields. RLS (asm_teacher_update / asm_admin) decides who may;
- * the one app-level rule is that `max_score` freezes once ANY score has been recorded against it —
+ * the one app-level rule is that `max_score` freezes once any score has been recorded against it,
  * every stored score is a fraction of that total, so changing it would silently re-grade the class.
  */
 export async function updateAssessment(
@@ -88,7 +88,7 @@ export async function updateAssessment(
 /**
  * Delete an assessment that hasn't entered the record.
  *
- * Submitted results are what parents and terminal reports read — block-if-history applies and the
+ * Submitted results are what parents and terminal reports read, block-if-history applies and the
  * delete is refused. Unsubmitted rows are the teacher's own drafts and cascade away with the
  * assessment (results FK, migration 0008). RLS: teachers may only delete within their own
  * class-subject pairs (asm_teacher_delete, migration 0025).

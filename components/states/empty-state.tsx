@@ -11,7 +11,7 @@ interface EmptyStateProps {
 }
 
 /**
- * Calm, centered, guiding empty state (06-UI §7). Never a bare "No data" left to chance —
+ * Calm, centered, guiding empty state (06-UI §7). Never a bare "No data" left to chance,
  * always a title, and usually a one-line description of what will appear here.
  */
 export function EmptyState({

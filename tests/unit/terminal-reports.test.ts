@@ -70,7 +70,7 @@ describe("assignPositions", () => {
   });
 
   it("gives tied students the same position and skips the next (competition ranking)", () => {
-    // 1, 2, 2, 4 — how a report card reads. Dense ranking (1, 2, 2, 3) would understate how many
+    // 1, 2, 2, 4, how a report card reads. Dense ranking (1, 2, 2, 3) would understate how many
     // children are ahead of the fourth student.
     const out = assignPositions([
       { student_id: "a", average_score: 90 },
@@ -195,7 +195,7 @@ describe("computeSubjectComponents", () => {
       [r("RME", 1, 3, false), r("RME", 2, 3, true)],
       50,
     );
-    // CA: 33.333…% → 16.7 of 50; exam: 66.666…% → 33.3 of 50.
+    // CA: 33.333...% → 16.7 of 50; exam: 66.666...% → 33.3 of 50.
     expect(rows[0]).toEqual({
       subject_name: "RME",
       short_code: null,

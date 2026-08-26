@@ -1,6 +1,6 @@
 /**
  * The report card's two data blocks, shared by every surface that shows one: the admin/teacher
- * compile dialog and the parent's published card. Both render the SAME columns and the same summary
+ * compile dialog and the parent's published card. Both render the same columns and the same summary
  * figures as `lib/pdf/report-card.ts` prints, so what a teacher signs off, what a parent reads on
  * their phone, and what comes out of the printer are one card in three places.
  */
@@ -23,7 +23,7 @@ export interface ReportCardSubject {
 /** One decimal on every figure, like the printed card. A blank cell stays a dash, never 0.0. */
 const dec = (v: number | null): string => (v === null ? "—" : v.toFixed(1));
 
-/** "1/16" — a rank only means something against the size of the group it was taken over. */
+/** "1/16", a rank only means something against the size of the group it was taken over. */
 const rank = (position: number | null, size: number | null): string =>
   position === null ? "—" : size === null ? String(position) : `${position}/${size}`;
 

@@ -11,9 +11,9 @@ audiences that consume that data.
 ## Phase 1 — Documentation (this set)
 
 Requirements, architecture, database design, user flows, permissions, standards. Establishes
-the source of truth before any code. **Status: ✅ done** (kept current as the build changes it).
+the source of truth before any code. **Status: done** (kept current as the build changes it).
 
-Deliverables: `CLAUDE.md` + `docs/00`–`docs/08`.
+Deliverables: `README.md` and `docs/00`-`docs/09`.
 
 ---
 
@@ -31,7 +31,7 @@ Stand up the backend the whole app depends on.
 
 Exit criteria: a seeded school with an admin, all tables protected, tenancy tests green.
 
-**Status: ✅ done.** 21 migrations, 26 tables, 2 views, 8 app-facing functions (plus 7 SECURITY DEFINER RLS helpers). `pnpm db:seed` builds a populated
+**Status: done.** 21 migrations, 26 tables, 2 views, 8 app-facing functions (plus 7 SECURITY DEFINER RLS helpers). `pnpm db:seed` builds a populated
 demo school; 13 RLS + 16 integration tests green.
 
 ---
@@ -56,7 +56,7 @@ The operational core; unblocks every other portal.
 
 Exit criteria: an admin can set up and run a school end-to-end (per `docs/05-USER-FLOWS.md §1`).
 
-**Status: 🔄 mostly done.** Promotion, announcements/events authoring and the report card PDF have all
+**Status: mostly done.** Promotion, announcements/events authoring and the report card PDF have all
 since shipped. Outstanding: school settings, and storing the generated report PDF rather than only
 downloading it. See "Remaining work" below.
 
@@ -72,7 +72,7 @@ Public presence + inbound funnel into the platform.
 
 Exit criteria: a visitor can learn about the school and submit an inquiry that lands in Admin.
 
-**Status: ✅ done.** Enquiries land in the admin inbox. News is a real, school-authored section
+**Status: done.** Enquiries land in the admin inbox. News is a real, school-authored section
 (`/news` + `/news/[slug]`), and the gallery is school-managed — both via Sanity, not Storage
 (`docs/02-ARCHITECTURE.md` §7a). The Studio is embedded at `/studio`, and the school also edits its
 contact email, phone numbers, office hours, admissions year, early-bird sentence and founding story
@@ -92,7 +92,7 @@ Consumes the academic structure admins created.
 
 Exit criteria: a teacher can mark attendance and submit results for their classes.
 
-**Status: ✅ done.** Attendance and score entry both write and propagate. "Performance review views" is
+**Status: done.** Attendance and score entry both write and propagate. "Performance review views" is
 the assessment detail screen; a richer analytics view is post-MVP.
 
 ---
@@ -103,12 +103,16 @@ Read-only monitoring for guardians; depends on submitted teacher data + publishe
 
 - Parent shell + dashboard (children, announcements, attendance summary, latest results).
 - Child profile, attendance history + percentage, results, published terminal reports.
+- Fees: balance, per-term position, extra fees, and a receipt per payment.
 - Scoped to linked children (RLS-enforced).
 
 Exit criteria: a parent sees accurate, up-to-date data for each linked child and nothing else.
 
-**Status: 🔄 mostly done.** Dashboard, profile, attendance, results and published reports all work.
-Missing: a fee-balance view — RLS already permits it (`pay_parent_read`), there is simply no screen.
+**Status: done.** Dashboard, profile, attendance, results, published reports and fees all work.
+The fees tab reads through the same `lib/data/fees.ts` functions the admin screens use, narrowed to
+one student, so a parent's balance and the office's balance for that child are the same figure by
+construction. No migration was needed — `pay_parent_read` / `inv_parent_read` / `efa_parent_read`
+already permitted it, which is what 0017's comment anticipated.
 
 ---
 
@@ -127,10 +131,11 @@ every "current class" read is scoped to the ACTIVE year.
 | Item | Reads work | Missing |
 |---|---|---|
 | School settings | `getSchool()` + `schools_admin_update` policy exist | No page to edit name, logo, address, contact |
-| Parent fee balance | `pay_parent_read` permits it | No screen. This is also where a parent would get their own receipt — today only an admin can issue one |
 
 Announcements and events have since gained their write side (`components/communication/*`,
-`lib/actions/communication.ts`), so they are no longer listed.
+`lib/actions/communication.ts`), so they are no longer listed. The parent fee balance has shipped
+too (`app/(app)/parent/children/[id]/fees`), receipt download included — a parent no longer has to
+ask the office to reissue one.
 
 ### Storage — three buckets to wire (the fourth is superseded)
 
@@ -157,6 +162,41 @@ against a deployed URL, since Sanity cannot reach localhost.
 Email/SMS delivery is **built and working** — "Email the invitation" and the branded recovery template
 both function. It needs an SMTP/Hubtel/Twilio account, not development. Until then the temporary-password
 and copy-link routes cover portal access with no provider at all (`docs/04-AUTH-AND-PERMISSIONS.md` §2.3).
+
+---
+
+## Hardening backlog
+
+Findings from the security review done while the database layer was being built. None is a
+cross-tenant or privilege-escalation hole, which is why they were deferred rather than fixed at
+the time. They have not all been re-checked since, so treat the list as leads rather than as a
+current audit. The first item was confirmed still open when this list was written.
+
+- **`is_active` is self-editable.** `0015_grants.sql` grants `UPDATE (... is_active)` on
+  `profiles` to `authenticated`, and no later migration narrows it. Staff deactivation has since
+  shipped as a feature, so a deactivated user holding a live session could set the flag back
+  through PostgREST. Either drop `is_active` from that grant list and move the change into a
+  Server Action, or enforce deactivation in auth and middleware so the flag stops being the
+  thing that matters.
+- **Test that a school admin cannot mint a super admin.** `0014` has a
+  `role <> 'super_admin'` check. The column lock is covered by tests; the INSERT path is not.
+- **`res_teacher_rw` is wider than the permission matrix.** Migration `0008` grants teachers
+  `FOR ALL` on `results`, which includes DELETE. The matrix in
+  `04-AUTH-AND-PERMISSIONS.md` says insert and update only. Split the policy.
+- **Same-school constraint** on `class_subjects.teacher_id` and `classes.class_teacher_id`.
+  Currently mitigated by the school predicate in the teacher policies; a constraint would make
+  it structural.
+- **`cs_select` and `fi_select` are school-readable.** Narrow them to the permission matrix if
+  the assignment map and fee catalogue should be role-gated rather than readable by anyone in
+  the school.
+- **No Storage isolation test** for the `<school_id>/...` prefix policies in `0012`. Worth adding
+  with the first real file upload.
+- **No negative test for unsubmitted results.** Seed an unsubmitted result and assert the linked
+  parent cannot read it, covering the `is_submitted` half of `res_parent_read`.
+- **Positive tests could assert more.** Several check only that no error came back. Round-trip
+  the persisted values instead.
+- **`current_role()` shadows a reserved word.** Safe today because every call site
+  schema-qualifies it. Rename to `current_user_role()` if a migration touches it anyway.
 
 ---
 

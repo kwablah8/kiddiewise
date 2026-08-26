@@ -5,10 +5,10 @@ import { StudioClient } from "./studio-client";
  * Sanity Studio, served from this app at /studio.
  *
  * The catch-all segment matters: the Studio is a single-page app that routes internally
- * (/studio/structure/newsPost, /studio/vision, …), and `[[...tool]]` lets Next hand all of it to the
+ * (/studio/structure/newsPost, /studio/vision, ...), and `[[...tool]]` lets Next hand all of it to the
  * same page instead of 404ing on a deep link or a refresh.
  *
- * `force-static` is correct despite the Studio being highly dynamic — everything it does happens in
+ * `force-static` is correct despite the Studio being highly dynamic, everything it does happens in
  * the browser against Sanity's API, so the server has nothing to compute per request and prerendering
  * the shell keeps it off the serverless path entirely.
  *
@@ -27,7 +27,7 @@ export default function StudioPage() {
     return (
       // Every colour here is explicit, and that is the point. Importing the Studio component pulls
       // Sanity's global stylesheet into this route's CSS bundle even on this branch, where the Studio
-      // never renders — and that stylesheet sets `body { background: #0d0e12 }`. Inheriting
+      // never renders, and that stylesheet sets `body { background: #0d0e12 }`. Inheriting
       // `text-foreground` put near-black type on Sanity's near-black canvas, which is how this screen
       // first shipped: technically rendered, practically invisible. So this panel paints its own
       // surface and its own type colours, and cannot be broken by whichever stylesheet wins.

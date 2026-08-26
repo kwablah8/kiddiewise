@@ -9,16 +9,16 @@ import { getMarketingSettings, getNewsPosts } from "@/lib/marketing/cms/read";
 export const metadata: Metadata = { title: "News" };
 
 /**
- * News — term dates, event write-ups and notices, written by the school in the Studio (01-REQ
+ * News: term dates, event write-ups and notices, written by the school in the Studio (01-REQ
  * "Marketing website": News).
  *
- * The four states (CLAUDE.md rule 4): **success** is the card grid; **empty** reuses the
- * `ComingSoonHero` this page has shipped since launch, which is already designed and honest — there is
+ * The four states: **success** is the card grid; **empty** reuses the
+ * `ComingSoonHero` this page has shipped since launch, which is already designed and honest; there is
  * genuinely nothing to read yet, and a bare "No posts" line would be a downgrade; **error** also lands
  * here, because `getNewsPosts()` cannot throw and logs the real cause server-side; **loading** is
  * `loading.tsx`, which only shows if the cached read has expired and a visitor arrives first.
  *
- * These posts are NOT the portal's `announcements`. That table is for signed-in parents and teachers
+ * These posts are not the portal's `announcements`. That table is for signed-in parents and teachers
  * and is scoped by RLS; this is the outward-facing, indexable one. No sync between them, by design.
  */
 export default async function NewsPage() {

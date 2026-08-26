@@ -36,7 +36,7 @@ create policy students_admin_all on public.students for all to authenticated
   with check (public.is_school_admin() and school_id = public.current_school_id());
 -- NOTE: students_teacher_read is deferred to 0006_academic_structure.sql. Its USING clause
 -- queries public.enrollments directly (not through a SECURITY DEFINER function), and unlike
--- function bodies, CREATE POLICY expressions are resolved at creation time — enrollments
+-- function bodies, CREATE POLICY expressions are resolved at creation time, enrollments
 -- doesn't exist until 0006. Same deferral pattern as schools_active_year_fk/active_term_fk
 -- below in 0006. Policy text is verbatim from the plan, only its migration location moved.
 create policy students_parent_read on public.students for select to authenticated

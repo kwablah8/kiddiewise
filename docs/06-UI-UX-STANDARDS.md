@@ -17,8 +17,8 @@ are read from the screenshots; **confirm exact hex against the brand kit before 
 - **Fast and calm.** Subtle, purposeful motion; instant-feeling interactions.
 - **Helpful over decorative.** Empty states explain and guide; errors tell the user what to do.
 
-Avoid: generic dashboards, AI-generated-looking layouts, gradient overload, poor spacing,
-huge unnecessary cards, cluttered interfaces.
+Avoid: generic dashboards, gradient overload, poor spacing, huge unnecessary cards, cluttered
+interfaces.
 
 ---
 
@@ -77,8 +77,8 @@ The crest and the school's name come from `lib/brand.ts` via `components/brand/c
 white chip is **load-bearing**: `logo.jpg` has a white background and dissolves into navy without it.
 `lib/marketing/site.ts` and `lib/marketing/media.ts` derive their identity fields from `BRAND`.
 
-SEAM: identity is single-tenant today. Reading a school's own name and logo from the `schools` row
-and Storage is unbuilt — CLAUDE.md §5.
+Identity is single-tenant today. Reading a school's own name and logo from the `schools` row and
+Storage is not built yet; see `08-ROADMAP.md`.
 
 ### Stat-card icon chips
 Soft, low-saturation tinted squares behind each metric icon: green, amber, and (teacher

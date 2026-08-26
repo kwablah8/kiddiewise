@@ -29,7 +29,7 @@ export function HomePrograms() {
           const photo = MEDIA.programs[program.key as ProgramKey];
           return (
             <article key={program.key} className={`reveal${i > 0 ? ` d${Math.min(i, 4)}` : ""}`}>
-              {/* The hover lift lives on this inner element, not the `.reveal` article — a CSS
+              {/* The hover lift lives on this inner element, not the `.reveal` article, a CSS
                   Animation (the entrance) and a CSS Transition (the hover) fighting over
                   `transform` on the SAME element would let the still-active view()-timeline
                   animation permanently win once the hover transition finishes, silently killing

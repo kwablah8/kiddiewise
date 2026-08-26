@@ -40,7 +40,7 @@ type EditFormOutput = z.output<typeof editFormSchema>;
 
 /**
  * Edit + delete controls for one assessment row, shared by the teacher's list and the admin's
- * table. Who may actually write is RLS's decision (asm_teacher_* / asm_admin) — the buttons render
+ * table. Who may actually write is RLS's decision (asm_teacher_* / asm_admin), the buttons render
  * for everyone who can see the row, and an unauthorised write comes back as a permission message.
  */
 export function AssessmentRowActions({ assessment }: { assessment: AssessmentListItemVM }) {
@@ -107,7 +107,7 @@ function AssessmentEditDialog({
   const { data: types } = useAssessmentTypes();
 
   // Scores are stored as fractions of max_score, so once any exist the server refuses to move the
-  // total — the field is disabled with the reason rather than letting the save bounce.
+  // total, the field is disabled with the reason rather than letting the save bounce.
   const maxLocked = assessment.result_count > 0;
 
   const {

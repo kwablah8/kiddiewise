@@ -6,7 +6,7 @@ import { queryKeys } from "./keys";
 import * as data from "@/lib/data/communication";
 import * as actions from "@/lib/actions/communication";
 
-// Bound to consts so useMutation can infer its variables type — see the note in
+// Bound to consts so useMutation can infer its variables type, see the note in
 // lib/queries/people.ts. Do not inline these into `mutationFn`.
 const createAnnouncement = mutate(actions.createAnnouncement);
 const updateAnnouncement = mutate(actions.updateAnnouncement);

@@ -20,6 +20,6 @@ create policy profiles_select on public.profiles for select to authenticated
 create policy profiles_admin_write on public.profiles for all to authenticated
   using (public.is_school_admin() and school_id = public.current_school_id())
   with check (public.is_school_admin() and school_id = public.current_school_id());
--- a user may update their own profile row (not role/school — enforced in app + provisioning).
+-- a user may update their own profile row (not role/school, enforced in app + provisioning).
 create policy profiles_self_update on public.profiles for update to authenticated
   using (id = auth.uid()) with check (id = auth.uid());

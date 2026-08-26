@@ -59,7 +59,7 @@ export async function getClassPerformance(): Promise<ClassPerformanceVM[]> {
     class_name: r.class_name,
     level: r.level,
     students: Number(r.students),
-    // Null when a class has no submitted results yet — the chart renders that as a gap rather
+    // Null when a class has no submitted results yet, the chart renders that as a gap rather
     // than as a zero, which would read as "they all failed".
     average_score: r.average_score === null ? null : Number(r.average_score),
   }));
@@ -90,7 +90,7 @@ export async function getUpcomingEvents(): Promise<UpcomingEventVM[]> {
     await db()
       .from("events")
       .select("id, title, start_at, location")
-      // Upcoming only — a dashboard card listing last term's sports day is noise.
+      // Upcoming only, a dashboard card listing last term's sports day is noise.
       .gte("start_at", new Date().toISOString())
       .order("start_at", { ascending: true })
       .limit(5),

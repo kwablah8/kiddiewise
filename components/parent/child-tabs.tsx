@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { lightFocusRingClass } from "@/lib/ui";
 
-/** Section tabs within a child (Profile · Attendance · Results). */
+/** Section tabs within a child (Profile · Daily Report · Attendance · Results · Fees). */
 export function ChildTabs({ childId }: { childId: string }) {
   const pathname = usePathname();
   const base = `/parent/children/${childId}`;
@@ -15,6 +15,7 @@ export function ChildTabs({ childId }: { childId: string }) {
     { label: "Daily Report", href: `${base}/daily-report`, exact: false },
     { label: "Attendance", href: `${base}/attendance`, exact: false },
     { label: "Results", href: `${base}/results`, exact: false },
+    { label: "Fees", href: `${base}/fees`, exact: false },
   ];
 
   return (

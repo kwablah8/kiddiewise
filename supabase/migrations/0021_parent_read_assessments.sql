@@ -12,7 +12,7 @@
 -- on both. The bug lived exactly in the join between them.
 --
 -- Scope: assessments belonging to a class one of their children is enrolled in. That is broader than
--- "assessments my child has a result for", and deliberately so — a parent should see that a test
+-- "assessments my child has a result for", and deliberately so, a parent should see that a test
 -- happened even before it is marked. It leaks nothing about other students: an assessment row is a
 -- class-level artefact (title, subject, date, max score) and contains no per-student data. Other
 -- students' RESULTS remain gated by `res_parent_read`.

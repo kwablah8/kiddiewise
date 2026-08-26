@@ -15,7 +15,7 @@ import { formatDate } from "@/lib/format";
  */
 export function AnnouncementsPanel({ limit = 5 }: { limit?: number }) {
   const { data, isLoading, isError, refetch } = useAnnouncements();
-  // Drafts are excluded even for an admin viewing a portal dashboard — a dashboard shows what the
+  // Drafts are excluded even for an admin viewing a portal dashboard, a dashboard shows what the
   // school has actually said, not what it is still writing.
   const published = (data ?? []).filter((a) => a.is_published).slice(0, limit);
   const isEmpty = !isLoading && !isError && published.length === 0;

@@ -1,7 +1,7 @@
 /**
- * Moves the committed gallery photos into Sanity — run once with `pnpm cms:seed:gallery`.
+ * Moves the committed gallery photos into Sanity, run once with `pnpm cms:seed:gallery`.
  *
- * WHY THIS EXISTS. `getGalleryPhotos()` replaces the gallery as a WHOLE LIST: while Sanity has zero
+ * why this EXISTS. `getGalleryPhotos()` replaces the gallery as a whole LIST: while Sanity has zero
  * photos the site serves the 13 committed files, and the moment it has one it serves exactly that one.
  * That is the right rule (a half-Sanity, half-local gallery could never have a committed photo removed,
  * and would duplicate any that were re-uploaded) but it makes the first publish a cliff. This script
@@ -14,7 +14,7 @@
  *
  * IDEMPOTENT: documents use a deterministic `_id` derived from the filename and are written with
  * `createOrReplace`, so re-running updates in place instead of duplicating. Re-running after the school
- * has reordered photos WILL reset `position` back to the manifest order — that is the one destructive
+ * has reordered photos WILL reset `position` back to the manifest order; that is the one destructive
  * edge, and it is why the script says so out loud before it writes.
  *
  * The committed files stay in `public/slis/photos/`. They remain the fallback for an unconfigured build
@@ -88,7 +88,7 @@ async function main() {
       _id: documentIdFor(photo.src),
       _type: "galleryImage",
       image: { _type: "image", asset: { _type: "reference", _ref: asset._id } },
-      // Carried across verbatim — this is the whole reason the script exists.
+      // Carried across verbatim; this is the whole reason the script exists.
       alt: photo.alt,
       // Preserve the manifest's deliberate order (the community photo leads).
       position: index + 1,

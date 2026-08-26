@@ -5,7 +5,7 @@ import { TrendPill } from "./trend-pill";
 
 export type MetricTint = "green" | "amber" | "blue" | "indigo";
 
-// Soft, low-saturation tinted chips (06-UI §2 "Stat-card icon chips") — decorative accents, not
+// Soft, low-saturation tinted chips (06-UI §2 "Stat-card icon chips"), decorative accents, not
 // full-color blocks. green/amber are the admin palette; blue/indigo are the teacher palette (06-UI §8)
 // used by the teacher dashboard metric row.
 const tintStyles: Record<MetricTint, string> = {

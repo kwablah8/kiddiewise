@@ -2,7 +2,7 @@ import Link from "next/link";
 import { KeyRound } from "lucide-react";
 
 /**
- * "Forgot password?" — deliberately NOT an email form.
+ * "Forgot password?", deliberately not an email form.
  *
  * The school runs without an email/SMS provider (docs/09 §portal access), so a reset link would
  * simply never arrive; a form promising one is a dead end that reads as a broken product. Instead

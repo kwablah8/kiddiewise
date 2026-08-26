@@ -10,7 +10,7 @@ import {
 /**
  * Renders a news post's rich text.
  *
- * The components map is not optional decoration — without it, Portable Text emits unstyled output and
+ * The components map is not optional decoration: without it, Portable Text emits unstyled output and
  * every heading, list and link in a post that the school wrote looks broken. The set of styles here
  * matches exactly what `sanity/schema/news-post.ts` offers the editor, so there is no block type they
  * can produce that lands unstyled.
@@ -55,7 +55,7 @@ const components: PortableTextComponents = {
     link: ({ children, value }) => {
       const href = typeof value?.href === "string" ? value.href : undefined;
       if (!href) return <>{children}</>;
-      // Anything an editor links to is somewhere else, so it opens in a new tab — and `noopener`
+      // Anything an editor links to is somewhere else, so it opens in a new tab, and `noopener`
       // is what stops that tab from reaching back into `window.opener`.
       const external = /^https?:\/\//i.test(href);
       return (
@@ -72,7 +72,7 @@ const components: PortableTextComponents = {
   types: {
     image: ({ value }) => {
       // The GROQ projection flattens image blocks to the same five keys as a cover photo, so the same
-      // contract validates them. A block that fails is skipped rather than crashing the article — a
+      // contract validates them. A block that fails is skipped rather than crashing the article, a
       // missing photo is a worse-looking post, not a broken page.
       const parsed = cmsDescribedImageSchema.safeParse(value);
       if (!parsed.success) return null;

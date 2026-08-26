@@ -1,11 +1,10 @@
 /**
- * SLIS media manifest — the single source of truth for optimized asset paths + alt text.
+ * Media manifest: the single source of truth for optimised asset paths and alt text.
  *
- * Components import `MEDIA` instead of hardcoding paths under `public/slis/`, so swapping a
- * photo (e.g. once the school's licensed photographer delivers a full set — Pixieset downloads
- * are disabled, so these WhatsApp-quality photos are the real interim SEAM) only ever happens
- * here. Every asset was optimized from `SNAB-Assets/` (source, not committed) via `sips`/`ffmpeg`:
- * see `.superpowers/sdd/slis-unit-A-report.md` for the full photo catalog.
+ * Components import `MEDIA` rather than hardcoding paths under `public/slis/`, so swapping a photo
+ * only ever happens here. The current photos came from the school over WhatsApp and are placeholders
+ * for a licensed set. Each one was optimised out of `SNAB-Assets/` (the raw source, not committed)
+ * with `sips` and `ffmpeg`.
  */
 
 import { BRAND } from "@/lib/brand";
@@ -18,13 +17,13 @@ export interface MediaAsset {
   /**
    * A tiny base64 preview to show while the real image loads, passed to `next/image` as
    * `placeholder="blur"`. Only ever set on assets that came from Sanity, which extracts one (an
-   * "LQIP") for every upload. The committed files under `public/slis/` leave this `undefined` — Next
+   * "LQIP") for every upload. The committed files under `public/slis/` leave this `undefined`, Next
    * generates their blur placeholder at build time from the local file, so they need nothing here.
    */
   blurDataURL?: string;
 }
 
-/** A `MediaAsset` whose intrinsic size is known — for `next/image` without `fill`. */
+/** A `MediaAsset` whose intrinsic size is known, for `next/image` without `fill`. */
 export interface SizedMediaAsset extends MediaAsset {
   width: number;
   height: number;
@@ -40,11 +39,11 @@ export interface MediaManifest {
   introPhoto: MediaAsset;
   community: MediaAsset;
   programs: Record<ProgramKey, MediaAsset>;
-  /** All real photos, for the Gallery page. SEAM: additional licensed photos append here. */
+  /** All real photos, for the Gallery page. Additional licensed photos append here. */
   gallery: readonly MediaAsset[];
   promoVideo: { src: string };
   promoPoster: MediaAsset;
-  /** The school's own admission flyer graphic — not a photo, kept out of `gallery`. Rendered
+  /** The school's own admission flyer graphic: not a photo, kept out of `gallery`. Rendered
    * verbatim by `FlyerPoster` on Home and Admissions, and served as-is to the poster's download
    * link, so it is the one asset here that reaches parents as a file rather than as a page. */
   flyer: SizedMediaAsset;
@@ -142,7 +141,7 @@ const eventKidsFuntime: MediaAsset = {
 };
 
 export const MEDIA: MediaManifest = {
-  // DERIVED from `lib/brand.ts` — the crest is shared with the portal sidebar and auth screens now,
+  // derived from `lib/brand.ts`, the crest is shared with the portal sidebar and auth screens now,
   // so its path and alt text live in one place rather than here and there.
   logo: BRAND.crest,
   heroPhoto: campusExteriorBanners,
@@ -171,15 +170,15 @@ export const MEDIA: MediaManifest = {
     hallwayValuesMural,
     eventKidsFuntime,
   ],
-  promoVideo: { src: "/slis/video/promo.mp4" }, // SEAM: swap for a hosted/streamed source if it grows.
+  promoVideo: { src: "/slis/video/promo.mp4" }, // Swap for a hosted or streamed source if it grows.
   promoPoster: {
     src: "/slis/video/promo-poster.jpg",
     alt: "SLIS roadside signboard listing Creche through JHS programs and contact details",
     width: 1280,
     height: 720,
   },
-  // SEAM: next year's artwork replaces this one file + these two lines. Nothing else references the
-  // path, and the alt text is deliberately a description of what the flyer *says* — it is the only
+  // Next year's artwork replaces this one file and these two lines. Nothing else references the
+  // path, and the alt text is deliberately a description of what the flyer *says*; it is the only
   // way the flyer's content (a raster) reaches a screen reader or a search engine.
   flyer: {
     src: "/slis/flyer-admission-2026-2027.jpg",

@@ -26,24 +26,24 @@ export interface DataTableColumn<T> {
   hideOnMobile?: boolean;
 }
 
-/** Anything inside a row that owns its own activation — clicking it must not also open the row. */
+/** Anything inside a row that owns its own activation, clicking it must not also open the row. */
 const INTERACTIVE_SELECTOR =
   'a[href], button, input, select, textarea, label, [role="button"], [role="menuitem"], [role="checkbox"], [role="switch"]';
 
 /**
  * Whether a row-level click/keypress actually came from something interactive inside the row.
  *
- * Two distinct cases, both of which reached production as the same bug — clicking "Invite" on the
+ * Two distinct cases, both of which reached production as the same bug, clicking "Invite" on the
  * staff page opened the teacher's profile behind the dialog:
  *
- *  1. A control INSIDE the row (button, link, checkbox). The event bubbles up through the DOM to the
+ *  1. A control inside the row (button, link, checkbox). The event bubbles up through the DOM to the
  *     row, which then navigates on top of whatever the control just did.
  *  2. A dialog or menu the row opened. Those render through a portal, so they sit outside the row in
- *     the DOM — but React dispatches synthetic events through the COMPONENT tree, so every click
+ *     the DOM, but React dispatches synthetic events through the COMPONENT tree, so every click
  *     inside them still arrives at this handler. Containment is what tells the two apart.
  *
  * Fixed here rather than with a `stopPropagation` wrapper at each call site: the row is what
- * over-reaches, so the row is where it gets bounded — otherwise every future table column with a
+ * over-reaches, so the row is where it gets bounded, otherwise every future table column with a
  * button in it has to remember the same incantation.
  */
 function isFromInteractiveChild(event: {
@@ -55,7 +55,7 @@ function isFromInteractiveChild(event: {
   // Portalled UI: outside the row in the DOM, inside it in React's tree.
   if (!event.currentTarget.contains(target)) return true;
   const hit = target.closest(INTERACTIVE_SELECTOR);
-  // The row itself carries role="button", so it matches the selector — ignoring that match is what
+  // The row itself carries role="button", so it matches the selector, ignoring that match is what
   // keeps ordinary clicks on a cell working.
   return hit !== null && hit !== event.currentTarget;
 }

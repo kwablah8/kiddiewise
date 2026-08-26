@@ -33,10 +33,10 @@ interface AssessmentRow {
 }
 
 /**
- * `is_submitted` is a property of each RESULT, not of the assessment — the DB has no column for it.
+ * `is_submitted` is a property of each RESULT, not of the assessment, the DB has no column for it.
  * An assessment counts as submitted once it has results and every one of them is submitted, which is
  * what "the teacher has finished entering and released these marks" actually means. Deriving it means
- * it can never disagree with the underlying rows (golden rule 9).
+ * it can never disagree with the underlying rows.
  */
 function toListItemVM(a: AssessmentRow): AssessmentListItemVM {
   return {
@@ -91,7 +91,7 @@ export async function getAssessment(id: string): Promise<AssessmentDetailVM | nu
   const results: AssessmentResultVM[] = unwrapList(resultsRes, "assessment results")
     .map((r) => {
       const score = Number(r.score);
-      // Graded against the assessment's own max and the CURRENT scale, not the stored grade — so a
+      // Graded against the assessment's own max and the CURRENT scale, not the stored grade, so a
       // corrected grading scale is reflected here immediately.
       const derived = scoreToGrade(score, max, bands);
       return {
@@ -103,7 +103,7 @@ export async function getAssessment(id: string): Promise<AssessmentDetailVM | nu
         remark: derived?.remark ?? null,
       };
     })
-    // Highest first — how a teacher reads a mark sheet.
+    // Highest first, how a teacher reads a mark sheet.
     .sort((a, b) => b.score - a.score);
 
   return { ...toListItemVM(assessment), results };
@@ -113,7 +113,7 @@ export async function getAssessment(id: string): Promise<AssessmentDetailVM | nu
  * The teacher's own assessments: those whose (class, subject) pair they are assigned to teach.
  *
  * RLS on `assessments` allows same-school reads (an admin oversees all of them), so the teacher
- * scope is applied here. It matches on the PAIR, not on class alone — a teacher who takes Maths in
+ * scope is applied here. It matches on the PAIR, not on class alone, a teacher who takes Maths in
  * Basic 1 should not see the English assessments for the same class.
  */
 export async function listTeacherAssessments(
@@ -156,7 +156,7 @@ export async function getScoreSheet(assessmentId: string): Promise<ScoreSheetVM 
   );
   if (!assessment) return null;
 
-  // The roster is scoped to the year the assessment's own term belongs to — NOT the active year —
+  // The roster is scoped to the year the assessment's own term belongs to, not the active year,
   // so last year's mark sheet keeps showing last year's cohort after a promotion rollover.
   let rosterQuery = db()
     .from("enrollments")

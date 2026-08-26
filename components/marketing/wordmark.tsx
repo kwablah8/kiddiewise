@@ -1,7 +1,7 @@
 import { BrandLock } from "@/components/brand/brand-lock";
 
 interface WordmarkProps {
-  /** "light" for dark (blue) surfaces — header/footer bands, "dark" for the white header/menu. */
+  /** "light" for dark (blue) surfaces, header/footer bands, "dark" for the white header/menu. */
   tone?: "light" | "dark";
   className?: string;
   /** Spell the school out instead of showing the initialism. See `BrandLock`. */
@@ -9,7 +9,7 @@ interface WordmarkProps {
 }
 
 /**
- * The marketing site's identity mark — crest in a white chip beside the wordmark text.
+ * The marketing site's identity mark, crest in a white chip beside the wordmark text.
  *
  * Now a thin alias over the shared `BrandLock`: the crest markup and the "SLIS / Learners
  * International" pairing moved to `components/brand/` once the portal sidebar, auth screens and

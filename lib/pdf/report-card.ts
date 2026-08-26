@@ -20,7 +20,7 @@ export interface ReportGradeBand {
 
 /**
  * Everything the card prints, assembled by the caller (the report dialog) from rows it already
- * holds — the renderer stays pure and DOM-free, mirroring `receipt-pdf.ts`.
+ * holds, the renderer stays pure and DOM-free, mirroring `receipt-pdf.ts`.
  */
 export interface ReportCardData {
   schoolName: string;
@@ -37,7 +37,7 @@ export interface ReportCardData {
   levelName: string | null;
   yearName: string | null;
   termName: string;
-  /** "Number on roll" — the class size frozen at generation. */
+  /** "Number on roll", the class size frozen at generation. */
   enrolledCount: number | null;
   classTeacherName: string | null;
   position: number | null;
@@ -73,7 +73,7 @@ const INK = 0;
 const MUTED = 90;
 
 /**
- * The school's colours, used with restraint — this is an official record, not a brochure. Navy
+ * The school's colours, used with restraint; this is an official record, not a brochure. Navy
  * carries the school's name, the term band and every heading; gold appears only as hairline rules,
  * because it fails contrast as text. Everything a parent actually READS stays black on white.
  */
@@ -84,22 +84,22 @@ const TINT = rgb(BRAND.palette.tint);
 /** Box and grid rules: navy at a weight that reads as a neutral rule, not as colour. */
 const RULE: [number, number, number] = [150, 158, 180];
 
-/** Card figures carry one decimal — 23.0, 86.7, 877.7. A blank stays blank, never a 0.0. */
+/** Card figures carry one decimal: 23.0, 86.7, 877.7. A blank stays blank, never a 0.0. */
 const dec = (v: number | null | undefined): string =>
   v === null || v === undefined ? "" : v.toFixed(1);
 
 /** Band edges read as the school wrote them: 100%, not 100.0%; 89.9%, not 90%. */
 const pct = (v: number): string => `${Number(v.toFixed(1))}%`;
 
-/** "1/16" — a rank only means something against the size of the group it was taken over. */
+/** "1/16", a rank only means something against the size of the group it was taken over. */
 const rank = (position: number | null, size: number | null): string =>
   position === null ? "—" : size === null ? String(position) : `${position}/${size}`;
 
 /**
- * Draw one table cell on EXACTLY one line: shrink the type to fit, then clip with an ellipsis.
+ * Draw one table cell on exactly one line: shrink the type to fit, then clip with an ellipsis.
  *
  * jsPDF's `maxWidth` wraps instead of shrinking, and a wrapped cell in a fixed-height row prints
- * its second line on top of the subject below it — "Information and Communication Technology"
+ * its second line on top of the subject below it, "Information and Communication Technology"
  * landing across the next child's science mark. Leaves the font size as it found it.
  */
 function fitCell(
@@ -129,7 +129,7 @@ function fitCell(
  * identity block, the grading key, the twelve-column subject table, the summary line, and the
  * section a class teacher and head teacher sign.
  *
- * A4 portrait — this one IS a full page, unlike the A5 receipt. Same reasoning for jsPDF over a
+ * A4 portrait; this one is a full page, unlike the A5 receipt. Same reasoning for jsPDF over a
  * print stylesheet: it downloads identically everywhere and attaches to WhatsApp, which is how it
  * reaches a parent.
  *
@@ -152,7 +152,7 @@ export function renderReportCard(data: ReportCardData, logo?: PdfImage | null): 
   return doc;
 }
 
-/** Crest, school name, motto and contact lines — the school's headed paper, in its own colours. */
+/** Crest, school name, motto and contact lines, the school's headed paper, in its own colours. */
 function letterhead(doc: jsPDF, data: ReportCardData, logo?: PdfImage | null): number {
   const crest = 19;
   if (logo) doc.addImage(logo.dataUrl, logo.format, MARGIN, 9, crest, crest);
@@ -183,7 +183,7 @@ function letterhead(doc: jsPDF, data: ReportCardData, logo?: PdfImage | null): n
 
   y = Math.max(y + 1, 9 + crest + 2);
   // The crest's gold, as a hairline under the letterhead. Gold is a rule colour on this document and
-  // never a text colour — it fails contrast on white, and a report card is read, not admired.
+  // never a text colour; it fails contrast on white, and a report card is read, not admired.
   doc.setDrawColor(...GOLD);
   doc.setLineWidth(0.8);
   doc.line(MARGIN, y, RIGHT, y);
@@ -194,7 +194,7 @@ function letterhead(doc: jsPDF, data: ReportCardData, logo?: PdfImage | null): n
   return y;
 }
 
-/** The term band — the card's one solid block of the school's navy. */
+/** The term band, the card's one solid block of the school's navy. */
 function termTitle(doc: jsPDF, data: ReportCardData, top: number): number {
   const y = top + 3;
   const height = 9.5;
@@ -233,7 +233,7 @@ function identityAndGrading(doc: jsPDF, data: ReportCardData, top: number): numb
   };
 
   field("Student ID", data.admissionNo);
-  // Surname first, comma, other names — how a school roll is read aloud and searched.
+  // Surname first, comma, other names, how a school roll is read aloud and searched.
   field("Name", [data.studentLastName, data.studentFirstName].filter(Boolean).join(", "));
   field("Class", data.className);
   field("Number On Roll", data.enrolledCount === null ? "" : String(data.enrolledCount));
@@ -250,7 +250,7 @@ function identityAndGrading(doc: jsPDF, data: ReportCardData, top: number): numb
   y += 5;
 
   // Three columns filled top-to-bottom, so the grades read 1-2-3 / 4-5-6 / 7-8-9 across the page
-  // rather than snaking. Highest band first — the scale is read from the top down.
+  // rather than snaking. Highest band first, the scale is read from the top down.
   const bands = [...data.gradeBands].sort((a, b) => b.min_score - a.min_score);
   const rows = Math.max(1, Math.ceil(bands.length / 3));
   const columnWidth = CONTENT_WIDTH / 3;
@@ -281,7 +281,7 @@ interface Column {
   align: "left" | "center";
 }
 
-/** The template's twelve columns. Widths sum to CONTENT_WIDTH — asserted by the unit test. */
+/** The template's twelve columns. Widths sum to CONTENT_WIDTH, asserted by the unit test. */
 function columns(caWeight: number): Column[] {
   return [
     { header: "", width: 5, align: "center" },
@@ -353,7 +353,7 @@ function subjectTable(doc: jsPDF, data: ReportCardData, top: number): number {
     });
   });
 
-  // --- grid drawn once over the finished table — cleaner corners than per-cell rects ------------
+  // --- grid drawn once over the finished table, cleaner corners than per-cell rects ------------
   const bottom = tableTop + headerHeight + data.subjects.length * rowHeight;
   doc.rect(MARGIN, tableTop, CONTENT_WIDTH, bottom - tableTop);
   doc.line(MARGIN, tableTop + headerHeight, RIGHT, tableTop + headerHeight);
@@ -503,7 +503,7 @@ function signedSection(doc: jsPDF, data: ReportCardData, top: number): void {
 }
 
 /**
- * The school's motto, closing the page in its own colours — the one place a report card is allowed
+ * The school's motto, closing the page in its own colours, the one place a report card is allowed
  * a flourish, because it is the only line on it that isn't about this particular child.
  */
 function footer(doc: jsPDF, top: number): void {
@@ -537,6 +537,6 @@ export async function downloadReportCard(data: ReportCardData): Promise<void> {
   renderReportCard(data, logo).save(reportCardFilename(data));
 }
 
-/** Exported for the layout test — the twelve columns must exactly fill the card's width. */
+/** Exported for the layout test, the twelve columns must exactly fill the card's width. */
 export const reportCardColumns = columns;
 export const REPORT_CARD_CONTENT_WIDTH = CONTENT_WIDTH;

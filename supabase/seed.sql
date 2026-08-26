@@ -1,5 +1,5 @@
--- supabase/seed.sql — minimal operational tenant for local dev.
--- NOTE: we deliberately do NOT seed auth.users / profiles here. Directly inserting into
+-- supabase/seed.sql, minimal operational tenant for local dev.
+-- NOTE: we deliberately do not seed auth.users / profiles here. Directly inserting into
 -- auth.users is fragile (many required columns) and would break `supabase db reset` on
 -- schema drift. Login users are created through provisioning (M3) or, for tests, via the
 -- admin API in tests/rls/helpers.ts. This seed only lays down non-auth tenant data so the

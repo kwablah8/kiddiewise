@@ -89,7 +89,7 @@ const columns: DataTableColumn<StudentListItemVM>[] = [
   },
 ];
 
-/** Searchable, filterable students list — admission no, name w/ avatar, class, gender, status (06-UI §6). */
+/** Searchable, filterable students list, admission no, name w/ avatar, class, gender, status (06-UI §6). */
 export function StudentsTable() {
   const router = useAppRouter();
   const [searchInput, setSearchInput] = useState("");
@@ -205,7 +205,7 @@ function FilterSelect({
   return (
     <div className="space-y-1.5">
       <label className="block text-xs font-medium text-[var(--muted-foreground)]">{label}</label>
-      {/* base-ui's onValueChange is `(value: string | null, …) => void` (null on clear) — this
+      {/* base-ui's onValueChange is `(value: string | null, ...) => void` (null on clear); this
           Select is never rendered with a clear affordance, but the callback still has to accept
           it; falling back to the sentinel keeps FilterSelect's own `onChange: (v: string) => void`
           contract simple. */}

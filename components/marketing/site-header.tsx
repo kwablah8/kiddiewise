@@ -21,7 +21,7 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 /**
- * Public site header (docs/06-UI §8) — the one required client component in the shell.
+ * Public site header (docs/06-UI §8), the one required client component in the shell.
  * It rides transparently over the dark hero at the top of every page, then settles into a
  * translucent white bar on scroll. Full keyboard support: skip link, visible focus, and a
  * mobile drawer that traps focus, closes on Escape, and returns focus to its trigger.

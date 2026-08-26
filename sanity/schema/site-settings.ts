@@ -3,14 +3,14 @@ import { defineArrayMember, defineField, defineType } from "sanity";
 /**
  * The handful of marketing facts the school revises on its own schedule.
  *
- * Deliberately NOT here: the school's name, motto and crest (they live in `lib/brand.ts`, shared with
- * the portal and the generated PDF report cards — if Sanity owned them the public site and the portal
+ * Deliberately not here: the school's name, motto and crest (they live in `lib/brand.ts`, shared with
+ * the portal and the generated PDF report cards, if Sanity owned them the public site and the portal
  * could disagree), the campus address (rendered by a client component and by the sign-in screen), the
  * tagline, the programs, and every piece of section prose. Changing those is a design decision, not a
  * content update, so they stay in `lib/marketing/site.ts`.
  *
- * Also deliberately absent: the "Admission open for 2026/2027" line. It is DERIVED from
- * `admissionsYear` in code, exactly as it is today, so the editor types the year once (golden rule 9).
+ * Also deliberately absent: the "Admission open for 2026/2027" line. It is derived from
+ * `admissionsYear` in code, exactly as it is today, so the editor types the year once.
  *
  * Every field here is optional as far as the site is concerned: `lib/marketing/cms/merge.ts` falls
  * back to the committed value for anything left empty. The `required()` rules below exist to stop an
@@ -103,10 +103,10 @@ export const siteSettings = defineType({
       rows: 2,
       group: "admissions",
     }),
-    // NO `socials` field, deliberately. `SITE.socials` exists in the config interface but NOTHING
+    // no `socials` field, deliberately. `SITE.socials` exists in the config interface but NOTHING
     // renders it: the footer has no social row and `SOCIAL_LINKS` in `components/marketing/
     // nav-config.ts` is imported nowhere. A Studio field that visibly does nothing after an editor
-    // fills it in is worse than an absent one — it teaches the school not to trust the CMS. Add this
+    // fills it in is worse than an absent one; it teaches the school not to trust the CMS. Add this
     // field in the same change that builds the footer row, not before.
     defineField({
       name: "foundingStory",

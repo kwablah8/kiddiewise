@@ -48,7 +48,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Parents", href: "/parents", icon: UserRound },
   { label: "Subjects", href: "/subjects", icon: BookOpen },
   { label: "Classes", href: "/classes", icon: School },
-  // Label "Admissions" (per spec) but href "/enquiries" ON PURPOSE: the public marketing site owns
+  // Label "Admissions" (per spec) but href "/enquiries" on PURPOSE: the public marketing site owns
   // /admissions, so the admin inquiry module lives at /enquiries. Don't "fix" one to match the other.
   { label: "Enquiries", href: "/enquiries", icon: ClipboardList, countKey: "new_inquiries" },
   { label: "Assessments", href: "/assessments", icon: FileCheck2 },
@@ -56,7 +56,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Grading", href: "/grading", icon: SlidersHorizontal },
   { label: "Terminal Reports", href: "/terminal-reports", icon: FileBarChart2 },
   { label: "Promotion", href: "/promotion", icon: TrendingUp },
-  // Announcements AND events live behind this one entry, as two tabs. Both are "tell the school
+  // Announcements and events live behind this one entry, as two tabs. Both are "tell the school
   // something", and the sidebar is already long.
   { label: "Announcements", href: "/announcements", icon: Megaphone },
 ];
@@ -134,8 +134,8 @@ export function Sidebar({
             <Crest tone="light" className="size-8 rounded-lg" sizes="32px" standalone />
           ) : (
             // `compact` drops the "Learners International" descriptor: at w-64, minus the crest and
-            // the collapse chevron, the tracked-out descriptor truncates to "LEARNERS INTERNATIO…",
-            // which looks broken. The crest plus "SLIS" is enough identity for app chrome — the full
+            // the collapse chevron, the tracked-out descriptor truncates to "LEARNERS INTERNATIO...",
+            // which looks broken. The crest plus "SLIS" is enough identity for app chrome, the full
             // lock has room to breathe on the marketing header and the auth panel.
             <BrandLock tone="light" compact crestClassName="size-8 rounded-lg" />
           )}
@@ -193,7 +193,7 @@ export function Sidebar({
                 navFocusRingClass,
               )}
             >
-              {/* Gold edge on the active item — one of only two jobs gold has in the portal (the
+              {/* Gold edge on the active item, one of only two jobs gold has in the portal (the
                   other is the focus ring). It marks position without relying on the white/15 pill
                   alone, which is a subtle cue on a dark surface. Decorative: `aria-current` on the
                   link is what actually conveys "you are here". */}

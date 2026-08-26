@@ -7,7 +7,7 @@ import type { ReactElement, ReactNode } from "react";
  * Toast adapter over react-hot-toast.
  *
  * react-hot-toast takes a single message; it has no `description` concept. Nearly every call site in
- * this app is a two-part message — "Attendance saved" plus "4 students left unmarked" — because the
+ * this app is a two-part message, "Attendance saved" plus "4 students left unmarked", because the
  * second line is where the actionable detail lives. Rather than flatten 50 of those into single
  * strings (losing the visual hierarchy) or rewrite every call site, this keeps the
  * `(message, { description })` shape and renders it as a titled toast.
@@ -47,7 +47,7 @@ function split(options?: AppToastOptions): { description?: ReactNode; rest: Toas
 /**
  * Same surface the app already used, so call sites only change their import.
  *
- * `message` maps to a plain neutral toast — react-hot-toast has no `.message`, and a neutral
+ * `message` maps to a plain neutral toast, react-hot-toast has no `.message`, and a neutral
  * "nothing to do yet" must not wear a success tick.
  */
 export const toast = {

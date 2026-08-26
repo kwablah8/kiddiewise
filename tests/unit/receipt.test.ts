@@ -13,6 +13,7 @@ const payment: PaymentVM = {
   reference: "MP2607.1432.A1",
   paid_at: "2026-07-27T10:15:00.000Z",
   fee_label: "Full year",
+  recorded_by_name: "Ama Mensah",
 };
 
 describe("receiptNumber", () => {
@@ -70,7 +71,6 @@ describe("buildReceipt", () => {
     payment,
     schoolName: "SNAB Learners International School",
     methodLabel: "Mobile money",
-    issuedBy: "Ama Mensah",
     logoUrl: null,
   });
 
@@ -83,7 +83,6 @@ describe("buildReceipt", () => {
       amount: 450,
       method: "Mobile money",
       reference: "MP2607.1432.A1",
-      issuedBy: "Ama Mensah",
     });
   });
 
@@ -93,12 +92,28 @@ describe("buildReceipt", () => {
     expect(data.methodKey).toBe("mobile_money");
   });
 
+  // The line attests who took the money, so it must survive a reprint by anyone else, see the
+  // note on buildReceipt. Asserted here because the regression it guards (the signed-in admin's
+  // name on a colleague's receipt, or the parent's own name on theirs) is invisible on screen.
+  it("names the officer who recorded the payment, not whoever is printing it", () => {
+    expect(data.issuedBy).toBe("Ama Mensah");
+  });
+
+  it("falls back to the school office when the recorder's profile is gone", () => {
+    const orphaned = buildReceipt({
+      payment: { ...payment, recorded_by_name: null },
+      schoolName: "S",
+      methodLabel: "Cash",
+      logoUrl: null,
+    });
+    expect(orphaned.issuedBy).toBe("the school office");
+  });
+
   it("keeps a missing reference as null rather than inventing one", () => {
     const noRef = buildReceipt({
       payment: { ...payment, reference: null },
       schoolName: "S",
       methodLabel: "Cash",
-      issuedBy: "A",
       logoUrl: null,
     });
     expect(noRef.reference).toBeNull();
@@ -113,7 +128,6 @@ describe("buildReceipt logo", () => {
       payment,
       schoolName: "S",
       methodLabel: "Cash",
-      issuedBy: "A",
       logoUrl: uploaded,
     });
     expect(data.logoSrc).toBe(uploaded);
@@ -124,7 +138,6 @@ describe("buildReceipt logo", () => {
       payment,
       schoolName: "S",
       methodLabel: "Cash",
-      issuedBy: "A",
       logoUrl: null,
     });
     expect(data.logoSrc).toBe(BRAND.crest.src);
@@ -137,7 +150,6 @@ describe("receiptFilename", () => {
       payment,
       schoolName: "S",
       methodLabel: "Cash",
-      issuedBy: "A",
       logoUrl: null,
     });
     expect(receiptFilename(data)).toBe("RCP-9C1F2B7A-Kofi-Mensah.pdf");
@@ -148,7 +160,6 @@ describe("receiptFilename", () => {
       payment: { ...payment, student_name: "N'Diaye  Kwame-Junior" },
       schoolName: "S",
       methodLabel: "Cash",
-      issuedBy: "A",
       logoUrl: null,
     });
     expect(receiptFilename(data)).toBe("RCP-9C1F2B7A-N-Diaye-Kwame-Junior.pdf");

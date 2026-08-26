@@ -2,7 +2,7 @@
  * Integration checks against the seeded demo tenant.
  *
  * Unlike tests/rls (which mints throwaway schools to prove isolation in the abstract), these run
- * against the SAME data a developer clicks through — the tenant `pnpm seed:demo` builds. They are
+ * against the same data a developer clicks through, the tenant `pnpm seed:demo` builds. They are
  * the guard against a whole class of bug the RLS suite cannot see: a policy that is technically
  * correct but leaves a real portal with nothing to render.
  *
@@ -118,7 +118,7 @@ describe("admin sees the whole school", () => {
 
 describe("the school identifies itself from the database", () => {
   it("admin can read their own school's name", async () => {
-    // The credentials message and the invite emails name the school. Nothing may hardcode it — a
+    // The credentials message and the invite emails name the school. Nothing may hardcode it, a
     // literal school name is wrong for every tenant but one, and stays wrong after a rebrand.
     const { data, error } = await admin.from("schools").select("name, slug").single();
     expect(error).toBeNull();
@@ -171,7 +171,7 @@ describe("parent is scoped to their own children", () => {
   it("sees submitted results THROUGH the assessment join the portal actually uses", async () => {
     // The portal reads results with `assessments!inner(...)`, because a score is meaningless without
     // the subject and the max it is out of. Before 0021 parents had no SELECT policy on `assessments`,
-    // so this inner join returned zero rows and the results page was permanently empty — while a plain
+    // so this inner join returned zero rows and the results page was permanently empty, while a plain
     // `results` read passed. This asserts the real query shape against real seeded marks.
     const { data, error } = await parent
       .from("results")
@@ -196,6 +196,45 @@ describe("parent is scoped to their own children", () => {
     const { data, error } = await parent.from("student_fee_positions").select("student_id");
     expect(error).toBeNull();
     expect(data!.length).toBe(2);
+  });
+
+  it("sees the payment ledger the Fees tab renders, receipt officer and all", async () => {
+    // The exact select `lib/data/fees.ts#listPayments` issues, the function the parent portal now
+    // reuses. Asserted as one query rather than table by table, because the failure mode this file
+    // exists for is a join that returns nothing while each table on its own reads fine (see the
+    // results/assessments case above). The recorder embed is the fragile part: `profiles_select`
+    // (migration 0030) narrows a parent to STAFF profiles, so if that ever tightened further, every
+    // receipt a parent downloaded would quietly print "the school office" instead of the officer.
+    const { data, error } = await parent
+      .from("payments")
+      .select(
+        `id, student_id, amount, method, reference, paid_at,
+         students(first_name, last_name, enrollments(status, class_id, classes(name))),
+         invoices(fee_term),
+         extra_fee_assignments(extra_fee_items(name)),
+         recorder:profiles!payments_recorded_by_fkey(first_name, last_name)`,
+      )
+      .order("paid_at", { ascending: false });
+
+    expect(error).toBeNull();
+    expect(data!.length).toBeGreaterThan(0);
+
+    const { data: kids } = await parent.from("students").select("id");
+    const ids = new Set((kids ?? []).map((k) => k.id));
+    expect(data!.every((p) => ids.has(p.student_id))).toBe(true);
+    // Every row can name the student and the officer, which is what the receipt prints.
+    expect(data!.every((p) => p.students !== null)).toBe(true);
+    expect(data!.every((p) => p.recorder !== null)).toBe(true);
+  });
+
+  it("sees only its own children in the extra-fee positions view", async () => {
+    // The demo seed assigns extra fees to the first ten active students, which may or may not
+    // include this parent's two, so the assertion is about scoping, not about a count.
+    const { data, error } = await parent.from("extra_fee_positions").select("student_id");
+    expect(error).toBeNull();
+    const { data: kids } = await parent.from("students").select("id");
+    const ids = new Set((kids ?? []).map((k) => k.id));
+    expect((data ?? []).every((r) => r.student_id !== null && ids.has(r.student_id))).toBe(true);
   });
 
   it("cannot write attendance", async () => {

@@ -3,26 +3,21 @@ import { ZodError } from "zod";
 /**
  * The contract between a Server Action and the query hook that calls it.
  *
- * WHY THIS EXISTS. An error THROWN out of a Server Action loses its message in production. React's
- * client-side deserializer replaces it with a fixed string — see `resolveErrorProd` in
- * react-server-dom-webpack-client.browser.production.js — so every carefully-worded sentence in
- * `lib/actions/*` reached real users as:
+ * An error thrown out of a Server Action loses its message in production: React's client-side
+ * deserializer swaps it for a fixed string (`resolveErrorProd` in
+ * react-server-dom-webpack-client.browser.production.js). Every message in `lib/actions/*` used to
+ * reach users as "An error occurred in the Server Components render...", which is no use to a school
+ * administrator, and it happened for every failure the app can produce: a duplicate parent email, a
+ * missing active term, a permission refusal.
  *
- *   "An error occurred in the Server Components render. The specific message is omitted in
- *    production builds to avoid leaking sensitive details. A digest property is included…"
- *
- * That is not a message for a school administrator. It was live for every failure the app can
- * produce: a duplicate parent email, a missing active term, a permission refusal.
- *
- * A RETURNED value has no such problem — it is ordinary serialized data. So expected failures are
- * returned as `{ ok: false, message }` and only genuine faults are thrown. That split is the whole
- * design: throwing now means "this is a bug", and bugs are supposed to be opaque to the client and
- * loud in the server logs.
+ * A returned value is ordinary serialized data and survives. So expected failures come back as
+ * `{ ok: false, message }` and only genuine faults are thrown. Throwing therefore means "this is a
+ * bug": opaque to the client, loud in the server logs.
  */
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
 
 /**
- * Shown when something throws — i.e. when the cause is a fault, not a rule the user broke.
+ * Shown when something throws: i.e. when the cause is a fault, not a rule the user broke.
  *
  * Deliberately says nothing technical. The people using this are school administrators and
  * teachers; a stack trace, a Postgres code or a redaction notice tells them nothing they can act on
@@ -34,7 +29,7 @@ export const UNEXPECTED_ERROR_MESSAGE =
 /**
  * A failure the user is meant to read: a rule they broke, a state they need to fix first.
  *
- * Throwing this from anywhere inside an action is how a message earns its way to the screen —
+ * Throwing this from anywhere inside an action is how a message earns its way to the screen,
  * `attempt` converts it to a returned result. Anything else that escapes is treated as a bug.
  */
 export class UserFacingError extends Error {
@@ -62,8 +57,8 @@ function zodMessage(error: ZodError): string {
  *
  * Every exported Server Action wraps its body in this.
  *
- * Note what is NOT caught: anything that is neither a `UserFacingError` nor a `ZodError` is
- * rethrown untouched. That is load-bearing twice over — it keeps real faults in the Vercel logs
+ * Note what is not caught: anything that is neither a `UserFacingError` nor a `ZodError` is
+ * rethrown untouched. That is load-bearing twice over; it keeps real faults in the Vercel logs
  * with their stack and digest, and it lets Next's own control-flow errors through. `tenant()` calls
  * `requireProfile()`, which signals "not signed in" by calling `redirect()`, and `redirect()` works
  * by throwing. Swallowing that would turn a redirect to /login into a silent no-op.
@@ -82,7 +77,7 @@ export async function attempt<T>(run: () => Promise<T>): Promise<ActionResult<T>
  * Consume one action's result from inside another action.
  *
  * `createStudent` can create a guardian along the way, and a wrapped action returns its failure
- * rather than throwing it — so a bare `await createParent(...)` would let "Someone with that email
+ * rather than throwing it, so a bare `await createParent(...)` would let "Someone with that email
  * address already has an account" pass by unnoticed and the student would save with no guardian
  * attached. This turns the inner failure back into a throw, which the outer `attempt` then returns
  * as its own result, so the message still reaches the person who pressed the button.
@@ -120,7 +115,7 @@ async function unwrap<T>(call: Promise<ActionResult<T>>): Promise<T> {
  *
  * The point is that nothing downstream moves. The hook still resolves with the action's data and
  * still rejects on failure, so `onSuccess` handlers and every component's
- * `catch (err) { err.message }` keep working untouched — they just receive a sentence written for a
+ * `catch (err) { err.message }` keep working untouched; they just receive a sentence written for a
  * school administrator instead of a redaction notice.
  */
 export function mutate<TInput, TOutput>(

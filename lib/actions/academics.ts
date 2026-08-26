@@ -45,7 +45,7 @@ import {
 import type { TablesUpdate } from "@/lib/supabase/types";
 import { z } from "zod";
 
-// Every write stamps `school_id` from the session, never from the input — see lib/actions/_server.ts.
+// Every write stamps `school_id` from the session, never from the input, see lib/actions/_server.ts.
 // Where the database already enforces a rule (unique names, single active year), these functions
 // translate the resulting error into something a user can read rather than re-checking it first: a
 // pre-flight SELECT would still race, whereas the constraint cannot be beaten.
@@ -54,7 +54,7 @@ import { z } from "zod";
 // Academic years + terms
 // ---------------------------------------------------------------------------
 
-/** New years are created INACTIVE — activating one is a separate, deliberate act. */
+/** New years are created INACTIVE: activating one is a separate, deliberate act. */
 export async function createYear(input: AcademicYearCreateInput): Promise<ActionResult<{ id: string }>> {
   return attempt(async () => {
     const data = academicYearCreateSchema.parse(input);
@@ -107,8 +107,8 @@ export async function updateYear(input: AcademicYearUpdateInput): Promise<Action
 /**
  * Delete a year that was created by mistake.
  *
- * Two guards implement block-if-history (spec 2026-07-31): the ACTIVE year is refused outright —
- * deleting it would leave every year-scoped read with nothing to scope by — and a year whose terms
+ * Two guards implement block-if-history (spec 2026-07-31): the active year is refused outright,
+ * deleting it would leave every year-scoped read with nothing to scope by, and a year whose terms
  * hold data is refused by the terms' own restrict FKs (attendance, assessments, reports, fees), or
  * by the year's (enrollments, invoices), surfacing here as 23503. Empty terms cascade away with the
  * year, which is what "delete the mistake" means for a year mistyped along with its three terms.
@@ -166,7 +166,7 @@ export async function deleteTerm(input: { id: string }): Promise<ActionResult<{ 
 
     // No fee pre-check is needed: fee_items scope terms via the fee_term ENUM (migration 0017),
     // not a term FK, and every remaining dependent (attendance, assessments, reports, invoices)
-    // is ON DELETE RESTRICT — history surfaces as 23503 below.
+    // is ON DELETE RESTRICT, history surfaces as 23503 below.
     assertOk(
       await ctx.db.from("terms").delete().eq("id", id),
       "term",
@@ -180,7 +180,7 @@ export async function deleteTerm(input: { id: string }): Promise<ActionResult<{ 
  * Activate a year, deactivating the previous one.
  *
  * `academic_years_one_active` is a partial unique index, so setting a second year active while the
- * first is still active would be rejected outright — the demotion must happen FIRST, and both
+ * first is still active would be rejected outright, the demotion must happen FIRST, and both
  * statements must land. They are issued in order rather than in a transaction because PostgREST has no
  * multi-statement transaction; if the second fails the school is left with no active year, which the
  * UI renders as "no active year" and an admin can immediately correct. That is a recoverable state,
@@ -206,8 +206,8 @@ export async function setActiveYear(input: { id: string }): Promise<ActionResult
     );
     // Keep the school's cached active-year pointer in step. activeContext() (which stamps the year on
     // every fee, payment and attendance write) and getActivePeriod() read schools.active_academic_year_id,
-    // NOT academic_years.is_active — so without this, switching the year here left every subsequent write
-    // recorded against the OLD year until a reseed. The active term now belongs to a different year, so
+    // not academic_years.is_active, so without this, switching the year here left every subsequent write
+    // recorded against the old year until a reseed. The active term now belongs to a different year, so
     // clear it; the admin picks the new year's term next.
     assertOk(
       await ctx.db
@@ -245,7 +245,7 @@ export async function setActiveTerm(input: { id: string }): Promise<ActionResult
  * Set (or clear) when school reopens after a term.
  *
  * Lives on the term, not on the reports, so every child in the class is told the same date and the
- * value exists before a batch is generated — see migration 0023. Called from the reopening-date
+ * value exists before a batch is generated, see migration 0023. Called from the reopening-date
  * banner on /terminal-reports, which is where the person writing reports is standing.
  */
 export async function setReopeningDate(
@@ -301,7 +301,7 @@ export async function updateClass(input: ClassUpdateInput): Promise<ActionResult
     const ctx = await tenant();
 
     // `capacity` and `class_teacher_id` carry `.nullable().default(null)`, so under `.partial()` an
-    // omitted key parses to null rather than undefined — there is no "untouched" state to detect and
+    // omitted key parses to null rather than undefined; there is no "untouched" state to detect and
     // they are always written. That matches how the edit form submits (every registered field).
     const patch: TablesUpdate<"classes"> = {
       capacity: data.capacity,
@@ -334,7 +334,7 @@ export async function createSubject(input: SubjectCreateInput): Promise<ActionRe
         .select("id")
         .single(),
       "subject",
-      // Enforced by unique(school_id, name) — see the note at the top of this file.
+      // Enforced by unique(school_id, name), see the note at the top of this file.
       "A subject with this name already exists.",
     );
     return { id: row.id };
@@ -384,7 +384,7 @@ async function nextStaffNo(
 /**
  * Add a staff member: provision their auth account with a temporary password, then their profile.
  *
- * `staff_no` is assigned here, never accepted from the client — it is an identifier the school owns.
+ * `staff_no` is assigned here, never accepted from the client; it is an identifier the school owns.
  *
  * Credentials are issued up front, the same way `createParent` does it and for the same reason: the
  * admin is usually sitting with (or on the phone to) the person being added, and handing over a
@@ -442,7 +442,7 @@ export async function createStaff(input: StaffCreateInput): Promise<ActionResult
   });
 }
 
-/** `staff_no`, `role` and `school_id` are all immutable here — 0015 withholds the grants for the
+/** `staff_no`, `role` and `school_id` are all immutable here, 0015 withholds the grants for the
  *  latter two, and staff numbers are permanent once issued. */
 export async function updateStaff(
   input: z.infer<typeof staffUpdateSchema>,
@@ -451,7 +451,7 @@ export async function updateStaff(
     const data = staffUpdateSchema.parse(input);
     const ctx = await tenant();
 
-    // Deactivating yourself would ban the session you're standing in — the same lockout
+    // Deactivating yourself would ban the session you're standing in, the same lockout
     // reissueTempPassword guards against, and equally unrecoverable from inside the app.
     if (data.is_active === false && data.id === ctx.profile.id) {
       throw new UserFacingError("You can't deactivate your own account.");
@@ -479,7 +479,7 @@ export async function updateStaff(
     );
 
     // The profile update above ran under RLS, so reaching this line proves the caller may manage
-    // this person. The ban itself needs the service role; status is a security state — an inactive
+    // this person. The ban itself needs the service role; status is a security state, an inactive
     // staff member cannot sign in (spec decision 2).
     if (data.is_active !== undefined) {
       await setSignInBlocked(data.id, !data.is_active);
@@ -490,7 +490,7 @@ export async function updateStaff(
 }
 
 /**
- * Remove a staff member who should never have existed — wrong email, duplicate entry, test row.
+ * Remove a staff member who should never have existed, wrong email, duplicate entry, test row.
  * Anyone the school has actually worked with is blocked and pointed at deactivation, which keeps
  * their name on everything they authored while revoking access.
  */
@@ -517,7 +517,7 @@ export async function deleteStaff(input: { id: string }): Promise<ActionResult<{
     }
 
     // What blocks the deletion. The database SET NULLs all of these references on delete, so a
-    // delete would silently strip authorship off registers, mark sheets and receipts — these
+    // delete would silently strip authorship off registers, mark sheets and receipts, these
     // checks, not an FK, are the block-if-history boundary here. activity_log is deliberately
     // absent: audit lines keep their text, and losing the actor link is what any audit trail does
     // when an account goes away.

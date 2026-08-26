@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 /**
  * Top-of-page banner surfacing the school's single active academic year + term
  * (06-UI §7 empty-state tone: "No active term"). Every other screen that reads
- * `useActiveContext()` shows the same "Active: …" phrasing this banner establishes.
+ * `useActiveContext()` shows the same "Active: ..." phrasing this banner establishes.
  */
 export function ActiveContextBanner() {
   const { data, isLoading, isError, refetch } = useActiveContext();

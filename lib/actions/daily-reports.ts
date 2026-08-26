@@ -13,7 +13,7 @@ import {
  * Both saves are idempotent upserts on `unique(student_id, date)`: a daily report is corrected
  * and re-saved through the day, never duplicated. Who may write which table is entirely RLS's
  * decision (migration 0026): parents reach only their own children's parent rows, teachers only
- * the teacher rows of students in classes they teach — so neither action re-checks the
+ * the teacher rows of students in classes they teach, so neither action re-checks the
  * relationship, and an out-of-scope write fails at the database, not in trusting app code.
  */
 

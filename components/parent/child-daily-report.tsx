@@ -32,8 +32,8 @@ function todayISO(): string {
 /**
  * The parent's side of the daily report: fill the morning section, read the teacher's back.
  *
- * The form follows the paper original's rhythm — sleep & mood, breakfast, medication, then the
- * handover notes — as titled sections rather than one flat stack, with the follow-up fields
+ * The form follows the paper original's rhythm: sleep & mood, breakfast, medication, then the
+ * handover notes, as titled sections rather than one flat stack, with the follow-up fields
  * (what was eaten, which medicine) revealed only once their yes/no is answered. Enum questions
  * are one-tap pills, not dropdowns: this gets filled at the school gate with a child on one arm.
  */
@@ -135,7 +135,7 @@ const EMPTY_PARENT_FORM: ParentFormState = {
   parent_comments: null,
 };
 
-// Controlled state, not RHF — every field is nullable and the controls' structure is the
+// Controlled state, not RHF, every field is nullable and the controls' structure is the
 // validation; the Zod contract runs in the action.
 function ParentDayForm({
   studentId,

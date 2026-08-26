@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 /**
  * When school reopens after the selected term, set from the terminal reports screen.
  *
- * It sits above the class/year/term selectors and applies to the TERM, not to a class — every child
+ * It sits above the class/year/term selectors and applies to the TERM, not to a class, every child
  * in the school comes back on the same day, and storing it per report row would let two pupils in
  * one class disagree (migration 0023). Keeping it here rather than in Academic → Terms is
  * deliberate: it is the person writing report cards who knows the date, and this is the screen they

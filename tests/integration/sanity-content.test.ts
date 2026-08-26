@@ -1,7 +1,7 @@
 /**
  * Proves the GROQ projections and the Zod contracts still agree.
  *
- * WHY THIS EXISTS, SPECIFICALLY. A projection bug shipped that emptied the whole gallery: the shared
+ * why this EXISTS, SPECIFICALLY. A projection bug shipped that emptied the whole gallery: the shared
  * image projection read `alt` from inside the image object, which is right for a news cover but wrong
  * for a gallery photo, where the description lives on the document. Every row failed validation, the
  * per-row `.catch(null)` turned each failure into a `null`, the list came back empty, and the site
@@ -14,7 +14,7 @@
  * It deliberately imports the REAL query constants and the REAL schemas. Copying either would recreate
  * exactly the blind spot above.
  *
- * Skips when `NEXT_PUBLIC_SANITY_PROJECT_ID` is unset, so CI and a fresh clone stay green — the same
+ * Skips when `NEXT_PUBLIC_SANITY_PROJECT_ID` is unset, so CI and a fresh clone stay green, the same
  * property that makes the whole CMS layer optional.
  */
 import { describe, expect, it } from "vitest";
@@ -110,7 +110,7 @@ describeCms("Sanity projections match their contracts", () => {
 
   it("site settings validate, whether or not anyone has filled them in", async () => {
     const raw = await client.fetch<unknown>(SITE_SETTINGS_QUERY);
-    // `null` is legitimate — nobody has opened "Site settings" yet — and the merge handles it.
+    // `null` is legitimate, nobody has opened "Site settings" yet, and the merge handles it.
     if (raw === null) return;
     const result = cmsSiteSettingsSchema.safeParse(raw);
     expect(result.success, `siteSettings failed its contract: ${JSON.stringify(result.error)}`).toBe(

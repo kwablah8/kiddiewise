@@ -1,5 +1,5 @@
 /**
- * SLIS site configuration — the single source of truth for the marketing site's copy.
+ * SLIS site configuration, the single source of truth for the marketing site's copy.
  *
  * Every real-world fact about the client (name, motto, location, contact, programs) lives here
  * exactly once. Marketing pages and components import `SITE` instead of hardcoding strings, so
@@ -7,14 +7,14 @@
  *
  * SOURCE: the school's crest logo + admission flyer (`SNAB-Assets/`). Facts not present in that
  * source (e.g. a founding year, precise enrollment figures, social handles) are intentionally
- * left out rather than invented — see `socials` below and the M4 rebrand plan's "honesty guard".
+ * left out rather than invented, see `socials` below and the M4 rebrand plan's "honesty guard".
  *
- * SANITY: six of these fields are now EDITABLE by the school in the Studio at /studio, which makes the
- * values here their FALLBACK rather than the last word — `contact`, `hours`, `admissionsYear`,
+ * SANITY: six of these fields are now editable by the school in the Studio at /studio, which makes the
+ * values here their FALLBACK rather than the last word, `contact`, `hours`, `admissionsYear`,
  * `admissionsNote` (derived) and `earlyBird`. Anything rendering one of those must read
  * `getMarketingSettings()` from `lib/marketing/cms/read.ts`, not this constant, or it will show stale
  * copy while the page beside it shows the edited copy. Each field is marked below. Everything unmarked
- * — the name, motto, tagline, address, programs, offerings — is code-owned and safe to import directly.
+ *, the name, motto, tagline, address, programs, offerings, is code-owned and safe to import directly.
  *
  * This module must stay importable from CLIENT components (`site-header.tsx` and
  * `app/(auth)/layout.tsx` both import it), so it must never gain `import "server-only"`.
@@ -24,7 +24,7 @@ import { BRAND } from "@/lib/brand";
 
 /**
  * The school year currently being admitted for, from the 2026/2027 admission flyer. Declared once
- * here because `admissionsNote` embeds it and page copy names it inline — a `const` object cannot
+ * here because `admissionsNote` embeds it and page copy names it inline, a `const` object cannot
  * reference its own fields, so the alternative is writing the year twice.
  */
 const ADMISSIONS_YEAR = "2026/2027";
@@ -35,7 +35,7 @@ const ADMISSIONS_YEAR = "2026/2027";
  * Exported because Sanity lets the school edit `admissionsYear` and this sentence renders in eight
  * places including the site's `<meta description>`. If the note were a second editable field, bumping
  * the year and forgetting the note would put one wrong fact on all eight surfaces. One function, one
- * fact (golden rule 9).
+ * fact.
  */
 export function admissionsNoteFor(year: string): string {
   return `Admission open for ${year}`;
@@ -46,7 +46,7 @@ export interface ProgramLevel {
   key: string;
   name: string;
   ageRange: string;
-  /** Short, honest, non-fabricated description — no invented stats or history. */
+  /** Short, honest, non-fabricated description, no invented stats or history. */
   blurb: string;
 }
 
@@ -78,10 +78,10 @@ export interface OfficeHours {
 }
 
 export interface Offering {
-  /** Stable identifier — the component maps this to an icon (icons aren't stored here). */
+  /** Stable identifier, the component maps this to an icon (icons aren't stored here). */
   key: string;
   name: string;
-  /** One-line, honest description — no invented facilities, stats or events. */
+  /** One-line, honest description, no invented facilities, stats or events. */
   blurb: string;
   /** Short checklist of what the offering includes. */
   items: readonly string[];
@@ -98,30 +98,30 @@ export interface SiteConfig {
   motto: string;
   tagline: string;
   location: SiteLocation;
-  /** SANITY-EDITABLE — read via `getMarketingSettings()`, not `SITE`. */
+  /** SANITY-EDITABLE: read via `getMarketingSettings()`, not `SITE`. */
   contact: SiteContact;
-  /** The school year admissions are open for, e.g. "2026/2027" — for copy that names it inline.
-   *  SANITY-EDITABLE — read via `getMarketingSettings()`, not `SITE`. */
+  /** The school year admissions are open for, e.g. "2026/2027", for copy that names it inline.
+   *  SANITY-EDITABLE: read via `getMarketingSettings()`, not `SITE`. */
   admissionsYear: string;
-  /** DERIVED from `admissionsYear` by `admissionsNoteFor()`, never authored on its own.
-   *  SANITY-EDITABLE (indirectly) — read via `getMarketingSettings()`, not `SITE`. */
+  /** derived from `admissionsYear` by `admissionsNoteFor()`, never authored on its own.
+   *  SANITY-EDITABLE (indirectly): read via `getMarketingSettings()`, not `SITE`. */
   admissionsNote: string;
   /** The early-bird offer as one standalone sentence. The flyer advertises that a discount exists
    * but states neither an amount nor a deadline, so this says exactly that and no more.
-   * SANITY-EDITABLE — read via `getMarketingSettings()`, not `SITE`. */
+   * SANITY-EDITABLE: read via `getMarketingSettings()`, not `SITE`. */
   earlyBird: string;
-  /** SANITY-EDITABLE — read via `getMarketingSettings()`, not `SITE`. */
+  /** SANITY-EDITABLE: read via `getMarketingSettings()`, not `SITE`. */
   hours: OfficeHours;
   programs: readonly ProgramLevel[];
   /** Co-curricular life beyond the academic ladder (shown in the "What we offer" home section). */
   offerings: readonly Offering[];
-  /** SEAM: real handles are unknown at integration time — populate once the school confirms them. */
+  /** TODO: real handles unknown at integration time; populate once the school confirms them. */
   socials: readonly SocialLink[];
 }
 
 export const SITE: SiteConfig = {
-  // Identity is DERIVED from `lib/brand.ts`, not re-authored: the portal shows the same name and
-  // motto now, and it must not import this marketing config to get them (CLAUDE.md §10).
+  // Identity is derived from `lib/brand.ts`, not re-authored: the portal shows the same name and
+  // motto now, and it must not import this marketing config to get them.
   name: BRAND.fullName,
   shortName: BRAND.shortName,
   motto: BRAND.motto,

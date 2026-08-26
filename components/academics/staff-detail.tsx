@@ -311,7 +311,7 @@ function ConfirmDeleteStaffDialog({
 }
 
 /**
- * Derived "assigned classes/subjects" — unioned the same way `toStaffVM` computes
+ * Derived "assigned classes/subjects", unioned the same way `toStaffVM` computes
  * class_count/subject_count: classes where this staff is the homeroom class teacher (from
  * `useClasses`), plus subjects taught via `class_subjects` (from `useAssignmentsForStaff`).
  */

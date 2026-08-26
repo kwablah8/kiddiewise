@@ -5,23 +5,19 @@ import { parseBody } from "next-sanity/webhook";
 import { tagsFor, type SanityWebhookPayload } from "@/lib/marketing/cms/revalidate";
 
 /**
- * Sanity calls this when the school publishes, so an edit is live on the next request rather than after
- * the time-based backstop in `lib/marketing/cms/read.ts`.
+ * Sanity calls this on publish, so an edit goes live on the next request instead of waiting for the
+ * time-based backstop in `lib/marketing/cms/read.ts`.
  *
- * `{ expire: 0 }` on `revalidateTag` is the reason this feels instant. The default (`"max"`) is
- * stale-while-revalidate: the next visitor is served the OLD page while a fresh one builds in the
- * background, so an editor who publishes and refreshes still sees their previous content once. Next's
- * docs call out `{ expire: 0 }` specifically for "webhooks or third-party services that need immediate
- * expiration" — the next request blocks for fresh data instead. `updateTag` would be the other route to
- * read-your-own-writes, but it can only be called from a Server Action, never a Route Handler.
+ * `{ expire: 0 }` is what makes it feel instant. The default is stale-while-revalidate, which serves
+ * the old page to the next visitor while a fresh one builds, so an editor who publishes and refreshes
+ * sees their previous content once. With `expire: 0` the next request blocks for fresh data instead.
+ * `updateTag` is the other way to get read-your-own-writes, but it only works in a Server Action.
  *
- * SECURITY: this endpoint is unauthenticated by necessity (Sanity's servers have no session), so its
- * only protection is the HMAC signature `parseBody` verifies against `SANITY_REVALIDATE_SECRET`. That is
- * why a missing secret is refused below rather than waved through, and why `/api/revalidate-sanity` is
- * allowlisted in `lib/auth/access.ts` — without that, this app's middleware would redirect Sanity's POST
- * to /login and nothing would ever revalidate.
- *
- * It can only ever expire caches. There is no path here that reads or writes school data.
+ * Security: this endpoint cannot be authenticated, since Sanity's servers have no session with us. Its
+ * only protection is the HMAC signature `parseBody` checks against `SANITY_REVALIDATE_SECRET`, which is
+ * why a missing secret is refused below. `/api/revalidate-sanity` is also allowlisted in
+ * `lib/auth/access.ts`; without that the middleware would redirect Sanity's POST to /login. The handler
+ * can only expire caches, and never reads or writes school data.
  */
 export async function POST(request: NextRequest) {
   const secret = process.env.SANITY_REVALIDATE_SECRET;
@@ -36,7 +32,7 @@ export async function POST(request: NextRequest) {
   try {
     const { isValidSignature, body } = await parseBody<SanityWebhookPayload>(request, secret);
 
-    // `!== true`, NOT `=== false`. `parseBody` returns `isValidSignature: null` — not `false` — when the
+    // `!== true`, not `=== false`. `parseBody` returns `isValidSignature: null`, not `false`, when the
     // signature header is absent entirely, so a `=== false` check lets an UNSIGNED request past this
     // gate and leaves it to be caught incidentally by the body check below. Verified: that request was
     // answered 400 "no document type" instead of 401. Nothing exploitable followed from it here, but a
@@ -50,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const tags = tagsFor(body);
     if (tags.length === 0) {
-      // A document type we do not render. Answer 200 so Sanity treats it as delivered — a 4xx here
+      // A document type we do not render. Answer 200 so Sanity treats it as delivered, a 4xx here
       // would have it retry, and keep retrying, over something we intend to ignore.
       return NextResponse.json({ revalidated: false, reason: `unhandled type ${body._type}` });
     }

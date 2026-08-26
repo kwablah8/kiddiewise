@@ -2,10 +2,10 @@
  * Generated temporary passwords for admin-issued portal credentials.
  *
  * Generated rather than admin-chosen on purpose: given a free text field, an admin will use the same
- * password for every parent in the school. That is not cynicism about admins — it is what a repetitive
+ * password for every parent in the school. That is not cynicism about admins; it is what a repetitive
  * task at a busy admission desk produces, and one leaked credential would then open every account.
  *
- * Optimised to be READ ALOUD AND TYPED, because it travels by handwriting on an admission slip and
+ * Optimised to be READ ALOUD and TYPED, because it travels by handwriting on an admission slip and
  * then over WhatsApp:
  *   - Words, not character soup: "Cocoa-4172-River" survives a phone call; "xK9#mQ2v" does not.
  *   - No ambiguous characters. 0/O and 1/l/I are the classic transcription failures, so the digits
@@ -16,7 +16,7 @@
 
 import type { PortalAccessStatus } from "@/lib/validators/people";
 
-// Ghanaian and school-familiar nouns — recognisable to the people typing them, which is the point.
+// Ghanaian and school-familiar nouns: recognisable to the people typing them, which is the point.
 // The list length matters: see TEMP_PASSWORD_COMBINATIONS below.
 export const TEMP_PASSWORD_WORDS = [
   "Cocoa",
@@ -93,7 +93,7 @@ const pickWord = (): string => TEMP_PASSWORD_WORDS[randomInt(TEMP_PASSWORD_WORDS
  * Asserted in the unit tests rather than left implicit, because it is the one property that makes this
  * safe to hand over: ~74 million (~26 bits) combined with a 30-day expiry, single use, and Supabase's
  * login rate limiting. An earlier 24-word / 4-digit version gave only ~2 million, which a collision
- * test caught by flaking — two parents can never be issued the same credential.
+ * test caught by flaking, two parents can never be issued the same credential.
  */
 export const TEMP_PASSWORD_COMBINATIONS =
   TEMP_PASSWORD_WORDS.length * (TEMP_PASSWORD_WORDS.length - 1) * DIGITS.length ** DIGIT_COUNT;
@@ -144,10 +144,10 @@ export function tempPasswordExpiry(from: Date): string {
  * Whether an issued temporary password has lapsed.
  *
  * Lives here rather than inline in the login page for two reasons: reading the clock inside a
- * component body is impure (React may re-run it at any time), and the rule deserves a unit test —
+ * component body is impure (React may re-run it at any time), and the rule deserves a unit test,
  * getting it inverted would either lock out valid users or leave credentials alive forever.
  *
- * A null expiry means "no deadline recorded", which is treated as NOT expired: it is the state of
+ * A null expiry means "no deadline recorded", which is treated as not expired: it is the state of
  * accounts that predate this feature, and locking those out would be a regression.
  */
 export function isTempPasswordExpired(expiresAt: string | null, now: number = Date.now()): boolean {
@@ -158,12 +158,12 @@ export function isTempPasswordExpired(expiresAt: string | null, now: number = Da
 /**
  * Derive whether someone has taken ownership of their portal account.
  *
- * Derived, never stored (golden rule 9): the three underlying columns already say everything, and a
+ * Derived, never stored: the three underlying columns already say everything, and a
  * fourth "status" column would be one more thing to keep in sync on every password change.
  *
  * Lives here rather than beside either read: staff and parents are the same `profiles` rows with the
  * same credential lifecycle, so the two lists must answer "has this person taken over their account?"
- * identically — a second copy of this rule is a second chance to get it wrong.
+ * identically, a second copy of this rule is a second chance to get it wrong.
  */
 export function derivePortalStatus(
   p: {
@@ -173,7 +173,7 @@ export function derivePortalStatus(
   },
   now: number = Date.now(),
 ): PortalAccessStatus {
-  // They replaced the temporary password — the account is genuinely theirs.
+  // They replaced the temporary password, the account is genuinely theirs.
   if (!p.must_change_password && p.password_changed_at) return "active";
   if (p.must_change_password) {
     return isTempPasswordExpired(p.temp_password_expires_at, now) ? "expired" : "pending";

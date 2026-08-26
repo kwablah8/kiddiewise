@@ -16,5 +16,5 @@ comment on column public.subjects.is_active is
   'False when the school no longer teaches this subject. Kept rather than deleted so existing marks and class assignments still resolve — see 0022.';
 
 -- Indexed because every picker and the subjects list filter on it, and the column is low-cardinality
--- only in the sense that most rows are true — which is exactly the case a partial index serves well.
+-- only in the sense that most rows are true, which is exactly the case a partial index serves well.
 create index subjects_active_idx on public.subjects(school_id, is_active);

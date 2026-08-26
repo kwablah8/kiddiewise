@@ -7,13 +7,13 @@ const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-/** Service-role client — bypasses RLS. Seeding/teardown only. */
+/** Service-role client, bypasses RLS. Seeding/teardown only. */
 export const admin = (): SupabaseClient => createClient(URL, SERVICE);
 
-/** Anonymous (unauthenticated) client — subject to `anon` policies. */
+/** Anonymous (unauthenticated) client, subject to `anon` policies. */
 export const anon = (): SupabaseClient => createClient(URL, ANON);
 
-/** A client authenticated as a real user — every query runs under RLS. */
+/** A client authenticated as a real user, every query runs under RLS. */
 export async function signInAs(email: string, password = "Password123!") {
   const c = createClient(URL, ANON);
   const { error } = await c.auth.signInWithPassword({ email, password });
@@ -48,7 +48,7 @@ async function makeUser(db: SupabaseClient, email: string) {
 }
 
 // Each call to seedTwoSchools() must mint identities (auth emails, school slugs) that are
-// unique across the WHOLE `pnpm test:rls` run, not just within one test file — every test
+// unique across the whole `pnpm test:rls` run, not just within one test file, every test
 // file's `beforeAll` calls seedTwoSchools() against the same, un-reset database. A monotonic
 // counter guarantees uniqueness within a single module instance/process; a random suffix
 // guarantees uniqueness across the separate module instances Vitest spins up per test file
@@ -124,7 +124,7 @@ export async function seedTwoSchools(): Promise<Seeded> {
       is_active: true,
     })
   ).id;
-  // term id isn't needed by the seed itself — tests look up the active term for their own
+  // term id isn't needed by the seed itself, tests look up the active term for their own
   // school via `.eq("is_active", true)` once signed in.
   await ins<{ id: string }>("terms", {
     school_id: schoolA,

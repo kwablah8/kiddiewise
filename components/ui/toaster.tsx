@@ -7,7 +7,7 @@ import { CircleCheckIcon, Loader2Icon, OctagonXIcon } from "lucide-react";
  * Toast host. Mounted once in the (app) layout.
  *
  * Styled with the design tokens rather than react-hot-toast's defaults, so toasts match the rest of
- * the app and follow light/dark automatically — the CSS variables already flip with the theme, which
+ * the app and follow light/dark automatically, the CSS variables already flip with the theme, which
  * is why nothing here reads `next-themes` (the previous sonner wrapper had to).
  *
  * Icons are the project's lucide set, replacing the library's built-in emoji-style marks, so a toast

@@ -10,7 +10,7 @@ interface QuickAction {
   icon: LucideIcon;
 }
 
-// Exam + Assessment both point at /teacher/assessment — the assessment screen (Slice 3) hosts exam
+// Exam + Assessment both point at /teacher/assessment, the assessment screen (Slice 3) hosts exam
 // creation and performance review together (01-REQ Teacher §Exams & assessments).
 const ACTIONS: QuickAction[] = [
   { title: "Attendance", description: "Mark today's register", href: "/teacher/attendance", icon: CalendarCheck },

@@ -27,8 +27,8 @@ import {
  * Fee writes.
  *
  * Nothing here stores a paid amount, a balance or a status. Those are derived from `payments` by the
- * views in migration 0018 — recording one payment therefore updates the Overview, Class Fees and
- * Payment History together, because all three read the same derivation (golden rule 9). This is why
+ * views in migration 0018, recording one payment therefore updates the Overview, Class Fees and
+ * Payment History together, because all three read the same derivation. This is why
  * 0017 dropped `invoices.amount_paid` and `invoices.status`.
  */
 
@@ -99,7 +99,7 @@ export async function createFeeStructure(input: FeeStructureCreateInput): Promis
     const data = feeStructureCreateSchema.parse(input);
     const ctx = await tenant();
 
-    // The class and year names are NOT stored — the read joins them, so renaming a class updates every
+    // The class and year names are NOT stored: the read joins them, so renaming a class updates every
     // fee structure that references it instead of leaving stale labels behind.
     const row = assertWrite(
       await ctx.db
@@ -127,11 +127,11 @@ export async function createFeeStructure(input: FeeStructureCreateInput): Promis
 /**
  * Correct a fee structure.
  *
- * Editing this changes the school's published price list and NO student's balance: `fee_items` has
- * no link to `invoices` — the assign dialogs take a typed amount and never read a row from here.
+ * Editing this changes the school's published price list and no student's balance: `fee_items` has
+ * no link to `invoices`, the assign dialogs take a typed amount and never read a row from here.
  * Closing that gap is separate work.
  *
- * No `.eq("school_id", …)` guard: `fi_admin`'s `using` clause is the tenant boundary (golden rule 2),
+ * No `.eq("school_id", ...)` guard: `fi_admin`'s `using` clause is the tenant boundary,
  * so another school's id matches zero rows and `assertWrite` reports it as not found.
  */
 export async function updateFeeStructure(
@@ -170,7 +170,7 @@ export async function updateFeeStructure(
  * Remove a fee structure.
  *
  * Safe: the only foreign key pointing at `fee_items` anywhere is
- * `invoice_items.fee_item_id … on delete set null`, and nothing writes `invoice_items`. No invoice
+ * `invoice_items.fee_item_id ... on delete set null`, and nothing writes `invoice_items`. No invoice
  * or payment can be orphaned.
  *
  * `.select("id").single()` rather than a bare delete so a row that RLS refuses, or that another
@@ -218,7 +218,7 @@ export async function bulkAssignFees(
     // A class-wide assignment upserts on (student, year, fee_term), so it OVERWRITES any invoice a
     // student already has for that scope. For students carrying an individually-granted award
     // (scholarship_type != 'none'), that would silently wipe the bursary and reset their discount to
-    // the class default — a real money-loss with no trace. Leave those invoices untouched; the admin
+    // the class default, a real money-loss with no trace. Leave those invoices untouched; the admin
     // set them deliberately and can still adjust one from the Class Fees row. Everyone else is
     // created or corrected as before.
     const { data: existing } = await ctx.db
@@ -288,8 +288,8 @@ export async function assignIndividualFee(
 /**
  * Record a payment against a student's fees.
  *
- * A payment must settle something — `payments_one_target` requires exactly one of `invoice_id` or
- * `extra_fee_assignment_id` — so an invoice for the active year is required first. Recording money
+ * A payment must settle something, `payments_one_target` requires exactly one of `invoice_id` or
+ * `extra_fee_assignment_id`, so an invoice for the active year is required first. Recording money
  * against nothing would be untraceable, which is precisely the failure mode paper receipts have.
  */
 export async function recordPayment(input: RecordPaymentInput): Promise<ActionResult<{ id: string }>> {
@@ -302,7 +302,7 @@ export async function recordPayment(input: RecordPaymentInput): Promise<ActionRe
       throw new UserFacingError("Set an active academic year before recording payments.");
     }
 
-    // Settle the invoice whose scope the admin clicked, not always the full-year one — a student may
+    // Settle the invoice whose scope the admin clicked, not always the full-year one, a student may
     // hold both a full-year and per-term invoices, and hardcoding full_year here either rejected a
     // legitimate term payment ("no fees assigned") or credited it to the wrong invoice.
     const invoiceId = await findInvoice(ctx, data.student_id, academicYearId, data.fee_term);

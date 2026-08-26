@@ -3,9 +3,9 @@ import { ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * PhotoSlot — a local, tasteful stand-in for imagery that isn't a real photo yet.
+ * PhotoSlot: a local, tasteful stand-in for imagery that isn't a real photo yet.
  *
- * SEAM: real photos come from `MEDIA` (`lib/marketing/media.ts`); the last remaining uses of this
+ * Real photos come from `MEDIA` (`lib/marketing/media.ts`). The last remaining uses of this
  * placeholder are non-photographic slots on the not-yet-built Unit C pages (e.g. the Contact map
  * embed, an admissions document photo). It renders a fixed-aspect, SLIS-tinted panel with a
  * neutral icon + a caption describing the intended asset. It exposes `role="img"` + `aria-label`
@@ -41,7 +41,7 @@ interface PhotoSlotProps {
   /** CSS aspect-ratio, e.g. "4 / 3", "3 / 4", "16 / 10". */
   aspect?: string;
   tone?: PhotoTone;
-  /** Hide the visible caption (still exposed as the accessible name) — for small slots. */
+  /** Hide the visible caption (still exposed as the accessible name), for small slots. */
   hideCaption?: boolean;
   className?: string;
 }

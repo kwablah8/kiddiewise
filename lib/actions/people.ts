@@ -44,13 +44,13 @@ async function nextAdmissionNo(ctx: TenantContext): Promise<string> {
 /**
  * Admit a student.
  *
- * A student's class is an `enrollments` row, not a column — so assigning a class here creates the
+ * A student's class is an `enrollments` row, not a column, so assigning a class here creates the
  * enrollment for the active academic year (05-FLOWS §2). That is what lets a promotion later be a new
  * enrollment rather than an edit that destroys the history.
  *
- * The inline "add new guardian" is validated BEFORE the student is inserted, using the same strict
+ * The inline "add new guardian" is validated before the student is inserted, using the same strict
  * schema `createParent` uses. A looser pre-check would let an address through that `createParent` then
- * rejects — after the student row already exists, leaving a half-finished admission.
+ * rejects, after the student row already exists, leaving a half-finished admission.
  */
 export async function createStudent(input: StudentCreateInput): Promise<ActionResult<{ id: string }>> {
   return attempt(async () => {
@@ -125,8 +125,8 @@ export async function createStudent(input: StudentCreateInput): Promise<ActionRe
     }
 
     if (newGuardian) {
-      // createParent also issues temporary credentials. They aren't surfaced here — the student form has
-      // no room to present them — so the admin sends them from the Parents screen via "Send credentials".
+      // createParent also issues temporary credentials. They aren't surfaced here, the student form has
+      // no room to present them, so the admin sends them from the Parents screen via "Send credentials".
       // orThrow on both: these are wrapped actions, so they RETURN their failures. Ignoring either
       // result would save the student with no guardian attached and report success.
       const { profileId: parentId } = orThrow(await createParent(newGuardian));
@@ -164,7 +164,7 @@ export async function updateStudent(input: StudentUpdateInput): Promise<ActionRe
     if (data.photo_url !== undefined) patch.photo_url = data.photo_url;
     if (data.enrollment_status !== undefined) patch.enrollment_status = data.enrollment_status;
 
-    // These carry `.nullable().default(null)`, so under `.partial()` they never parse to undefined —
+    // These carry `.nullable().default(null)`, so under `.partial()` they never parse to undefined,
     // an omitted key means null, and the edit form submits every registered field.
     patch.other_names = data.other_names;
     patch.blood_group = data.blood_group;
@@ -217,7 +217,7 @@ export async function updateStudent(input: StudentUpdateInput): Promise<ActionRe
 }
 
 /**
- * Grant someone portal access — a parent or a staff member.
+ * Grant someone portal access, a parent or a staff member.
  *
  * Separate from creating them on purpose (see `provisionUser`): adding a person to the roster is
  * record-keeping, deciding they should be able to log in is a distinct act that happens later, when
@@ -240,7 +240,7 @@ export async function invitePortal(input: {
 
 /**
  * Add a parent/guardian. Provisions an auth account because a profile cannot exist without one
- * (`profiles.id` → `auth.users.id`), but notifies nobody — use `invitePortal` for that.
+ * (`profiles.id` → `auth.users.id`), but notifies nobody, use `invitePortal` for that.
  */
 export async function createParent(input: ParentCreateInput): Promise<ActionResult<IssuedCredentials>> {
   return attempt(async () => {
@@ -248,7 +248,7 @@ export async function createParent(input: ParentCreateInput): Promise<ActionResu
     const ctx = await tenant();
 
     // Issued up front so the admin can hand the credentials over while the parent is still at the desk
-    // during admission — the whole point of this flow is that it needs no email or SMS provider.
+    // during admission, the whole point of this flow is that it needs no email or SMS provider.
     const tempPassword = generateTempPassword();
     const expiresAt = tempPasswordExpiry(new Date());
 
@@ -291,7 +291,7 @@ export async function createParent(input: ParentCreateInput): Promise<ActionResu
  *
  * Named "reissue", not "re-copy", because the original is unrecoverable: passwords are bcrypt hashes.
  * Storing the plaintext to allow a genuine re-copy would expose every parent's password to any admin
- * and to any breach — so the old one is replaced instead.
+ * and to any breach, so the old one is replaced instead.
  */
 export async function reissueCredentials(input: {
   profile_id: string;
@@ -307,7 +307,7 @@ export async function reissueCredentials(input: {
  * Link a parent to a student as a guardian.
  *
  * A student has at most one primary guardian, enforced by the `student_guardians_one_primary` partial
- * unique index (0016). So promoting a new primary must demote the incumbent first — the index would
+ * unique index (0016). So promoting a new primary must demote the incumbent first, the index would
  * otherwise reject the insert. The mock did this in application code; the invariant now lives in the
  * database, where a concurrent write can't slip past it.
  */

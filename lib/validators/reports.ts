@@ -17,7 +17,7 @@ export const reportSubjectRowVM = z.object({
   class_score: z.number().nullable(),
   exam_score: z.number().nullable(),
   total: z.number().nullable(),
-  /** How the rest of the class did in this subject — the card's three comparison columns. */
+  /** How the rest of the class did in this subject, the card's three comparison columns. */
   class_average: z.number().nullable(),
   class_lowest: z.number().nullable(),
   class_highest: z.number().nullable(),
@@ -40,16 +40,16 @@ export const terminalReportRowVM = z.object({
   subject_count: z.number(),
   total_score: z.number().nullable(),
   average_score: z.number().nullable(),
-  /** Derived from the average via the school's bands at read time — a label, not a stored value. */
+  /** Derived from the average via the school's bands at read time, a label, not a stored value. */
   overall_grade: z.string().nullable(),
   position: z.number().nullable(),
-  /** "Number Of Passes" — subjects at or above the school's pass mark. Null before generation. */
+  /** "Number Of Passes", subjects at or above the school's pass mark. Null before generation. */
   passes: z.number().nullable(),
   // The class-wide figures the card prints beside the child's own, so an average has a scale.
   class_average: z.number().nullable(),
   class_lowest_average: z.number().nullable(),
   class_highest_average: z.number().nullable(),
-  /** "Position in J.H.S. 2" — the same rank across every class sharing this class's level. */
+  /** "Position in J.H.S. 2", the same rank across every class sharing this class's level. */
   level_position: z.number().nullable(),
   level_size: z.number().nullable(),
   attendance_present: z.number(),
@@ -78,7 +78,7 @@ export const terminalReportSheetVM = z.object({
   term_id: z.string(),
   term_name: z.string(),
   rows: z.array(terminalReportRowVM),
-  /** How many of the generated rows are published — drives the publish/unpublish affordance. */
+  /** How many of the generated rows are published, drives the publish/unpublish affordance. */
   published_count: z.number(),
   generated_count: z.number(),
 });
@@ -105,7 +105,7 @@ const cardText = (max: number, label: string) =>
   );
 
 // Every field optional: an omitted key means "leave that column alone" (the action patches only
-// what was sent), while an empty string explicitly clears. Same lesson as staffUpdateSchema — a
+// what was sent), while an empty string explicitly clears. Same lesson as staffUpdateSchema, a
 // caller saving one field must not wipe the others.
 export const reportCommentsSchema = z.object({
   id: z.string().min(1),

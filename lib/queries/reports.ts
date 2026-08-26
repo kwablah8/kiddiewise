@@ -14,7 +14,7 @@ export const useReportSheet = (classId: string | null, termId: string | null) =>
 
 /**
  * All three mutations invalidate the whole `reports` tree. Generating changes every row's figures and
- * positions at once, and publishing changes what the parent portal can see — so a narrow invalidation
+ * positions at once, and publishing changes what the parent portal can see, so a narrow invalidation
  * would leave the sheet disagreeing with the database.
  */
 function useReportMutation<TInput, TOutput>(fn: (input: TInput) => Promise<ActionResult<TOutput>>) {

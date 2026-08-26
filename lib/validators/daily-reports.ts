@@ -8,7 +8,7 @@ const note = (max = 2000) => z.string().trim().max(max, `Keep this under ${max} 
  * The pupil's daily report (SNAB "Child's Daily Report" form, migration 0026).
  *
  * Two sections with two authors: the parent's morning report and the teacher's day report. Each
- * is one row per (student, date) in its own table — see the migration for why they are split.
+ * is one row per (student, date) in its own table, see the migration for why they are split.
  * Every field is nullable on purpose: this is a paper form transcribed, and half-filled is a
  * valid state at any point of the day. "Not answered" must stay distinguishable from "No".
  */

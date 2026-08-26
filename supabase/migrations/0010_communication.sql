@@ -83,7 +83,7 @@ create policy al_admin_read on public.activity_log for select to authenticated
 create policy al_insert_self on public.activity_log for insert to authenticated
   with check (school_id = public.current_school_id() and actor_id = auth.uid());
 
--- admissions_inquiries: the ONLY anonymous write. INSERT-only for anon; admins read/manage.
+-- admissions_inquiries: the only anonymous write. INSERT-only for anon; admins read/manage.
 create policy inq_anon_insert on public.admissions_inquiries for insert to anon
   with check (true);
 create policy inq_admin_all on public.admissions_inquiries for all to authenticated

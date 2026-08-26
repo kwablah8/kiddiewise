@@ -16,7 +16,7 @@ import {
  * Writes NEW enrollments for the target year and leaves every existing row alone. That is the whole
  * design (docs/05-USER-FLOWS.md §7): a student's class is an enrollment, not a column, so last
  * year's placement stays true and last year's reports keep resolving to the class the child was
- * actually in. Rewriting the old row instead would quietly rewrite history — a Basic 3 report card
+ * actually in. Rewriting the old row instead would quietly rewrite history, a Basic 3 report card
  * would start claiming the child was in Basic 4.
  *
  * Idempotent. The upsert targets `unique(student_id, academic_year_id)` from migration 0006, so
@@ -54,7 +54,7 @@ export async function promoteStudents(
       ...repeating.map((d) => ({
         school_id: ctx.schoolId,
         student_id: d.student_id,
-        // Same class as this year — that is what repeating means.
+        // Same class as this year; that is what repeating means.
         class_id: data.source_class_id,
         academic_year_id: data.target_year_id,
         status: "active" as const,
@@ -70,7 +70,7 @@ export async function promoteStudents(
       );
     }
 
-    // Graduating writes no new enrollment — there is no next class. It closes off the CURRENT
+    // Graduating writes no new enrollment; there is no next class. It closes off the CURRENT
     // year's row instead, which is the one place promotion does change an existing record, and only
     // its outcome, never its placement.
     if (graduating.length > 0) {

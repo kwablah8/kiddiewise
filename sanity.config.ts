@@ -13,7 +13,7 @@ import { structure } from "./sanity/structure";
  * `process.env` is read directly rather than through `lib/marketing/cms/env.ts`. That is a deliberate,
  * small duplication: the Sanity CLI loads this file with its own bundler, which does not resolve this
  * repo's `@/*` path alias, so importing app code here would break `sanity` commands. The app side
- * needs the opposite behaviour anyway — it treats a missing project id as "fall back to the committed
+ * needs the opposite behaviour anyway; it treats a missing project id as "fall back to the committed
  * content" rather than as an error.
  */
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? "";
@@ -28,8 +28,8 @@ export default defineConfig({
   schema: {
     types: schemaTypes,
     // Keeps "Site settings" out of the global "create new" menu. Without this an editor can create a
-    // second siteSettings document, which the site would silently ignore — the query reads one fixed
-    // document id — and that is a confusing afternoon for whoever has to explain why an edit did
+    // second siteSettings document, which the site would silently ignore, the query reads one fixed
+    // document id, and that is a confusing afternoon for whoever has to explain why an edit did
     // nothing.
     templates: (templates) =>
       templates.filter(

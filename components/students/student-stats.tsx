@@ -19,8 +19,8 @@ const tintChip: Record<Tint, string> = {
 };
 
 /**
- * Local stat card: tinted icon chip · label · value · muted caption sub-line. Deliberately NOT
- * `MetricCard` — its `trend` prop renders a `TrendPill` (a colored ↑/↓ delta for period-over-period
+ * Local stat card: tinted icon chip · label · value · muted caption sub-line. Deliberately not
+ * `MetricCard`; its `trend` prop renders a `TrendPill` (a colored ↑/↓ delta for period-over-period
  * change), so a share-of-total fed to it reads as a false "trending up +N%". These captions are
  * static shares of the roster, so they belong in a plain muted sub-line under the value instead.
  */
@@ -54,7 +54,7 @@ function StatCard({
 /**
  * 4-card summary row atop the Students list (06-UI §6): Total, Active, Assigned to a class, and
  * Gender ratio. Stats are secondary to the roster below, so a failed fetch degrades to a single
- * muted note rather than a full `ErrorState` + retry — the table below still works.
+ * muted note rather than a full `ErrorState` + retry, the table below still works.
  */
 export function StudentStats() {
   const { data, isLoading, isError } = useStudentStats();

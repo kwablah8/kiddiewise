@@ -40,14 +40,14 @@ const TERMS: FeeTerm[] = ["full_year", "first", "second", "third"];
 
 interface FeeStructureDialogProps {
   mode: "create" | "edit";
-  /** Required when `mode === "edit"` — the row already loaded by the Fee Structure table. */
+  /** Required when `mode === "edit"`, the row already loaded by the Fee Structure table. */
   structure?: FeeStructureVM;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 /**
- * Create/edit dialog for a fee structure. One dialog, two modes — the shape `SubjectFormDialog`
+ * Create/edit dialog for a fee structure. One dialog, two modes, the shape `SubjectFormDialog`
  * uses. Form state isn't reset on close; the caller remounts with a fresh `key` on every open, so
  * opening the pencil on a second row shows that row's values and not the previous one's.
  */
@@ -80,7 +80,7 @@ export function FeeStructureDialog({
             term: structure.term,
             amount: structure.amount,
             // `<input type="date">` needs `yyyy-MM-dd`; the column is a date, but slice defensively
-            // in case a timestamp ever arrives — the control renders blank rather than complaining.
+            // in case a timestamp ever arrives, the control renders blank rather than complaining.
             due_date: structure.due_date ? structure.due_date.slice(0, 10) : null,
             late_fee: structure.late_fee,
             description: structure.description,

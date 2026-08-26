@@ -36,8 +36,8 @@ import type { TerminalReportRowVM } from "@/lib/validators/reports";
  * half-marked results onto report cards parents are already reading.
  *
  * With `teacherId` set this is the TEACHER portal's compile view: the class list narrows to the
- * classes where they are the class teacher (spec decision 1 — the homeroom teacher compiles), and
- * the dialog hides the head teacher's remark. Generation and publishing stay available — spec
+ * classes where they are the class teacher (spec decision 1, the homeroom teacher compiles), and
+ * the dialog hides the head teacher's remark. Generation and publishing stay available, spec
  * decision 2, backed by tr_class_teacher_* RLS rather than this prop.
  */
 export function TerminalReports({ teacherId }: { teacherId?: string }) {
@@ -131,7 +131,7 @@ export function TerminalReports({ teacherId }: { teacherId?: string }) {
       key: "average",
       header: "Average",
       align: "right",
-      // Null, not 0 — a student with no submitted marks has no average, and a zero would read as a fail.
+      // Null, not 0, a student with no submitted marks has no average, and a zero would read as a fail.
       render: (r) =>
         r.average_score === null ? (
           <span className="text-[var(--muted-foreground)]">—</span>
@@ -194,7 +194,7 @@ export function TerminalReports({ teacherId }: { teacherId?: string }) {
     },
   ];
 
-  // A teacher who is nobody's class teacher has nothing to compile — their input is score entry.
+  // A teacher who is nobody's class teacher has nothing to compile, their input is score entry.
   if (teacherId && !classesLoading && classes.length === 0) {
     return (
       <div className={cardShellClass}>

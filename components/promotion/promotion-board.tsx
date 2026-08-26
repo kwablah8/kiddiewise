@@ -42,7 +42,7 @@ const DECISIONS: PromotionDecision[] = ["promote", "repeat", "graduate", "skip"]
  * End-of-year promotion for one class.
  *
  * Deliberately one class at a time, not the whole school in a single sweep. Promotion is the least
- * reversible thing an admin does here — it decides where every child sits for a year — and a
+ * reversible thing an admin does here; it decides where every child sits for a year, and a
  * screen that moved 250 pupils on one button would be reviewed by nobody.
  *
  * Nothing about the destination is inferred. Class levels in real data are typed by hand and drift

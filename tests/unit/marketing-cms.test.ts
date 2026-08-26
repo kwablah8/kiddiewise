@@ -39,7 +39,7 @@ describe("mergeSiteSettings", () => {
   it("overrides only the fields that were filled in", () => {
     const merged = mergeSiteSettings(SITE, cmsSiteSettingsSchema.parse({ contactEmail: "office@slis.edu.gh" }));
     expect(merged.contact.email).toBe("office@slis.edu.gh");
-    // Untouched neighbours must survive — an editor filling one box must not blank the rest.
+    // Untouched neighbours must survive, an editor filling one box must not blank the rest.
     expect(merged.contact.phones).toEqual(SITE.contact.phones);
     expect(merged.earlyBird).toBe(SITE.earlyBird);
   });
@@ -121,8 +121,8 @@ describe("image asset contracts", () => {
   };
 
   it("accepts asset facts with no description attached", () => {
-    // REGRESSION: the asset schema must NOT require `alt`. It used to, which meant the gallery
-    // projection — where alt lives on the document, not the image — failed every single row, emptied
+    // REGRESSION: the asset schema must not require `alt`. It used to, which meant the gallery
+    // projection, where alt lives on the document, not the image, failed every single row, emptied
     // the list, and silently fell back to the committed photos. See cms/queries.ts ASSET_PROJECTION.
     expect(cmsImageAssetSchema.parse(asset)).toMatchObject({ width: 1920, height: 1440 });
     expect(cmsImageAssetSchema.safeParse({ ...asset, alt: undefined }).success).toBe(true);
@@ -152,7 +152,7 @@ describe("list tolerance", () => {
   const photo = {
     id: "a",
     alt: "Children at the kids' funtime event around an inflatable pool",
-    // Mirrors the real GROQ projection: asset facts only, NO alt inside the image.
+    // Mirrors the real GROQ projection: asset facts only, no alt inside the image.
     image: { ref: "image-a-800x600-jpg", width: 800, height: 600, lqip: null },
   };
 
@@ -193,7 +193,7 @@ describe("list tolerance", () => {
 
 describe("tagsFor (publish webhook -> cache tags)", () => {
   // These strings must match the `tags` passed to each fetch in cms/read.ts. A mismatch does not
-  // throw — a publish just never reaches the site — so it has to be a test, not a careful reading.
+  // throw, a publish just never reaches the site, so it has to be a test, not a careful reading.
   it("expires both the collection and the individual post for a news publish", () => {
     expect(tagsFor({ _type: "newsPost", slug: "first-term-opens" })).toEqual([
       "newsPost",

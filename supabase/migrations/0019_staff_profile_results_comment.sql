@@ -4,13 +4,13 @@
 -- 1. The staff create/edit form and the staff detail page (lib/validators/academics.ts#staffVM)
 --    collect an employment record that `profiles` had nowhere to store.
 -- 2. The parent portal's results view shows the subject teacher's note per subject
---    (lib/validators/parent.ts#subjectResultVM.teacher_comment). `results.remark` is NOT that —
+--    (lib/validators/parent.ts#subjectResultVM.teacher_comment). `results.remark` is not that,
 --    it is the grading scale's remark for the band ("Very Good"), written by the grading logic.
 --    Conflating the two would let a teacher's note be overwritten every time a score is regraded.
 
 alter table public.profiles
   -- Free-text job title ("Head Teacher", "Accountant"). Distinct from `role`, which is the auth
-  -- role and only ever teacher/school_admin — a bursar and a head teacher share a role but not a job.
+  -- role and only ever teacher/school_admin, a bursar and a head teacher share a role but not a job.
   add column position       text,
   add column gender         gender,
   add column date_of_birth  date,

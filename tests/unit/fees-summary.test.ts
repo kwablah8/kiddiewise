@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { summarizeFees } from "@/lib/fees/summary";
+import { combineFeeTotals, summarizeFees } from "@/lib/fees/summary";
 
 describe("summarizeFees", () => {
   it("aggregates totals, collection rate and the paid/partial/pending breakdown", () => {
@@ -36,5 +36,34 @@ describe("summarizeFees", () => {
     expect(s.collection_rate).toBe(0);
     expect(s.outstanding).toBe(0);
     expect(s.total_records).toBe(0);
+  });
+});
+
+describe("combineFeeTotals", () => {
+  it("folds class fees and extra fees into the one figure a parent owes", () => {
+    const totals = combineFeeTotals(
+      summarizeFees(
+        [{ expected: 1000, paid: 400, arrears: 200 }],
+        [{ amount: 300, paid: 0 }],
+      ),
+    );
+    expect(totals.due).toBe(1500); // 1000 expected + 200 arrears + 300 extra
+    expect(totals.paid).toBe(400);
+    expect(totals.outstanding).toBe(1100); // 800 on the invoice + 300 on the extra fee
+  });
+
+  it("does not let an overpaid invoice settle a separate extra fee", () => {
+    // The regression this guards: computing `due - paid` would report GHS 0 outstanding here and
+    // tell a parent the uniform is paid for, while the school's ledger still shows it unpaid.
+    const totals = combineFeeTotals(
+      summarizeFees([{ expected: 1000, paid: 1300, arrears: 0 }], [{ amount: 300, paid: 0 }]),
+    );
+    expect(totals.due).toBe(1300);
+    expect(totals.paid).toBe(1300);
+    expect(totals.outstanding).toBe(300);
+  });
+
+  it("is zero across the board for a child with no fees on record", () => {
+    expect(combineFeeTotals(summarizeFees([], []))).toEqual({ due: 0, paid: 0, outstanding: 0 });
   });
 });

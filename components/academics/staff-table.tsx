@@ -21,7 +21,7 @@ import { matchesQuery } from "@/lib/search";
 import { cardShellClass } from "@/lib/ui";
 
 // Tone tracks how much attention the row needs: a teacher still holding a password the admin also
-// knows is not a failure, but it isn't finished either — hence "warning" rather than "success".
+// knows is not a failure, but it isn't finished either, hence "warning" rather than "success".
 const PORTAL_TONE: Record<PortalAccessStatus, "success" | "warning" | "danger" | "neutral"> = {
   active: "success",
   pending: "warning",
@@ -103,7 +103,7 @@ function buildColumns(currentUserId: string | null): DataTableColumn<StaffVM>[] 
     {
       key: "portal_status",
       header: "Portal access",
-      // "Active" means they signed in and replaced the temporary password — i.e. the account is
+      // "Active" means they signed in and replaced the temporary password, i.e. the account is
       // genuinely theirs and the admin no longer knows the credential.
       render: (row) => (
         <StatusPill
@@ -116,7 +116,7 @@ function buildColumns(currentUserId: string | null): DataTableColumn<StaffVM>[] 
       key: "actions",
       header: "",
       render: (row) => {
-        // An admin is a staff member, so the row for whoever is signed in is on this list too — and
+        // An admin is a staff member, so the row for whoever is signed in is on this list too, and
         // both of these actions target somebody ELSE's account by definition. "Send credentials" on
         // your own row revokes the password you are using (see reissueTempPassword's guard, which is
         // what actually enforces this); an invite link to yourself is merely pointless. Marking the
@@ -153,12 +153,12 @@ interface StaffTableProps {
   onNewStaff: () => void;
 }
 
-/** Staff list — name w/ initials, staff_no, email, department, classes/subjects, status (06-UI §6). */
+/** Staff list: name w/ initials, staff_no, email, department, classes/subjects, status (06-UI §6). */
 export function StaffTable({ onNewStaff }: StaffTableProps) {
   const router = useAppRouter();
   const { data, isLoading, isError, refetch } = useStaff();
   // Only to recognise the caller's own row below. Null while the session loads, which merely means
-  // the row shows its buttons for a moment — the server guard is what makes pressing one safe.
+  // the row shows its buttons for a moment, the server guard is what makes pressing one safe.
   const { profile } = useSession();
   const [query, setQuery] = useState("");
   const rows = (data ?? []).filter((r) =>

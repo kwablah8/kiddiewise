@@ -240,7 +240,7 @@ const EMPTY_TEACHER_FORM: TeacherFormState = {
 /**
  * Controlled state rather than RHF, deliberately: every field is nullable (a half-filled day
  * sheet is a valid state), the toileting log is a dynamic list, and there is nothing for a
- * resolver to reject — the structure of the controls IS the validation, and the Zod contract
+ * resolver to reject, the structure of the controls is the validation, and the Zod contract
  * still runs in the action.
  */
 function TeacherDayForm({

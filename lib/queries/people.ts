@@ -7,8 +7,8 @@ import * as actions from "@/lib/actions/people";
 
 
 // Each action is bound to a const here rather than wrapped inline at `mutationFn`. That is not
-// style: `mutationFn: mutate(actions.x)` is a generic CALL in a contextually-typed position, and
-// TypeScript stops inferring useMutation's variables type through it — it silently falls back to
+// style: `mutationFn: mutate(actions.x)` is a generic call in a contextually-typed position, and
+// TypeScript stops inferring useMutation's variables type through it; it silently falls back to
 // `void`, so every `onSuccess(_result, variables)` below becomes an error. Binding first gives the
 // property a concrete function type and inference works as it did before. Do not inline these.
 const createStudent = mutate(actions.createStudent);
@@ -95,7 +95,7 @@ export const useLinkGuardian = () => {
  * Grant portal access to a parent or staff member. Returns either a copyable link (delivery: "link")
  * or confirmation that an email went out (delivery: "email").
  *
- * No cache invalidation: inviting doesn't change any row the UI renders — the account already existed,
+ * No cache invalidation: inviting doesn't change any row the UI renders, the account already existed,
  * silently, from the moment the person was added.
  */
 export const useInvitePortal = () => useMutation({ mutationFn: invitePortal });
@@ -104,7 +104,7 @@ export const useInvitePortal = () => useMutation({ mutationFn: invitePortal });
  * Issue a fresh temporary password so the admin can send credentials again.
  *
  * Invalidates both people lists because the reissue resets `must_change_password`, and the portal
- * status column must flip back to "Awaiting first sign-in" — for staff and parents alike. The action
+ * status column must flip back to "Awaiting first sign-in", for staff and parents alike. The action
  * takes a bare `profile_id` and cannot tell which list the person is on, so both are refreshed rather
  * than guessed at.
  */

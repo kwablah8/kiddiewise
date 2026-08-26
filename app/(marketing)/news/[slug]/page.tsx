@@ -15,7 +15,7 @@ interface NewsPostPageProps {
 }
 
 /**
- * Prerenders every post that exists at build time. Returns `[]` when Sanity is unconfigured — a
+ * Prerenders every post that exists at build time. Returns `[]` when Sanity is unconfigured, a
  * supported build (CI, a developer without credentials); the routes simply render on demand instead.
  * Posts published AFTER a deploy are also covered: Next renders them on first request.
  */
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: NewsPostPageProps): Promise<M
   return {
     title: post.title,
     // The excerpt is required in the Studio precisely so this is never empty, and so a shared link on
-    // WhatsApp — how most parents will actually receive it — shows a real summary and a real photo.
+    // WhatsApp, how most parents will actually receive it, shows a real summary and a real photo.
     description: post.excerpt,
     openGraph: {
       title: post.title,

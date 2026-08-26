@@ -25,7 +25,7 @@ interface SectionProps {
 /**
  * The marketing layout wrapper. Every band on the public SLIS site is a <Section>, which gives it
  * a tone (white / warm gold-tint / blue brand band / gold accent band), consistent editorial
- * vertical rhythm, and a centered reading-width container. Alternating tones — not borders — carry
+ * vertical rhythm, and a centered reading-width container. Alternating tones, not borders, carry
  * the page's structure.
  */
 export function Section({

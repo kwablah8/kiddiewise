@@ -1,15 +1,15 @@
 /**
- * Canonical school identity — the crest, the names, the motto.
+ * Canonical school identity: the crest, the names, the motto.
  *
  * This exists because brand identity is no longer marketing-only: the authenticated portal's
  * sidebar, the auth screens and the parent shell all show the crest and the school's name now that
  * this build is tailored to SLIS. Those surfaces must not import `lib/marketing/*` (a portal
- * reaching into the public site's config is exactly the seam CLAUDE.md §10 asks us to respect), so
- * the shared facts live here and `lib/marketing/site.ts` + `lib/marketing/media.ts` DERIVE from
- * them rather than re-declaring them. One fact, one home (golden rule 9).
+ * reaching into the public site's config crosses a layer boundary), so the shared facts live here
+ * and `lib/marketing/site.ts` and `lib/marketing/media.ts` derive from them rather than
+ * re-declaring them. One fact, one home.
  *
- * SEAM: single-tenant by design, for now. True per-school branding reads the name from the
- * `schools` row and the logo from Storage — both unbuilt, see CLAUDE.md §5. When that lands, this
+ * Single-tenant by design for now. True per-school branding reads the name from the `schools` row
+ * and the logo from Storage, neither of which is built yet. When that lands; this
  * module becomes the fallback for a school that hasn't uploaded its own identity yet.
  */
 
@@ -17,8 +17,8 @@ export interface BrandCrest {
   src: string;
   /**
    * Descriptive alt for the rare slot where the crest stands alone. Most placements sit beside the
-   * school's name in text, where the image is decorative and callers pass `alt=""` instead — a
-   * screen reader announcing the crest AND the adjacent wordmark would just say it twice.
+   * school's name in text, where the image is decorative and callers pass `alt=""` instead, a
+   * screen reader announcing the crest and the adjacent wordmark would just say it twice.
    */
   alt: string;
   width: number;
@@ -31,22 +31,22 @@ export interface BrandCrest {
  * MIRRORS the `--m-*` block in `app/globals.css`, which is the visual source of truth and documents
  * where each hue was sampled from the crest. This is a deliberate second REPRESENTATION of one fact,
  * not a duplicate of it: jsPDF takes literal RGB, and reading
- * `getComputedStyle(document.documentElement)` would couple `lib/pdf/*` to the DOM — precisely the
+ * `getComputedStyle(document.documentElement)` would couple `lib/pdf/*` to the DOM, precisely the
  * coupling `renderReceipt` is split apart to avoid. Change one, change the other.
  */
 export interface BrandPalette {
-  /** Deep navy — headings on white. The lighter royal looks thin at display sizes. */
+  /** Deep navy, headings on white. The lighter royal looks thin at display sizes. */
   deep: string;
-  /** Royal blue, darkened — figures and rules. Same value as `--primary`. */
+  /** Royal blue, darkened, figures and rules. Same value as `--primary`. */
   strong: string;
-  /** Gold — accents and rules ONLY. It fails contrast as text on white. */
+  /** Gold, accents and rules only. It fails contrast as text on white. */
   accent: string;
-  /** A ~8% `strong` wash over white — emphasis-block fills. */
+  /** A ~8% `strong` wash over white, emphasis-block fills. */
   tint: string;
 }
 
 export interface Brand {
-  /** Initialism used in tight chrome — sidebar, auth panel, nav. */
+  /** Initialism used in tight chrome: sidebar, auth panel, nav. */
   shortName: string;
   /** Full registered name, for titles, footers and formal contexts. */
   fullName: string;
@@ -58,7 +58,7 @@ export interface Brand {
   /**
    * Backdrop for the auth screens' desktop side panel. `src` only, deliberately: it sits under a
    * near-opaque navy scrim as pure decoration, so it is rendered with `alt=""` and needs no
-   * description. Shown from `lg` up only — phones get a flat navy band, so this never costs mobile
+   * description. Shown from `lg` up only, phones get a flat navy band, so this never costs mobile
    * data. The same file also appears in the marketing gallery manifest with descriptive alt text;
    * that is the gallery's fact to own, not a duplicate of this one.
    */
@@ -87,6 +87,6 @@ export const BRAND: Brand = {
   // it is properly photographed rather than WhatsApp-quality; and the pupil's uniform is royal blue
   // with the school crest on it, so the frame carries the brand by itself. The exteriors all share
   // flat overcast sky, overhead power lines and orange pillars that fight the navy/gold palette.
-  // SEAM: swap this one line to change the login artwork.
+  // Swap this one line to change the login artwork.
   authPanelPhoto: { src: "/slis/photos/student-portrait-uniform.jpg" },
 } as const;

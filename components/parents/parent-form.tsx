@@ -18,7 +18,7 @@ import { cardShellClass } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 
 // `parentCreateSchema` has `.default(null)` on `occupation`, so its input type (what the form
-// collects) differs from its output type (what create requires) — same pattern as
+// collects) differs from its output type (what create requires), same pattern as
 // `student-form.tsx` / `staff-form.tsx`.
 type ParentFormInput = z.input<typeof parentCreateSchema>;
 
@@ -42,7 +42,7 @@ export function ParentForm() {
     setSubmitError(null);
     try {
       // The action creates the auth account with a generated temporary password and returns it. This
-      // is the ONLY moment it can be displayed — it is stored hashed, so it cannot be shown again.
+      // is the only moment it can be displayed; it is stored hashed, so it cannot be shown again.
       const phone = values.phone && values.phone.trim() !== "" ? values.phone.trim() : null;
       const credentials = await createParent.mutateAsync({ ...values, phone });
       setIssued(credentials);

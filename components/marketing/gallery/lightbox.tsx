@@ -14,7 +14,7 @@ interface LightboxProps {
 }
 
 /**
- * Gallery lightbox — a focus-trapped modal over a near-black backdrop (so its reduced-opacity
+ * Gallery lightbox, a focus-trapped modal over a near-black backdrop (so its reduced-opacity
  * caption text sits on near-black, not the royal-blue brand band; see the AA contrast note below).
  * Escape closes, ArrowLeft/ArrowRight step through photos, and a backdrop click closes. Follows
  * the same trap/restore-focus pattern as the mobile nav drawer (`site-header.tsx`).

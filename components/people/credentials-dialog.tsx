@@ -22,7 +22,7 @@ import {
 /**
  * Shows admin-issued credentials ONCE.
  *
- * "Once" is not a UX choice — the password is stored as a bcrypt hash, so after this dialog closes
+ * "Once" is not a UX choice, the password is stored as a bcrypt hash, so after this dialog closes
  * there is genuinely nothing left to display. The warning says so plainly, because an admin who
  * assumes they can look it up later will close this and then have to reissue.
  *

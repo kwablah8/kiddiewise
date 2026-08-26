@@ -24,7 +24,7 @@ import type { TerminalReportRowVM } from "@/lib/validators/reports";
 const textareaClass =
   "w-full rounded-lg border border-[var(--border)] bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-[var(--primary)]";
 
-/** What the card prints that lives outside the report row — supplied by the sheet around it. */
+/** What the card prints that lives outside the report row, supplied by the sheet around it. */
 export interface ReportCardContext {
   class_name: string;
   /** Labels the card's second position line ("Position in JHS"). */
@@ -39,9 +39,9 @@ export interface ReportCardContext {
 
 /**
  * One child's full report card: the frozen subject table (Class Score · Exams Score · Total ·
- * Position · Remarks) above the fields a human writes — conduct, attitude, interest, promoted-to
+ * Position · Remarks) above the fields a human writes, conduct, attitude, interest, promoted-to
  * and the remarks. Mounted fresh per row via `key`, so the fields initialise from that report
- * rather than carrying the previous child's words — writing one child's conduct onto another's
+ * rather than carrying the previous child's words, writing one child's conduct onto another's
  * card is the kind of mistake a parent never forgets.
  */
 export function ReportCommentsDialog({
@@ -132,7 +132,7 @@ function Form({
         attendanceTotal: row.attendance_total,
         subjects: row.subjects,
         gradeBands: bands ?? [],
-        // The unsaved edits print, not the last saved ones — a teacher who writes a remark and hits
+        // The unsaved edits print, not the last saved ones, a teacher who writes a remark and hits
         // Download expects the words in front of them on the page.
         conduct: conduct.trim() || null,
         attitude: attitude.trim() || null,
@@ -164,7 +164,7 @@ function Form({
         </DialogHeader>
 
         <div className="space-y-5">
-          {/* The frozen subject table — regenerate the class to refresh it. */}
+          {/* The frozen subject table, regenerate the class to refresh it. */}
           {row.subjects.length === 0 ? (
             <p className="rounded-lg bg-[var(--bg)] px-3 py-2 text-sm text-[var(--muted-foreground)]">
               No subject rows yet — generate the reports to snapshot this term&apos;s scores.

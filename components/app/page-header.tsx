@@ -12,7 +12,7 @@ interface PageHeaderProps {
   /** When set, a back link is shown above the title on mobile only (the sidebar is hidden below
    *  `lg`, so drill-in screens need an explicit way back). Pass the parent list's path. */
   backHref?: string;
-  /** Label for the back link — the parent screen's name, e.g. "Staff". Defaults to "Back". */
+  /** Label for the back link: the parent screen's name, e.g. "Staff". Defaults to "Back". */
   backLabel?: string;
 }
 

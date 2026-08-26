@@ -33,11 +33,11 @@ import {
  * Three properties hold across all of them, and they are the reason this integration cannot take the
  * site down:
  *
- * 1. **Sanity being absent is not an error.** No project id, network failure, malformed payload — each
+ * 1. **Sanity being absent is not an error.** No project id, network failure, malformed payload, each
  *    lands on the committed content in `lib/marketing/site.ts` / `media.ts`. `/news` is the one
  *    exception, and only because an empty news list is a designed empty state, not a degraded one.
  * 2. **Failures are loud on the server, silent on the page.** Every fallback logs why. Without that, a
- *    typo in a GROQ projection would show up as a mysteriously empty News page and nothing else — which
+ *    typo in a GROQ projection would show up as a mysteriously empty News page and nothing else, which
  *    is the main risk of not running Sanity's typegen.
  * 3. **`cache()` wraps each reader**, so the eight components that read the site settings cost one
  *    request per render, not eight. Plain fetch memoization would not cover this: `@sanity/client`
@@ -47,7 +47,7 @@ import {
 /**
  * Freshness has two independent mechanisms, and it needs both.
  *
- * 1. **Tags — the fast path.** Publishing in the Studio fires a webhook at
+ * 1. **Tags, the fast path.** Publishing in the Studio fires a webhook at
  *    `app/api/revalidate-sanity/route.ts`, which expires the matching tag with `{ expire: 0 }`. The
  *    very next request then re-reads Sanity, so an edit is live essentially as fast as the editor can
  *    refresh. This is the documented pattern for external systems that need immediate expiry.
@@ -56,7 +56,7 @@ import {
  *    minutes is short enough that a broken webhook is an annoyance rather than an outage, and long
  *    enough that we are not re-reading Sanity on a timer for no reason.
  *
- * These are NOT mutually exclusive: `next.tags` and `next.revalidate` are independent fetch options in
+ * These are not mutually exclusive: `next.tags` and `next.revalidate` are independent fetch options in
  * Next (the only documented conflict is `revalidate` with `cache: "no-store"`). The belief that tags
  * disable time-based revalidation comes from next-sanity's own `sanityFetch` helper, which sets
  * `revalidate: tags.length ? false : revalidate` internally. We call `fetch` directly, so we get both.
@@ -96,9 +96,9 @@ function parse<T>(schema: ZodType<T>, raw: unknown, label: string): T | null {
  * Drops the rows that failed validation, and SAYS SO.
  *
  * The list schemas wrap each row in `.catch(null)` so one bad item cannot empty a page. The cost is that
- * the array parse then *succeeds* with nulls in it, so `parse()` above never logs — which is how a
+ * the array parse then *succeeds* with nulls in it, so `parse()` above never logs, which is how a
  * projection bug once emptied the whole gallery in total silence and looked like "Sanity isn't working".
- * Anything discarded here is therefore reported, and losing EVERY row is reported as an error in its own
+ * Anything discarded here is therefore reported, and losing every row is reported as an error in its own
  * right, because that is the case a fallback is about to hide.
  */
 function keepValid<T>(rows: readonly (T | null)[], label: string): T[] {
@@ -124,7 +124,7 @@ function keepValid<T>(rows: readonly (T | null)[], label: string): T[] {
  * The editable slice of the site config, folded over the committed values.
  *
  * Any component rendering the contact email, phone numbers, opening hours, the admissions year or the
- * early-bird sentence must call this instead of importing `SITE` — see the SANITY-EDITABLE markers in
+ * early-bird sentence must call this instead of importing `SITE`, see the SANITY-editable markers in
  * `lib/marketing/site.ts`.
  */
 export const getMarketingSettings = cache(async (): Promise<MarketingSettings> => {
@@ -135,7 +135,7 @@ export const getMarketingSettings = cache(async (): Promise<MarketingSettings> =
 /**
  * Gallery photos, newest first unless the editor pinned a position.
  *
- * Falls back to the 13 committed photos as a WHOLE LIST, never per-photo: a half-Sanity, half-local
+ * Falls back to the 13 committed photos as a whole LIST, never per-photo: a half-Sanity, half-local
  * gallery would show the same campus twice in one grid.
  */
 export const getGalleryPhotos = cache(async (): Promise<readonly MediaAsset[]> => {
@@ -144,7 +144,7 @@ export const getGalleryPhotos = cache(async (): Promise<readonly MediaAsset[]> =
   if (!rows) return MEDIA.gallery;
 
   const photos = keepValid(rows, "gallery")
-    // `row.alt` is the DOCUMENT's description — a gallery photo's `image` field carries none.
+    // `row.alt` is the document's description, a gallery photo's `image` field carries none.
     .map((row) => toMediaAsset(row.image, row.alt))
     .filter((photo): photo is MediaAsset => photo !== null);
 
@@ -166,7 +166,7 @@ function toNewsSummary(row: CmsNewsSummary, coverWidth: number): NewsSummary {
 }
 
 /**
- * All published posts, newest first. Deliberately has NO fallback — an empty array is the honest
+ * All published posts, newest first. Deliberately has no fallback, an empty array is the honest
  * answer before the school has written anything, and `/news` renders its designed empty state for it.
  */
 export const getNewsPosts = cache(async (): Promise<readonly NewsSummary[]> => {
@@ -176,7 +176,7 @@ export const getNewsPosts = cache(async (): Promise<readonly NewsSummary[]> => {
   return keepValid(rows, "news list").map((row) => toNewsSummary(row, 1200));
 });
 
-/** One post, or `null` for an unknown slug — which the page turns into a 404. */
+/** One post, or `null` for an unknown slug, which the page turns into a 404. */
 export const getNewsPost = cache(async (slug: string): Promise<NewsPost | null> => {
   // Both tags: the per-post one so editing this post refreshes it, and the collection one so a
   // bulk change (or a slug we have not seen) still reaches it.

@@ -1,8 +1,8 @@
 -- 0015_grants.sql
--- PostgREST authorizes a request in TWO layers: SQL table/column privileges for the request
+-- PostgREST authorizes a request in two layers: SQL table/column privileges for the request
 -- role (anon/authenticated/service_role) AND Row Level Security. Migrations run as the
 -- `postgres` role, whose default privileges grant these roles only TRUNCATE/REFERENCES/TRIGGER
--- on new public tables — NOT select/insert/update/delete. Without the grants below, requests
+-- on new public tables, not select/insert/update/delete. Without the grants below, requests
 -- are denied at the privilege layer before RLS is ever evaluated: the app can read/write
 -- nothing and the service-role test/seed paths fail too. RLS (enabled on every table) remains
 -- the real row/tenant gate; these grants are the coarse layer beneath it.
@@ -20,7 +20,7 @@ grant select, insert, update, delete on all tables in schema public to authentic
 grant insert on public.admissions_inquiries to anon;
 
 -- profiles.role / profiles.school_id must be immutable via the API. In Postgres a table-level
--- UPDATE grant CANNOT be narrowed by a column-level REVOKE (they are independent — the table
+-- UPDATE grant CANNOT be narrowed by a column-level REVOKE (they are independent, the table
 -- grant wins), so instead of granting table-level UPDATE we drop it for authenticated and
 -- grant UPDATE only on the user-editable columns. Role/school changes go exclusively through
 -- the service role (provisioning / controlled server actions).

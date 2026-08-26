@@ -1,13 +1,13 @@
 import { z } from "zod";
 
 /**
- * Contracts for everything read out of Sanity (CLAUDE.md §10 — validators are the source of truth for
- * shapes). Sanity's schema is what an editor sees; these are what the site is willing to render.
+ * Contracts for everything read out of Sanity. These validators are the source of truth for the
+ * shapes: Sanity's schema is what an editor sees, and these are what the site will render.
  *
  * Two rules run through the whole file:
  *
  * 1. **Everything is optional.** Sanity returns `null` for an unfilled field and `null` for a document
- *    that does not exist yet. A half-filled `siteSettings` is a normal state on day one, not an error —
+ *    that does not exist yet. A half-filled `siteSettings` is a normal state on day one, not an error,
  *    `lib/marketing/cms/merge.ts` fills the gaps from the committed config.
  * 2. **A bad item degrades to the smallest possible loss.** A broken cover image costs a post its
  *    photo, not its existence; a broken gallery row drops that photo, not the gallery. That is what the
@@ -15,11 +15,11 @@ import { z } from "zod";
  */
 
 /**
- * An image asset's technical facts, with NO description.
+ * An image asset's technical facts, with no description.
  *
  * Split from the description deliberately. `alt` lives on the image object for a news cover but on the
- * DOCUMENT for a gallery photo, and a single schema that required `alt` inside the image made every
- * gallery row fail validation — which, because rows are individually tolerated below, emptied the
+ * document for a gallery photo, and a single schema that required `alt` inside the image made every
+ * gallery row fail validation, which, because rows are individually tolerated below, emptied the
  * gallery silently and sent it back to the committed files. Whoever adds the next image-bearing type
  * has to state where its alt text comes from, because this schema cannot supply one.
  */
@@ -33,7 +33,7 @@ export const cmsImageAssetSchema = z.object({
 });
 export type CmsImageAsset = z.infer<typeof cmsImageAssetSchema>;
 
-/** An asset whose description sits alongside it — a news cover, or an image block inside a post. */
+/** An asset whose description sits alongside it: a news cover, or an image block inside a post. */
 export const cmsDescribedImageSchema = cmsImageAssetSchema.extend({
   alt: z.string().min(1),
 });
@@ -58,8 +58,8 @@ export const officeHoursEntrySchema = z.object({
  * The editable slice of the site config. Every field is nullish; `mergeSiteSettings` decides what an
  * empty one means.
  *
- * Note what is NOT here: the school's name, motto, crest, address, tagline, programs and section prose.
- * Those stay compiled in `lib/marketing/site.ts` and `lib/brand.ts` — see the header of
+ * Note what is not here: the school's name, motto, crest, address, tagline, programs and section prose.
+ * Those stay compiled in `lib/marketing/site.ts` and `lib/brand.ts`, see the header of
  * `sanity/schema/site-settings.ts` for why each one is excluded.
  */
 export const cmsSiteSettingsSchema = z.object({
@@ -80,14 +80,14 @@ export type CmsSiteSettings = z.infer<typeof cmsSiteSettingsSchema>;
 
 export const cmsGalleryPhotoSchema = z.object({
   id: z.string().min(1),
-  /** Asset facts only — a gallery photo's `image` field has no subfields in the Studio schema. */
+  /** Asset facts only, a gallery photo's `image` field has no subfields in the Studio schema. */
   image: cmsImageAssetSchema,
-  /** The description, which for this type lives on the DOCUMENT. Required in the Studio. */
+  /** The description, which for this type lives on the document. Required in the Studio. */
   alt: z.string().min(1),
 });
 export type CmsGalleryPhoto = z.infer<typeof cmsGalleryPhotoSchema>;
 
-/** One row per photo, each independently droppable — see rule 2 in the header. */
+/** One row per photo, each independently droppable, see rule 2 in the header. */
 export const cmsGalleryListSchema = z.array(cmsGalleryPhotoSchema.nullable().catch(null));
 
 const newsBaseSchema = z.object({

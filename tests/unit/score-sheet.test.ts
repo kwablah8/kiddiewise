@@ -14,7 +14,7 @@ const existing: ExistingResult[] = [
 describe("buildScoreSheet", () => {
   it("merges existing marks and leaves the rest unmarked, ordered by name", () => {
     const sheet = buildScoreSheet(students, existing);
-    // Sorted by FULL name, matching buildRoster for attendance — so a teacher reads the same order on
+    // Sorted by FULL name, matching buildRoster for attendance, so a teacher reads the same order on
     // the register and the mark sheet: Ama Owusu, Bella Owusu, Kofi Antwi.
     expect(sheet.map((r) => r.student_id)).toEqual(["s1", "s2", "s3"]);
 

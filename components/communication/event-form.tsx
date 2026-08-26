@@ -29,7 +29,7 @@ type FormInput = z.input<typeof eventCreateSchema>;
 /**
  * `datetime-local` needs "YYYY-MM-DDTHH:mm" with no zone, but the column is timestamptz and comes
  * back as an ISO string. Slicing rather than reformatting keeps the wall-clock time the admin typed
- * — a 9am assembly must not drift an hour because of how the value round-tripped.
+ *, a 9am assembly must not drift an hour because of how the value round-tripped.
  */
 function toLocalInput(iso: string | null): string {
   return iso ? iso.slice(0, 16) : "";

@@ -27,7 +27,7 @@ function formatChildren(names: string[]): string {
 }
 
 // Tone tracks how much attention the row needs: a parent still holding a password the admin also
-// knows is not a failure, but it isn't finished either — hence "warning" rather than "success".
+// knows is not a failure, but it isn't finished either, hence "warning" rather than "success".
 const STATUS_TONE: Record<PortalAccessStatus, "success" | "warning" | "danger" | "neutral"> = {
   active: "success",
   pending: "warning",
@@ -72,7 +72,7 @@ function buildColumns(): DataTableColumn<ParentListItemVM>[] {
     {
       key: "portal_status",
       header: "Portal access",
-      // "Active" means they signed in and replaced the temporary password — i.e. the account is
+      // "Active" means they signed in and replaced the temporary password, i.e. the account is
       // genuinely theirs and the admin no longer knows the credential.
       render: (row) => (
         <StatusPill label={PORTAL_ACCESS_LABEL[row.portal_status]} tone={STATUS_TONE[row.portal_status]} />
@@ -99,7 +99,7 @@ function buildColumns(): DataTableColumn<ParentListItemVM>[] {
   ];
 }
 
-/** Parents list — name w/ initials avatar, email, phone, linked children (06-UI §6). */
+/** Parents list: name w/ initials avatar, email, phone, linked children (06-UI §6). */
 export function ParentsTable() {
   const { data, isLoading, isError, refetch } = useParents();
   const [query, setQuery] = useState("");

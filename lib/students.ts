@@ -1,6 +1,6 @@
 import type { StudentListItemVM, StudentStatsVM } from "@/lib/validators/people";
 
-// Derives the Students page stat cards from the full roster. Pure — unit-tested.
+// Derives the Students page stat cards from the full roster. Pure, unit-tested.
 export function computeStudentStats(students: StudentListItemVM[]): StudentStatsVM {
   return {
     total: students.length,

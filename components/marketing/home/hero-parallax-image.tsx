@@ -11,11 +11,11 @@ import { MEDIA } from "@/lib/marketing/media";
  * We drive the drift with a rAF-throttled scroll handler rather than a CSS scroll-driven
  * timeline: the hero <img> lives inside an `overflow-hidden` section, which leaves a CSS
  * `view()`/`scroll()` timeline inactive (its `currentTime` never resolves → no transform ever
- * applies). This approach works in every browser, writes ONLY `transform` (compositor-only,
+ * applies). This approach works in every browser, writes only `transform` (compositor-only,
  * no layout thrash), and is fully disabled under `prefers-reduced-motion`.
  *
  * The image is pre-scaled (`scale(1.25)`) so the vertical drift never reveals its edges, and it
- * translates down as the page scrolls — moving up ~12% slower than the content for a gentle lag.
+ * translates down as the page scrolls, moving up ~12% slower than the content for a gentle lag.
  */
 export function HeroParallaxImage() {
   const ref = useRef<HTMLDivElement>(null);

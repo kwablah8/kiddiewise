@@ -1,16 +1,13 @@
 /**
- * Whether Sanity is configured at all — the single switch the rest of the CMS layer hangs off.
+ * Whether Sanity is configured. The rest of the CMS layer hangs off this switch.
  *
- * The whole integration is ADDITIVE and OPTIONAL. `cmsProject()` returning `null` is a supported,
- * expected state, not an error: CI builds with no Sanity credentials, a developer who has not been
- * added to the Sanity project can still run the site, and every reader in `read.ts` falls back to the
- * committed content in `lib/marketing/site.ts` / `lib/marketing/media.ts`. That is also the rollback
- * story — unset `NEXT_PUBLIC_SANITY_PROJECT_ID` and the site is exactly what it was before Sanity.
+ * A `null` result is expected, not an error: readers in `read.ts` fall back to the committed content
+ * in `lib/marketing/site.ts` and `lib/marketing/media.ts`, so CI and a developer without Sanity
+ * access can both build the site. Unsetting `NEXT_PUBLIC_SANITY_PROJECT_ID` is the rollback.
  *
- * The dataset defaults to `production` so that setting the project id alone is enough, matching
- * `sanity.config.ts`. Both vars are `NEXT_PUBLIC_` because free-plan datasets are public: published
- * content is readable without a token, so there is no secret here to leak. (A token would only be
- * needed for reading DRAFTS, which this phase deliberately does not do.)
+ * The dataset defaults to `production`, matching `sanity.config.ts`, so the project id alone is
+ * enough. Both vars are `NEXT_PUBLIC_` because free-plan datasets are public and published content
+ * needs no token. Reading drafts would need one; we do not.
  */
 
 /** Pinned so a future change to Sanity's API defaults cannot silently alter query results. */

@@ -19,7 +19,7 @@ import { cardShellClass } from "@/lib/ui";
 /**
  * The school calendar.
  *
- * No draft state and no audience picker, because the `events` table has neither — `ev_select`
+ * No draft state and no audience picker, because the `events` table has neither, `ev_select`
  * (migration 0010) returns every event to everyone in the school. The note below says that out
  * loud rather than offering a "publish" control the schema could not honour.
  */

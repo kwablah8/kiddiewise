@@ -4,12 +4,12 @@ import type { Database } from "@/lib/supabase/types";
 import { homePathForRole, isPathAllowedForRole, isPublicPath } from "@/lib/auth/access";
 
 /**
- * Refreshes the auth cookie AND gates every request.
+ * Refreshes the auth cookie and gates every request.
  *
  * Doing the role check here rather than only in the client layout matters for two reasons: the user
  * never sees a flash of the wrong portal before being bounced, and an attacker can't skip it by
- * disabling JavaScript. It is still not the security boundary — RLS is (golden rule 2). This layer
- * decides which page renders; RLS decides which rows exist.
+ * disabling JavaScript. It is still not the security boundary; RLS is. This layer decides which
+ * page renders, RLS decides which rows exist.
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -58,7 +58,7 @@ export async function updateSession(request: NextRequest) {
     .single();
 
   if (!profile) {
-    // Authenticated but not provisioned into a school — nothing can be scoped, so don't let them
+    // Authenticated but not provisioned into a school, nothing can be scoped, so don't let them
     // into the app shell. Sign-out happens client-side; here we just refuse the protected route.
     if (isPublicPath(pathname)) return response;
     const url = request.nextUrl.clone();
@@ -76,8 +76,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Already signed in: /login and /reset-password are pointless — send them to their portal.
-  // /update-password is deliberately NOT in this list: arriving there with a session is the normal
+  // Already signed in: /login and /reset-password are pointless, send them to their portal.
+  // /update-password is deliberately not in this list: arriving there with a session is the normal
   // recovery flow, since the emailed link signs the user in before they set a new password.
   if (isAuthPage) {
     const url = request.nextUrl.clone();
@@ -86,7 +86,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Marketing pages stay open to signed-in users — an admin may legitimately view the public site.
+  // Marketing pages stay open to signed-in users, an admin may legitimately view the public site.
   if (isPublicPath(pathname)) return response;
 
   if (!isPathAllowedForRole(profile.role, pathname)) {

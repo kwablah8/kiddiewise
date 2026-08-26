@@ -7,7 +7,7 @@ import type { ScoreSheetEntryVM } from "@/lib/validators/assessments";
 export interface ResultRowForAggregation {
   subject: string | null;
   score: number;
-  /** The assessment's own maximum — assessments are not all marked out of 100. */
+  /** The assessment's own maximum, assessments are not all marked out of 100. */
   max_score: number;
   teacher_comment: string | null;
   /** Used only to pick the most recent teacher comment. */
@@ -15,15 +15,15 @@ export interface ResultRowForAggregation {
 }
 
 /**
- * Collapse many assessment results into ONE row per subject.
+ * Collapse many assessment results into one row per subject.
  *
  * A student sits several assessments per subject per term, but every screen that shows "results"
  * shows a single standing per subject. The score is the mean of that subject's submitted results,
- * each first converted to a percentage of its OWN max_score — averaging raw marks would let a
+ * each first converted to a percentage of its own max_score, averaging raw marks would let a
  * 20-mark class test count the same as a 100-mark exam.
  *
  * Grade and remark are derived from the school's current bands rather than read from the stored
- * `results.grade`, so editing the grading scale re-grades every view at once (golden rule 9). The
+ * `results.grade`, so editing the grading scale re-grades every view at once. The
  * teacher's comment is taken from the most recent result, so this week's note outranks last month's.
  *
  * Pure, so both the admin's student view and the parent portal share it and can be unit-tested
@@ -59,7 +59,7 @@ export function aggregateSubjectResults(
       return {
         subject,
         score: mean,
-        // An unbanded score means the grading scale has a gap — show a dash rather than invent a grade.
+        // An unbanded score means the grading scale has a gap, show a dash rather than invent a grade.
         grade: g?.grade ?? "—",
         remark: g?.remark ?? "—",
         teacher_comment: agg.comment,
@@ -68,7 +68,7 @@ export function aggregateSubjectResults(
     .sort((a, b) => a.subject.localeCompare(b.subject));
 }
 
-/** The mean of the per-subject standings — the figure a terminal report calls the overall average. */
+/** The mean of the per-subject standings, the figure a terminal report calls the overall average. */
 export function overallAverage(subjects: readonly SubjectResultVM[]): number | null {
   if (subjects.length === 0) return null;
   return Math.round(subjects.reduce((sum, s) => sum + s.score, 0) / subjects.length);

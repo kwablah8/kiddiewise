@@ -1,10 +1,10 @@
 -- 0035_inquiry_hardening.sql
 --
--- Harden the ONE write an anonymous visitor can make, at the database layer.
+-- Harden the one write an anonymous visitor can make, at the database layer.
 --
 -- The admissions inquiry is submitted through a Server Action that validates and length-caps input,
 -- but anon also holds a raw `insert` grant on this table and the policy is `inq_anon_insert ... with
--- check (true)` — so a script can POST straight to PostgREST, bypassing the action entirely, with
+-- check (true)`, so a script can POST straight to PostgREST, bypassing the action entirely, with
 -- multi-megabyte fields (storage abuse / a flooded admissions inbox) and a forged status. The Server
 -- Action's caps are not a security boundary; these constraints are.
 --
@@ -13,7 +13,7 @@
 --      'accepted'/'converted') and requires the contact fields the school needs to act on it.
 --
 -- Rate-limiting the endpoint (per-IP throttle / captcha) is the remaining defense and is
--- infrastructure, not schema — noted for ops.
+-- infrastructure, not schema, noted for ops.
 
 alter table public.admissions_inquiries
   add constraint admissions_inquiries_applicant_name_len check (char_length(applicant_name) between 1 and 120),

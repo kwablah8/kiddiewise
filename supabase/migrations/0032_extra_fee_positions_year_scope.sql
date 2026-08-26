@@ -8,10 +8,10 @@
 --
 -- Promotion (lib/actions/promotion.ts) APPENDS a new 'active' enrollment for the next year and leaves
 -- the previous one 'active' too ("a student's class is an enrollment, not a column"). So from the
--- first rollover, a continuing student has two active enrollments, and this join emits TWO rows per
--- extra-fee assignment — the Fees overview's extra_total / extra_paid double, and each assignment
+-- first rollover, a continuing student has two active enrollments, and this join emits two rows per
+-- extra-fee assignment, the Fees overview's extra_total / extra_paid double, and each assignment
 -- shows twice in the list. student_fee_positions already avoids this by joining on the invoice's own
--- academic_year_id; extra fees carry no year, so scope the join to the school's ACTIVE year instead —
+-- academic_year_id; extra fees carry no year, so scope the join to the school's active year instead,
 -- the enrollment whose class the row should display anyway.
 --
 -- Columns, order and security_invoker are unchanged, so create-or-replace is safe.
@@ -36,7 +36,7 @@ select
 from public.extra_fee_assignments a
 join public.extra_fee_items fi on fi.id = a.extra_fee_item_id
 join public.students s on s.id = a.student_id
--- The student's enrollment for the school's ACTIVE year only, so a promoted student contributes one
+-- The student's enrollment for the school's active year only, so a promoted student contributes one
 -- row (their current class), not one per year they have ever been enrolled.
 left join public.academic_years ay on ay.school_id = a.school_id and ay.is_active
 left join public.enrollments e

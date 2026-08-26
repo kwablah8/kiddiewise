@@ -7,8 +7,8 @@ import * as actions from "@/lib/actions/academics";
 
 
 // Each action is bound to a const here rather than wrapped inline at `mutationFn`. That is not
-// style: `mutationFn: mutate(actions.x)` is a generic CALL in a contextually-typed position, and
-// TypeScript stops inferring useMutation's variables type through it — it silently falls back to
+// style: `mutationFn: mutate(actions.x)` is a generic call in a contextually-typed position, and
+// TypeScript stops inferring useMutation's variables type through it; it silently falls back to
 // `void`, so every `onSuccess(_result, variables)` below becomes an error. Binding first gives the
 // property a concrete function type and inference works as it did before. Do not inline these.
 const createYear = mutate(actions.createYear);
@@ -65,7 +65,7 @@ export const useAssignments = (classId: string) =>
     queryFn: () => data.listAssignments(classId),
   });
 
-// Staff detail's derived "subjects taught" panel — same class_subjects rows as
+// Staff detail's derived "subjects taught" panel, same class_subjects rows as
 // `useAssignments`, filtered by teacher instead of class.
 export const useAssignmentsForStaff = (staffId: string) =>
   useQuery({
@@ -88,7 +88,7 @@ export const useCreateTerm = () => {
   return useMutation({
     mutationFn: createTerm,
     onSuccess: () => {
-      // Invalidate the whole "academics","terms",* prefix (covers both the unfiltered list and
+      // Invalidate the whole "academics", "terms", * prefix (covers both the unfiltered list and
       // every per-year-filtered variant already cached) plus years, since term_count changed.
       qc.invalidateQueries({ queryKey: ["academics", "terms"] });
       qc.invalidateQueries({ queryKey: queryKeys.academics.years });
@@ -107,7 +107,7 @@ export const useUpdateYear = () => {
   });
 };
 
-// Year/term deletions also touch the dashboard (class counts read through the active year) —
+// Year/term deletions also touch the dashboard (class counts read through the active year),
 // cheap to refetch, wrong to leave stale.
 export const useDeleteYear = () => {
   const qc = useQueryClient();
@@ -165,8 +165,8 @@ export const useSetActiveYear = () => {
   return useMutation({
     mutationFn: setActiveYear,
     onSuccess: () => {
-      // No key list: the active year scopes "current class" everywhere — student lists, rosters,
-      // class counts, the dashboard, the parent portal — so switching it re-scopes nearly every
+      // No key list: the active year scopes "current class" everywhere, student lists, rosters,
+      // class counts, the dashboard, the parent portal, so switching it re-scopes nearly every
       // read in the app. Refetch everything rather than maintain a list that WILL go stale.
       qc.invalidateQueries();
     },
@@ -266,9 +266,9 @@ export const useAssignSubject = () => {
       qc.invalidateQueries({ queryKey: queryKeys.academics.class(variables.class_id) });
       qc.invalidateQueries({ queryKey: queryKeys.academics.classes });
       qc.invalidateQueries({ queryKey: queryKeys.academics.staff });
-      // Every open staff-detail assignments panel (assignmentsByStaff(*)) can be affected —
+      // Every open staff-detail assignments panel (assignmentsByStaff(*)) can be affected,
       // either the newly-assigned teacher's list gains a row, or (on a re-assign) the previous
-      // teacher's list loses one — so invalidate the whole by-staff prefix rather than one id.
+      // teacher's list loses one, so invalidate the whole by-staff prefix rather than one id.
       qc.invalidateQueries({ queryKey: ["academics", "assignments", "by-staff"] });
       if (variables.teacher_id) {
         qc.invalidateQueries({ queryKey: queryKeys.academics.staffMember(variables.teacher_id) });
@@ -277,8 +277,8 @@ export const useAssignSubject = () => {
   });
 };
 
-// unassign only receives the class_subjects row id, not the class id it belonged to — so on
-// success it invalidates the whole "academics","assignments",* prefix (every open assignments
+// unassign only receives the class_subjects row id, not the class id it belonged to, so on
+// success it invalidates the whole "academics", "assignments", * prefix (every open assignments
 // panel refetches) plus classes/staff, whose subject/class counts may have changed.
 export const useUnassign = () => {
   const qc = useQueryClient();

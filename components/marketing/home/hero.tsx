@@ -4,7 +4,7 @@ import { SITE } from "@/lib/marketing/site";
 import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
 /**
- * Home hero — a real SLIS community photo (staff & families in the school's blue-and-gold polos)
+ * Home hero, a real SLIS community photo (staff & families in the school's blue-and-gold polos)
  * under a deep-blue brand gradient for legibility. The dark top satisfies the shell header's
  * "translucent over a dark hero" contract. Eyebrow carries the motto; a gold pill announces the
  * open admission; dual CTAs drive the two real actions (apply / visit).

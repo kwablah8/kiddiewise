@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 const MAX_ROWS = 5;
 
 /**
- * Dashboard "Recent Enquiries" — the newest website admissions enquiries, surfaced on the admin
+ * Dashboard "Recent Enquiries": the newest website admissions enquiries, surfaced on the admin
  * home for quick triage. Rows open the same side sheet used by the Admissions table (no route
  * change); "View all" links through to the full /enquiries list.
  */

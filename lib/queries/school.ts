@@ -4,7 +4,7 @@ import { queryKeys } from "./keys";
 import { getSchool } from "@/lib/data/school";
 
 /**
- * The caller's school. Cached generously — a school's name and contact details change roughly never,
+ * The caller's school. Cached generously, a school's name and contact details change roughly never,
  * and this is read by anything that has to identify the school to a parent.
  */
 export const useSchool = () =>
