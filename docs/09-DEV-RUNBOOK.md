@@ -407,7 +407,7 @@ invitation** also exists and needs SMTP; locally those emails land in Mailpit (Â
 | Promotion (decisions, next-year enrollments, year switch re-scopes every read) | Done, see `tests/rls/promotion-rollover.test.ts` |
 | Announcements and events authoring | Done |
 | Unit tests (198) | Green |
-| RLS tests (11 files) | Green except the two that assert migration 0032, which is unapplied on staging |
+| RLS tests (11 files, 50 tests) | Green. Run them against the local stack: the hosted projects rate-limit auth, and this suite signs in dozens of times |
 | Integration tests | Fail wherever the demo tenant has drifted from `seed:demo`; they assert exact counts |
 | School settings, Storage | Not built, see `docs/08-ROADMAP.md` |
 
