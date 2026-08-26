@@ -170,14 +170,15 @@ and copy-link routes cover portal access with no provider at all (`docs/04-AUTH-
 Findings from the security review done while the database layer was being built. None is a
 cross-tenant or privilege-escalation hole, which is why they were deferred rather than fixed at
 the time. They have not all been re-checked since, so treat the list as leads rather than as a
-current audit. The first item was confirmed still open when this list was written.
+current audit.
 
-- **`is_active` is self-editable.** `0015_grants.sql` grants `UPDATE (... is_active)` on
-  `profiles` to `authenticated`, and no later migration narrows it. Staff deactivation has since
-  shipped as a feature, so a deactivated user holding a live session could set the flag back
-  through PostgREST. Either drop `is_active` from that grant list and move the change into a
-  Server Action, or enforce deactivation in auth and middleware so the flag stops being the
-  thing that matters.
+**Fixed since:** `is_active` was self-editable. `0015_grants.sql` grants `UPDATE (... is_active)` on
+`profiles` to `authenticated`, and `profiles_self_update` let any user write their own row, so a
+deactivated user holding a live token could set the flag back. Migration `0036` adds a trigger
+allowing the change only from a school admin, and never on their own row. Covered by
+`tests/rls/profiles-escalation.test.ts`, including a positive control that admin deactivation still
+works.
+
 - **Test that a school admin cannot mint a super admin.** `0014` has a
   `role <> 'super_admin'` check. The column lock is covered by tests; the INSERT path is not.
 - **`res_teacher_rw` is wider than the permission matrix.** Migration `0008` grants teachers

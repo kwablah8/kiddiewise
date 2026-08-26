@@ -396,7 +396,7 @@ invitation** also exists and needs SMTP; locally those emails land in Mailpit (Â
 
 | Area | Status |
 |---|---|
-| Schema and RLS (35 migrations, 26 tables, 2 views, 8 app-facing functions plus 7 RLS helpers) | Migrated and tested |
+| Schema and RLS (36 migrations, 26 tables, 2 views, 8 app-facing functions plus 7 RLS helpers) | Migrated and tested |
 | Auth (login, reset, role routing, server-side guards) | Done, real Supabase Auth |
 | Portal access: temporary passwords, invite links, forced first change | Done, no email provider needed |
 | Demo seed | Done, `pnpm db:seed` |

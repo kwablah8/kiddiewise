@@ -183,5 +183,10 @@ disagree, the table (and RLS) are correct.
 3. The service-role key exists only in server/Edge contexts.
 4. The only anonymous write is `admissions_inquiries` (INSERT-only, rate-limited).
 5. Roles are assigned server-side; users cannot escalate their own role.
+6. `profiles.is_active` can only be changed by a school admin, and never on their own row.
+   Enforced by a trigger (migration `0036`) rather than by a grant, because an admin holds the same
+   `authenticated` privileges as everyone else and RLS cannot restrict a single column. It matters
+   because deactivation is a security state: an inactive staff member is banned from signing in, and
+   banning an auth user does not invalidate a token already issued to them.
 6. Sensitive files (terminal reports) are served via short-lived signed URLs scoped to
    authorized viewers.
