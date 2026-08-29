@@ -9,7 +9,7 @@ import type { NextConfig } from "next";
  * optimizer cannot be used as a proxy for another Sanity project's public assets. When the project id
  * is absent (CI, or a developer who has not been added to the Sanity project) the list is empty:
  * nothing Sanity-hosted is expected to render in that case either, because every reader falls back to
- * the committed files under `public/slis/`. See `lib/marketing/cms/env.ts`.
+ * the committed files under `public/kiddiewise/`. See `lib/marketing/cms/env.ts`.
  */
 const sanityProjectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 

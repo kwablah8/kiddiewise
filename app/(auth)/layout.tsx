@@ -15,14 +15,15 @@ import { SITE } from "@/lib/marketing/site";
  * text lock, so there is one place to change the artwork and no chance of the two drifting apart.
  *
  * Phones used to get a flat navy band and no photograph, to spare Ghanaian mobile data. That has
- * been reversed deliberately: the pupil in SLIS blue is what makes this screen the school's rather
+ * been reversed deliberately: a photo (today, `BRAND.authPanelPhoto` — a generated brand-colour
+ * placeholder until the school sends a real one) is what makes this screen the school's rather
  * than a generic portal, and a parent signing in on a phone is exactly who that should land on. The
  * cost is kept small rather than ignored, `sizes` below hands phones a ~400–800px wide candidate
  * instead of the 1440px original, which is tens of kilobytes, not hundreds.
  *
  * The scrim is deliberately heavy. This panel is a backdrop for a text lock, not a gallery, the
- * photo is there to make the screen feel like SLIS and nothing more, so legibility wins over the
- * image every time.
+ * photo is there to make the screen feel like the school and nothing more, so legibility wins over
+ * the image every time.
  */
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -74,15 +75,15 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,var(--brand-bottom),transparent)]"
         />
 
-        {/* two blocks, not three, and the middle is deliberately empty: the pupil's face sits at
-            roughly half the panel's height, which is exactly where a vertically-centred motto used
-            to land. Anchoring the words to the foot keeps the subject clear and lets the bottom
-            gradient do double duty as the text's backing. */}
+        {/* two blocks, not three, and the middle is deliberately empty: the placeholder's crest
+            watermark sits at roughly half the panel's height, which is exactly where a
+            vertically-centred motto used to land. Anchoring the words to the foot keeps the
+            subject clear and lets the bottom gradient do double duty as the text's backing. */}
         <div className="relative">
           {/* The FULL name, not the initialism: this is the front door, and a parent arriving from
-              a WhatsApp link may never have seen "SLIS" written down. The parent shell spells it
-              out for the same reason; staff chrome (sidebar, admin mobile bar) keeps the short
-              lock — see BrandLock's own note. */}
+              a WhatsApp link may never have seen the short name written down. The parent shell
+              spells it out for the same reason; staff chrome (sidebar, admin mobile bar) keeps the
+              short lock — see BrandLock's own note. */}
           <BrandLock tone="light" name="full" crestClassName="size-11 rounded-xl" />
         </div>
 

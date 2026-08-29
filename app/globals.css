@@ -55,12 +55,12 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  /* Primary accent (headings, primary actions, links, focus). derived from the SLIS brand block
-     below: a darker tint of the crest royal blue, dark enough that white text clears 7.15:1 and
-     still clears AA after shadcn's `hover:bg-primary/80` lightens it. The crest royal itself
-     (#4169E1) is only 4.85:1 with white and fails once that hover applies, which is why primary
+  /* Primary accent (headings, primary actions, links, focus). derived from the Kiddiewise brand
+     block below: a darker tint of the crest crimson, dark enough that white text clears 7.94:1 and
+     still clears AA after shadcn's `hover:bg-primary/80` lightens it. The crest crimson itself
+     (#CD014A) is only 5.68:1 with white and thins out once that hover applies, which is why primary
      is a tint and not the raw brand hex. */
-  --primary: var(--m-brand-strong, #2a4bc8);
+  --primary: var(--m-brand-strong, #a4013b);
   --primary-foreground: #FFFFFF;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -108,13 +108,13 @@
   --indigo-bg: #E0E7FF;  /* teacher indigo chip (06-UI §8) */
   --indigo-fg: #4338CA;
   --danger: #DC2626;
-  /* Signature brand surface: SLIS deep navy → near-black navy vertical gradient (sidebar, auth
-     panel, 404 illustration). derived from the SLIS brand block below, the hexes live there, once,
-     so there is never a second definition of "SLIS blue" to drift. The literal fallbacks are
-     defensive: if `data-brand` is ever dropped from <html>, these keep rendering a navy surface
-     instead of collapsing to an unset (transparent) gradient. */
-  --brand-top: var(--m-brand-deep, #1d2f65);
-  --brand-bottom: var(--m-brand-ink, #0b1229);
+  /* Signature brand surface: Kiddiewise deep crimson → near-black maroon vertical gradient
+     (sidebar, auth panel, 404 illustration). derived from the Kiddiewise brand block below, the
+     hexes live there, once, so there is never a second definition of "Kiddiewise crimson" to drift.
+     The literal fallbacks are defensive: if `data-brand` is ever dropped from <html>, these keep
+     rendering a brand-coloured surface instead of collapsing to an unset (transparent) gradient. */
+  --brand-top: var(--m-brand-deep, #710129);
+  --brand-bottom: var(--m-brand-ink, #1f000b);
   /* Marketing site only (docs/06-UI §8): a warm off-white that alternates with white to
      give the public pages a softer, editorial section rhythm. Not used in the app shell. */
   --bg-warm: #FAF7F3;
@@ -159,26 +159,26 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* --- SLIS brand tokens, THE single source of every SLIS hex ---
+/* --- Kiddiewise brand tokens, THE single source of every Kiddiewise hex ---
    Set on `<html>` (app/layout.tsx), so marketing AND the authenticated portal both inherit one
    palette.
 
    HISTORY, this reverses an earlier decision on purpose. These tokens were originally scoped to
    the `(marketing)` layout's root div specifically so they could never reach the portal, back when
-   the portal was meant to look tenant-neutral (maroon + green). The client asked for this build to
-   be tailored to them, so the wall came down: `:root` above now DERIVES --brand-top/--brand-bottom
-   /--primary from the tokens here rather than declaring maroon hexes of its own.
+   the portal was meant to look tenant-neutral (maroon + green). A later build for a different
+   school (SLIS) brought the wall down, deriving --brand-top/--brand-bottom/--primary from a block
+   here rather than declaring standalone hexes. This block carries that same structure forward for
+   Kiddiewise.
 
-   Hex values were sampled directly from the resized crest (`public/slis/logo.jpg`): the shield's
-   blue half clusters tightly on #4169E1, the gold half + motto band on #FFD700, both are, by
-   coincidence, the exact CSS-named "royalblue"/"gold" hues.
+   Hex values were sampled directly from the school's crest badge (`public/kiddiewise/logo.jpg`):
+   the shield's crimson half clusters tightly on #CD014A, the torch flame on #FFB605.
 
-   The blue ramp is one family, lightest to darkest:
-     --m-brand (#4169E1) → --m-brand-strong (#2A4BC8) → --m-brand-deep (#1D2F65) → --m-brand-ink (#0B1229)
+   The crimson ramp is one family, lightest to darkest:
+     --m-brand (#CD014A) → --m-brand-strong (#A4013B) → --m-brand-deep (#710129) → --m-brand-ink (#1F000B)
 
-   Contrast, measured (not eyeballed): white on --m-brand-strong 7.15:1 · on --m-brand-deep 12.75:1
-   · on --m-brand-ink 18.54:1. Gold on --m-brand-deep 9.09:1 and on --m-brand-ink 13.22:1, high
-   enough that gold is legible as TEXT on the navy sidebar, not merely as decoration.
+   Contrast, measured (not eyeballed): white on --m-brand-strong 7.94:1 · on --m-brand-deep 12.12:1
+   · on --m-brand-ink 19.76:1. Gold on --m-brand-deep 6.89:1 and on --m-brand-ink 11.4:1, high
+   enough that gold is legible as TEXT on the crimson sidebar, not merely as decoration.
 
    MIRRORED in `lib/brand.ts` as `BRAND.palette` (deep / strong / accent, plus a `tint` that exists
    only there). That mirror is for the PDF renderers: a jsPDF document takes literal RGB and cannot
@@ -189,15 +189,15 @@
    A second school would either override this block's values or swap the attribute value on
    <html>. True per-tenant branding, reading the school name and logo from the `schools` row and
    Storage, is not built yet; see docs/08-ROADMAP.md. */
-[data-brand="slis"] {
-  --m-brand: #4169e1; /* royal blue, sampled from the crest shield */
-  --m-brand-strong: #2a4bc8; /* darker royal, --primary; 7.15:1 with white, survives /80 hover */
-  --m-brand-deep: #1d2f65; /* darker blue for gradients/footer bands + sidebar top */
-  --m-brand-ink: #0b1229; /* near-black navy, sidebar/auth-panel gradient bottom */
-  --m-accent: #ffd700; /* gold, sampled from the crest shield + motto band */
-  --m-accent-ink: #142044; /* dark navy text on gold, 11.3:1 contrast, AA/AAA-safe */
+[data-brand="kiddiewise"] {
+  --m-brand: #cd014a; /* crimson, sampled from the crest shield */
+  --m-brand-strong: #a4013b; /* darker crimson, --primary; 7.94:1 with white, survives /80 hover */
+  --m-brand-deep: #710129; /* darker crimson for gradients/footer bands + sidebar top */
+  --m-brand-ink: #1f000b; /* near-black maroon, sidebar/auth-panel gradient bottom */
+  --m-accent: #ffb605; /* gold-orange, sampled from the crest's torch flame */
+  --m-accent-ink: #1a0009; /* dark maroon text on gold, 11.4:1 contrast, AA/AAA-safe */
   --m-canvas: #ffffff; /* white, from the crest's white background */
-  --m-warm: #fffbeb; /* soft warm white, gold-tinted section alternate */
+  --m-warm: #fff9eb; /* soft warm white, gold-tinted section alternate */
 }
 
 @layer base {

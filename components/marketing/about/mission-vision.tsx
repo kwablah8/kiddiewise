@@ -2,7 +2,7 @@ import { Section } from "@/components/marketing/section";
 import { SITE } from "@/lib/marketing/site";
 
 /**
- * Mission & vision statements grounded in the school's real motto and positioning (Creche → JHS,
+ * Mission & vision statements grounded in the school's real motto and positioning (Daycare → JHS,
  * one Oyarifa campus), not invented history or figures, per the M4 honesty guard.
  */
 const PILLARS: readonly { label: string; body: string }[] = [
@@ -10,7 +10,7 @@ const PILLARS: readonly { label: string; body: string }[] = [
     label: "Mission",
     body:
       "To nurture, grow and lead every learner who joins us — from a child's first morning in " +
-      "Creche to their final year of Junior High — with genuine care, steady structure, and a " +
+      "Daycare to their final year of Junior High — with genuine care, steady structure, and a " +
       "consistently high standard, at every one of our five stages.",
   },
   {

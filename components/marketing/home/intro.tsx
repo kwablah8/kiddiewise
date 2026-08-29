@@ -24,7 +24,7 @@ export function HomeIntro() {
           <div className="mt-6 space-y-5 text-lg leading-relaxed text-[var(--muted-foreground)]">
             <p>
               {SITE.name}{" "}was built around a simple belief — children learn best when they feel
-              safe, seen, and gently stretched. From a child&apos;s first morning in Creche to their
+              safe, seen, and gently stretched. From a child&apos;s first morning in Daycare to their
               final year of Junior High, the same care runs through every classroom.
             </p>
             <p>

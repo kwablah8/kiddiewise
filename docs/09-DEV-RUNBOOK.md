@@ -43,17 +43,17 @@ All demo accounts share one password.
 
 | Portal | Email | Password | Who they are |
 |---|---|---|---|
-| **Admin** | `admin@slis.test` | `Password123!` | Ama Mensah — School Admin |
-| **Staff / Teacher** | `teacher@slis.test` | `Password123!` | Efua Owusu — class teacher of Basic 1, teaches Maths across all classes |
-| **Parent** | `parent@slis.test` | `Password123!` | Yaw Mensah — guardian of exactly 2 children |
+| **Admin** | `admin@kiddiewise.test` | `Password123!` | Ama Mensah — School Admin |
+| **Staff / Teacher** | `teacher@kiddiewise.test` | `Password123!` | Efua Owusu — class teacher of Basic 1, teaches Maths across all classes |
+| **Parent** | `parent@kiddiewise.test` | `Password123!` | Yaw Mensah — guardian of exactly 2 children |
 
 Each role lands on its own portal after login (`/dashboard`, `/teacher/dashboard`,
 `/parent/dashboard`) and is bounced back if it tries to open another role's subtree.
 
 **Other seeded accounts** (same password) if you need a second user of a role:
 
-- Teachers: `kwabena.adjei@`, `abena.sarpong@`, `kojo.boateng@`, `akosua.danso@` `…@slis.test`
-- `yaw.nkrumah@slis.test` — deliberately **inactive**, teaches nothing (tests the empty case)
+- Teachers: `kwabena.adjei@`, `abena.sarpong@`, `kojo.boateng@`, `akosua.danso@` `…@kiddiewise.test`
+- `yaw.nkrumah@kiddiewise.test` — deliberately **inactive**, teaches nothing (tests the empty case)
 - Parents: `adwoa.asante@`, `kofi.boateng@`, `esi.owusu@`, `kwesi.darko@`, `afia.frimpong@`,
   `nana.antwi@`, `akua.kusi@` `…@example.com`
 
@@ -213,7 +213,7 @@ It carries each photo's existing descriptive alt text across verbatim, so nothin
 accessibility, and it is idempotent (deterministic document ids + `createOrReplace`). One caveat: re-running
 resets `position`, so it would undo manual reordering done in the Studio.
 
-The files stay in `public/slis/photos/` afterwards — they are the fallback for a build with no Sanity
+The files stay in `public/kiddiewise/photos/` afterwards — they are the fallback for a build with no Sanity
 env, so deleting them breaks `pnpm build` in CI.
 
 ### What the school can and cannot edit
@@ -236,7 +236,7 @@ because the page itself degrades silently to the built-in content rather than sh
 
 ## 7. What the demo tenant contains
 
-School: **SNAB Learners International School** (slug `slis`) — matches the marketing site's
+School: **Kiddiewise School Complex** (slug `kiddiewise`) — matches the marketing site's
 branding, so credential messages and public enquiries read correctly out of the box.
 
 | Data | Amount | Deliberate detail |

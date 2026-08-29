@@ -51,7 +51,7 @@ export async function HomeStatsBand() {
         </dl>
 
         <p className="reveal mt-12 font-mono text-[11px] uppercase tracking-[0.18em] text-white">
-          Creche → JHS · {admissionsNote}
+          Daycare → JHS · {admissionsNote}
         </p>
       </div>
     </Section>

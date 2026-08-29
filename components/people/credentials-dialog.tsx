@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { BRAND } from "@/lib/brand";
 import { useSchool } from "@/lib/queries/school";
 import {
   credentialsMessage,
@@ -39,10 +40,10 @@ export function CredentialsDialog({
 }) {
   const [copied, setCopied] = useState<"message" | "password" | null>(null);
   // Read from the tenant rather than taken as a prop: a hardcoded name would be wrong for every
-  // school but one, and would stay wrong after a rebrand. "SLIS" only covers the moment before the
-  // query resolves.
+  // school but one, and would stay wrong after a rebrand. `BRAND.shortName` only covers the moment
+  // before the query resolves.
   const { data: school } = useSchool();
-  const schoolName = school?.name ?? "SLIS";
+  const schoolName = school?.name ?? BRAND.shortName;
 
   if (!credentials) return null;
 

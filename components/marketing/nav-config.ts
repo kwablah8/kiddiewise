@@ -9,7 +9,7 @@
  * correct today, ahead of those components' full blue/gold recolor.
  */
 
-import { SITE as SLIS } from "@/lib/marketing/site";
+import { SITE as SOURCE } from "@/lib/marketing/site";
 
 export interface NavItem {
   label: string;
@@ -46,15 +46,15 @@ export const PORTAL_CTA = { label: "Portal Login", href: "/login" } as const;
  * program range) and is consumed today only by not-yet-rebranded components.
  */
 export const SITE = {
-  name: SLIS.name,
-  short: SLIS.shortName,
-  kind: "Creche to JHS",
-  tagline: SLIS.motto,
-  place: `${SLIS.location.lines[0]} · ${SLIS.location.area}`,
-  address: `${SLIS.location.lines.join(", ")}, ${SLIS.location.area}`,
-  phoneDisplay: SLIS.contact.phones.join(" / "),
-  phoneHref: `tel:${SLIS.contact.phones[0]}`,
-  email: SLIS.contact.email,
+  name: SOURCE.name,
+  short: SOURCE.shortName,
+  kind: "Daycare to JHS",
+  tagline: SOURCE.motto,
+  place: `${SOURCE.location.lines[0]} · ${SOURCE.location.area}`,
+  address: `${SOURCE.location.lines.join(", ")}, ${SOURCE.location.area}`,
+  phoneDisplay: SOURCE.contact.phones.join(" / "),
+  phoneHref: `tel:${SOURCE.contact.phones[0]}`,
+  email: SOURCE.contact.email,
 } as const;
 
 // REMOVED: `SOCIAL_LINKS`. It was an empty array imported by nothing, the footer has never rendered a

@@ -35,8 +35,8 @@ export function ParentShell({ profile, children }: ParentShellProps) {
             className={cn("min-w-0 rounded-lg", lightFocusRingClass)}
           >
             {/* Full name, same reasoning as the sign-in panel: a parent is the one signed-in user
-                who may never have seen "SLIS" written down. `min-w-0` (not `shrink-0`) lets the
-                name rewrap instead of forcing the bar wider on narrow phones. */}
+                who may never have seen the short name written down. `min-w-0` (not `shrink-0`)
+                lets the name rewrap instead of forcing the bar wider on narrow phones. */}
             <BrandLock tone="dark" name="full" crestClassName="size-8 rounded-lg" />
           </Link>
 

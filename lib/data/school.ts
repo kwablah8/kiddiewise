@@ -33,7 +33,7 @@ interface SchoolRow {
   pass_mark: number;
 }
 
-/** Initials-style short name: "SNAB Learners International School" → "SLIS". */
+/** Initials-style short name for a genuinely long name, e.g. "Kiddiewise School Complex" → "KSC". */
 function shortNameFor(name: string): string {
   const words = name.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w));
   // Only worth abbreviating a genuinely long name; "Volta Academy" reads better in full than "VA".

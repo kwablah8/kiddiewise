@@ -69,7 +69,7 @@ describe("amountInWords", () => {
 describe("buildReceipt", () => {
   const data = buildReceipt({
     payment,
-    schoolName: "SNAB Learners International School",
+    schoolName: "Kiddiewise School Complex",
     methodLabel: "Mobile money",
     logoUrl: null,
   });
@@ -77,7 +77,7 @@ describe("buildReceipt", () => {
   it("carries the payment onto the receipt", () => {
     expect(data).toMatchObject({
       receiptNo: "RCP-9C1F2B7A",
-      schoolName: "SNAB Learners International School",
+      schoolName: "Kiddiewise School Complex",
       studentName: "Kofi Mensah",
       className: "Basic 4",
       amount: 450,

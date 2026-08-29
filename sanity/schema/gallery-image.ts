@@ -4,9 +4,8 @@ import { defineField, defineType } from "sanity";
  * One photo in the public gallery.
  *
  * `alt` is required, not optional. Every photo in the committed manifest (`lib/marketing/media.ts`)
- * carries a real description, "SLIS campus courtyard with covered walkway, gazebo seating and the
- * front gate", not "photo1.jpg", and the gallery must not regress on that the moment uploads move
- * into the Studio.
+ * carries a real description of what it shows, not "photo1.jpg", and the gallery must not regress
+ * on that the moment uploads move into the Studio.
  *
  * `order` is optional on purpose. An editor who ignores it gets newest-first, which is the behaviour
  * they expect after uploading this term's event photos. Numbering only matters if the school later

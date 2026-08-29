@@ -11,22 +11,22 @@ interface BrandLockProps {
   /** Sizing override forwarded to the crest chip. */
   crestClassName?: string;
   /**
-   * Which name to show. "short" is the initialism over the descriptor, the right call in the
+   * Which name to show. "short" is the short name over the descriptor, the right call in the
    * portal sidebar and other tight chrome, where the full name simply does not fit.
    *
-   * "full" spells the school out and drops the descriptor, because "Learners International" is a
-   * fragment of "SNAB Learners International School" and printing both says the same words twice.
-   * The split is by audience, not surface: anywhere a parent or visitor can arrive cold, the
-   * marketing header, the auth screens, the parent shell, spells the name out, because they may
-   * never have seen "SLIS" written down. Staff chrome (the portal sidebar, the admin mobile bar)
-   * keeps the short lock: an administrator already knows where they are, and the sidebar does not
-   * have the room anyway.
+   * "full" spells the school out and drops the descriptor, avoiding printing overlapping words
+   * twice (e.g. a descriptor that repeats a word already in the full name). The split is by
+   * audience, not surface: anywhere a parent or visitor can arrive cold, the marketing header, the
+   * auth screens, the parent shell, spells the name out, because they may never have seen the
+   * short name written down. Staff chrome (the portal sidebar, the admin mobile bar) keeps the
+   * short lock: an administrator already knows where they are, and the sidebar does not have the
+   * room anyway.
    */
   name?: "short" | "full";
 }
 
 /**
- * The identity lock: crest + "SLIS" over "Learners International".
+ * The identity lock: crest + short name over descriptor.
  *
  * Six surfaces show this exact pairing: marketing header, marketing footer, portal sidebar, the
  * auth screens' desktop panel and mobile band, and the parent shell. Keeping it here stops the
@@ -49,9 +49,9 @@ export function BrandLock({
           className={cn(
             "text-[1.05rem] font-semibold tracking-[-0.01em]",
             light ? "text-white" : "text-[var(--text)]",
-            // The full name is 31 characters, so it wraps onto two lines rather than truncating,
-            // "SNAB Learners Internationa..." would be worse than no change at all. `max-w` caps how
-            // far it can push the nav; `leading-tight` keeps the two lines reading as one mark.
+            // The full name is 25 characters, so it wraps onto two lines rather than truncating,
+            // a mid-word ellipsis would be worse than no change at all. `max-w` caps how far it can
+            // push the nav; `leading-tight` keeps the two lines reading as one mark.
             full ? "max-w-[13rem] leading-tight text-balance" : "truncate",
           )}
         >

@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
       default: `${SITE.name} (${SITE.shortName}) — ${SITE.tagline}`,
       template: `%s · ${SITE.shortName}`,
     },
-    description: `${SITE.motto} ${SITE.name} offers Creche through JHS in ${SITE.location.lines[0]}, ${SITE.location.area}. ${admissionsNote}.`,
+    description: `${SITE.motto} ${SITE.name} offers Daycare through JHS in ${SITE.location.lines[0]}, ${SITE.location.area}. ${admissionsNote}.`,
   };
 }
 
@@ -25,8 +25,8 @@ export async function generateMetadata(): Promise<Metadata> {
  * Public marketing shell (docs/06-UI §8): its OWN layout: header + footer, no auth guard, no
  * app sidebar. Still a distinct visual system from the authenticated portals (editorial rhythm,
  * full-bleed photography, rounded CTAs), but it now shares their palette as well as the Geist
- * typeface: `data-brand="slis"` moved up to <html> in app/layout.tsx, so the SLIS blue/gold tokens
- * are global and this layout no longer needs to scope them.
+ * typeface: `data-brand="kiddiewise"` moved up to <html> in app/layout.tsx, so the crimson/gold
+ * tokens are global and this layout no longer needs to scope them.
  */
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -36,7 +36,7 @@ export function useReceiptDownload(): (payment: PaymentVM) => Promise<void> {
           schoolName: school?.name ?? "School",
           methodLabel: PAYMENT_METHOD_LABEL[payment.method],
           // The tenant's own uploaded crest when there is one; buildReceipt falls back to the
-          // bundled SLIS crest otherwise.
+          // bundled crest otherwise.
           logoUrl: school?.logo_url ?? null,
         }),
       );

@@ -50,14 +50,15 @@ export function isPublicPath(pathname: string): boolean {
   // here because the Studio is a catch-all route that navigates into deep paths of its own
   // (/studio/structure/newsPost, /studio/vision, ...), all of it the same one app.
   //
-  // `/slis/` is the school's own static media in `public/slis`, campus photos, the admissions
-  // flyer, the promo video and its poster. Every one of them is rendered BY the public marketing
-  // site, so gating them behind a session cannot be right: the guard turns an anonymous visitor's
-  // asset request into a redirect to /login, and the browser quietly renders a login page where a
-  // video or an image should be. Listed here rather than relying on the middleware matcher's
-  // extension test, for the same reason `/studio` is, see the note in `middleware.ts`: the matcher
-  // is a cost optimisation, this is the authoritative answer to "may an anonymous visitor see it".
-  return ["/news/", "/gallery/", "/about/", "/studio/", "/slis/"].some((prefix) =>
+  // `/kiddiewise/` is the school's own static media in `public/kiddiewise`, campus photos, the
+  // admissions flyer, the promo video and its poster. Every one of them is rendered BY the public
+  // marketing site, so gating them behind a session cannot be right: the guard turns an anonymous
+  // visitor's asset request into a redirect to /login, and the browser quietly renders a login page
+  // where a video or an image should be. Listed here rather than relying on the middleware
+  // matcher's extension test, for the same reason `/studio` is, see the note in `middleware.ts`:
+  // the matcher is a cost optimisation, this is the authoritative answer to "may an anonymous
+  // visitor see it".
+  return ["/news/", "/gallery/", "/about/", "/studio/", "/kiddiewise/"].some((prefix) =>
     pathname.startsWith(prefix),
   );
 }

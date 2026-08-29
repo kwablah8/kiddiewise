@@ -37,8 +37,8 @@ describe("mergeSiteSettings", () => {
   });
 
   it("overrides only the fields that were filled in", () => {
-    const merged = mergeSiteSettings(SITE, cmsSiteSettingsSchema.parse({ contactEmail: "office@slis.edu.gh" }));
-    expect(merged.contact.email).toBe("office@slis.edu.gh");
+    const merged = mergeSiteSettings(SITE, cmsSiteSettingsSchema.parse({ contactEmail: "office@kiddiewise.edu.gh" }));
+    expect(merged.contact.email).toBe("office@kiddiewise.edu.gh");
     // Untouched neighbours must survive, an editor filling one box must not blank the rest.
     expect(merged.contact.phones).toEqual(SITE.contact.phones);
     expect(merged.earlyBird).toBe(SITE.earlyBird);
@@ -64,7 +64,7 @@ describe("mergeSiteSettings", () => {
     // inherited its value". Two supplied numbers must mean exactly two numbers.
     const merged = mergeSiteSettings(SITE, cmsSiteSettingsSchema.parse({ phones: ["0300000001", "0300000002"] }));
     expect(merged.contact.phones).toEqual(["0300000001", "0300000002"]);
-    expect(SITE.contact.phones.length).toBe(2); // guard: the fixture would hide a bug if lengths differed
+    expect(SITE.contact.phones.length).toBe(1); // guard: the fixture would hide a bug if lengths differed
   });
 
   it("trims phone numbers and drops blank entries", () => {

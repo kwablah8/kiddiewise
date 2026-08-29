@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  *
  * Real photos come from `MEDIA` (`lib/marketing/media.ts`). The last remaining uses of this
  * placeholder are non-photographic slots on the not-yet-built Unit C pages (e.g. the Contact map
- * embed, an admissions document photo). It renders a fixed-aspect, SLIS-tinted panel with a
+ * embed, an admissions document photo). It renders a fixed-aspect, brand-tinted panel with a
  * neutral icon + a caption describing the intended asset. It exposes `role="img"` + `aria-label`
  * so it reads as an image to assistive tech today, and the `label` doubles as the future alt text.
  */

@@ -22,7 +22,7 @@ export async function SiteFooter() {
             {/* Solid white: measured against the real gradient box, this column sits close enough
                 to the lighter --m-brand end that white/70 fell to ~3.9-4.2:1 (fails AA). */}
             <p className="mt-5 text-sm leading-relaxed text-white">
-              {SITE.motto} {SITE.name} welcomes learners from Creche through Junior High School in{" "}
+              {SITE.motto} {SITE.name} welcomes learners from Daycare through Junior High School in{" "}
               {SITE.location.lines[0]}, {SITE.location.area}.
             </p>
             <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--m-accent)] px-3.5 py-1.5 text-[13px] font-semibold text-[var(--m-accent-ink)]">

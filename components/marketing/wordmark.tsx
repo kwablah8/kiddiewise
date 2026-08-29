@@ -11,10 +11,10 @@ interface WordmarkProps {
 /**
  * The marketing site's identity mark, crest in a white chip beside the wordmark text.
  *
- * Now a thin alias over the shared `BrandLock`: the crest markup and the "SLIS / Learners
- * International" pairing moved to `components/brand/` once the portal sidebar, auth screens and
- * parent shell started showing the same lock, so the surfaces cannot drift. Kept under this name
- * because every marketing call site already imports `Wordmark`.
+ * Now a thin alias over the shared `BrandLock`: the crest markup and the short-name/descriptor
+ * pairing moved to `components/brand/` once the portal sidebar, auth screens and parent shell
+ * started showing the same lock, so the surfaces cannot drift. Kept under this name because every
+ * marketing call site already imports `Wordmark`.
  */
 export function Wordmark({ tone = "dark", className, name }: WordmarkProps) {
   return <BrandLock tone={tone} className={className} name={name} />;

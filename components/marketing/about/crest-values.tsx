@@ -18,7 +18,7 @@ const VALUES: readonly { name: string; blurb: string }[] = [
   },
   {
     name: "Excellence",
-    blurb: "A genuinely high standard, held with care, from Creche all the way through JHS.",
+    blurb: "A genuinely high standard, held with care, from Daycare all the way through JHS.",
   },
 ];
 

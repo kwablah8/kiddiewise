@@ -17,7 +17,7 @@ export function HomePrograms() {
           id="programs-title"
           className="mt-4 text-[clamp(1.9rem,3.4vw,2.6rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-balance"
         >
-          Five stages, one journey — Creche to JHS.
+          Five stages, one journey — Daycare to JHS.
         </h2>
         <p className="mt-4 text-lg leading-relaxed text-[var(--muted-foreground)]">
           Every level builds on the last, so children grow up inside one steady, caring community.

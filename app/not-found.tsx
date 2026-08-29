@@ -3,14 +3,14 @@ import { NotFoundActions } from "@/components/states/not-found-actions";
 import { NotFoundIllustration } from "@/components/states/not-found-illustration";
 
 export const metadata: Metadata = {
-  title: "Page not found · SLIS Portal",
+  title: "Page not found · Kiddiewise Portal",
 };
 
 /**
  * Global 404 (06-UI §7 "Error"). Renders on the light content canvas rather than the app shell,
  * since an unmatched top-level route resolves against the root layout. The hero is a bespoke,
- * on-brand illustration, a record search that finds nothing, carrying the app's SLIS navy + blue
- * tokens (06-UI §2) instead of a generic graphic.
+ * on-brand illustration, a record search that finds nothing, carrying the app's brand tokens
+ * (06-UI §2) instead of a generic graphic.
  */
 export default function NotFound() {
   return (

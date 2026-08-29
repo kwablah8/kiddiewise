@@ -155,14 +155,14 @@ interface StaffDef {
 
 // admin@ / teacher@ / parent@ are the memorable demo logins; the rest read as a real roster.
 const STAFF: StaffDef[] = [
-  { key: "adm", first: "Ama", last: "Mensah", email: "admin@slis.test", phone: "+233 24 555 0110", staffNo: "ADM-1", role: "school_admin", department: null, active: true, position: "School Administrator", gender: "female", dob: "1985-02-11", hired: "2018-01-08", qualification: "MBA Educational Management" },
-  { key: "t1", first: "Efua", last: "Owusu", email: "teacher@slis.test", phone: "+233 24 100 1001", staffNo: "TCH-1", role: "teacher", department: "Mathematics", active: true, position: "Head Teacher", gender: "female", dob: "1982-05-14", hired: "2016-09-01", qualification: "M.Ed Mathematics" },
-  { key: "t2", first: "Kwabena", last: "Adjei", email: "kwabena.adjei@slis.test", phone: "+233 24 100 1002", staffNo: "TCH-2", role: "teacher", department: "Languages", active: true, position: "Class Teacher", gender: "male", dob: "1988-11-03", hired: "2019-09-01", qualification: "B.Ed English" },
-  { key: "t3", first: "Abena", last: "Sarpong", email: "abena.sarpong@slis.test", phone: "+233 24 100 1003", staffNo: "TCH-3", role: "teacher", department: "Science", active: true, position: "Class Teacher", gender: "female", dob: "1990-07-22", hired: "2020-01-13", qualification: "BSc Biology, PGDE" },
-  { key: "t4", first: "Kojo", last: "Boateng", email: "kojo.boateng@slis.test", phone: "+233 24 100 1004", staffNo: "TCH-4", role: "teacher", department: "Social Studies", active: true, position: "Class Teacher", gender: "male", dob: "1986-03-30", hired: "2017-09-04", qualification: "B.A Social Studies" },
-  { key: "t5", first: "Akosua", last: "Danso", email: "akosua.danso@slis.test", phone: "+233 24 100 1005", staffNo: "TCH-5", role: "teacher", department: "Creative Arts", active: true, position: "Subject Teacher", gender: "female", dob: "1993-09-17", hired: "2022-09-05", qualification: "Diploma in Basic Education" },
+  { key: "adm", first: "Ama", last: "Mensah", email: "admin@kiddiewise.test", phone: "+233 24 555 0110", staffNo: "ADM-1", role: "school_admin", department: null, active: true, position: "School Administrator", gender: "female", dob: "1985-02-11", hired: "2018-01-08", qualification: "MBA Educational Management" },
+  { key: "t1", first: "Efua", last: "Owusu", email: "teacher@kiddiewise.test", phone: "+233 24 100 1001", staffNo: "TCH-1", role: "teacher", department: "Mathematics", active: true, position: "Head Teacher", gender: "female", dob: "1982-05-14", hired: "2016-09-01", qualification: "M.Ed Mathematics" },
+  { key: "t2", first: "Kwabena", last: "Adjei", email: "kwabena.adjei@kiddiewise.test", phone: "+233 24 100 1002", staffNo: "TCH-2", role: "teacher", department: "Languages", active: true, position: "Class Teacher", gender: "male", dob: "1988-11-03", hired: "2019-09-01", qualification: "B.Ed English" },
+  { key: "t3", first: "Abena", last: "Sarpong", email: "abena.sarpong@kiddiewise.test", phone: "+233 24 100 1003", staffNo: "TCH-3", role: "teacher", department: "Science", active: true, position: "Class Teacher", gender: "female", dob: "1990-07-22", hired: "2020-01-13", qualification: "BSc Biology, PGDE" },
+  { key: "t4", first: "Kojo", last: "Boateng", email: "kojo.boateng@kiddiewise.test", phone: "+233 24 100 1004", staffNo: "TCH-4", role: "teacher", department: "Social Studies", active: true, position: "Class Teacher", gender: "male", dob: "1986-03-30", hired: "2017-09-04", qualification: "B.A Social Studies" },
+  { key: "t5", first: "Akosua", last: "Danso", email: "akosua.danso@kiddiewise.test", phone: "+233 24 100 1005", staffNo: "TCH-5", role: "teacher", department: "Creative Arts", active: true, position: "Subject Teacher", gender: "female", dob: "1993-09-17", hired: "2022-09-05", qualification: "Diploma in Basic Education" },
   // Inactive on purpose: staff screens must handle a teacher who teaches nothing.
-  { key: "t6", first: "Yaw", last: "Nkrumah", email: "yaw.nkrumah@slis.test", phone: "+233 24 100 1006", staffNo: "TCH-6", role: "teacher", department: "No Department", active: false, position: "Subject Teacher", gender: "male", dob: "1979-12-01", hired: "2015-09-01", qualification: "Cert. A Education" },
+  { key: "t6", first: "Yaw", last: "Nkrumah", email: "yaw.nkrumah@kiddiewise.test", phone: "+233 24 100 1006", staffNo: "TCH-6", role: "teacher", department: "No Department", active: false, position: "Subject Teacher", gender: "male", dob: "1979-12-01", hired: "2015-09-01", qualification: "Cert. A Education" },
 ];
 
 interface ParentDef {
@@ -175,7 +175,7 @@ interface ParentDef {
 }
 
 const PARENTS: ParentDef[] = [
-  { key: "p1", first: "Yaw", last: "Mensah", email: "parent@slis.test", phone: "+233 24 111 2222", occupation: "Accountant" },
+  { key: "p1", first: "Yaw", last: "Mensah", email: "parent@kiddiewise.test", phone: "+233 24 111 2222", occupation: "Accountant" },
   { key: "p2", first: "Adwoa", last: "Asante", email: "adwoa.asante@example.com", phone: "+233 24 111 2223", occupation: "Trader" },
   { key: "p3", first: "Kofi", last: "Boateng", email: "kofi.boateng@example.com", phone: "+233 24 111 2224", occupation: "Civil Engineer" },
   { key: "p4", first: "Esi", last: "Owusu", email: "esi.owusu@example.com", phone: "+233 24 111 2225", occupation: "Nurse" },
@@ -264,8 +264,8 @@ async function wipe(): Promise<void> {
 
   // Auth users are matched two ways, because each alone leaves cruft behind:
   //   - by id, from the profiles above: catches accounts whose email has since been changed, or
-  //     renamed in this script (the @kiddiewise.test → @slis.test switch would otherwise orphan
-  //     every old account, and `seed:demo` without a full reset would then not clean them up).
+  //     renamed in this script (an email-domain rebrand would otherwise orphan every old account,
+  //     and `seed:demo` without a full reset would then not clean them up).
   //   - by email, from the current lists: catches a run that failed between createUser and the
   //     profiles insert, leaving an auth user no profile points at. Without this the next run dies
   //     on "already registered".
@@ -289,13 +289,12 @@ async function main(): Promise<void> {
   // --- school -------------------------------------------------------------
   const { error: schoolErr } = await db.from("schools").upsert({
     id: SCHOOL_ID,
-    name: "SNAB Learners International School",
-    slug: "slis",
-    email: "snab.learner@gmail.com",
-    // The flyer's real numbers, and the address as two lines, the report card's letterhead prints
-    // each line of `address` on its own row, the way it sits on the school's headed paper.
-    phone: "0256855366 / 0244210139",
-    address: "Oyarifa, near the Ghana Flag\nBehind Rehoboth Estate, Accra",
+    name: "Kiddiewise School Complex",
+    slug: "kiddiewise",
+    // From the school's own site (kiddiewise.vercel.app), not invented.
+    email: "kiddiewise2012@gmail.com",
+    phone: "+233 54 179 0780",
+    address: "Oyarifa Road (Off Container Junction)\nAccra, Ghana",
   });
   if (schoolErr) throw new Error(`schools: ${schoolErr.message}`);
 
@@ -909,11 +908,11 @@ async function main(): Promise<void> {
   ]);
 
   console.log(`
-Demo tenant seeded: SNAB Learners International School
+Demo tenant seeded: Kiddiewise School Complex
 
-  Admin    admin@slis.test
-  Teacher  teacher@slis.test    (Efua Owusu — class teacher, Basic 1)
-  Parent   parent@slis.test     (Yaw Mensah — 2 children)
+  Admin    admin@kiddiewise.test
+  Teacher  teacher@kiddiewise.test    (Efua Owusu — class teacher, Basic 1)
+  Parent   parent@kiddiewise.test     (Yaw Mensah — 2 children)
 
   Password for all accounts: ${DEMO_PASSWORD}
 

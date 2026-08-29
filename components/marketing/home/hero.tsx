@@ -4,8 +4,8 @@ import { SITE } from "@/lib/marketing/site";
 import { getMarketingSettings } from "@/lib/marketing/cms/read";
 
 /**
- * Home hero, a real SLIS community photo (staff & families in the school's blue-and-gold polos)
- * under a deep-blue brand gradient for legibility. The dark top satisfies the shell header's
+ * Home hero, a generated brand-colour tile (no campus photo exists yet, see `lib/marketing/media.ts`)
+ * under a deep-crimson brand gradient for legibility. The dark top satisfies the shell header's
  * "translucent over a dark hero" contract. Eyebrow carries the motto; a gold pill announces the
  * open admission; dual CTAs drive the two real actions (apply / visit).
  *
@@ -42,7 +42,7 @@ export async function HomeHero() {
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-white sm:text-xl">
-            {SITE.name} guides children from Creche through Junior High School in{" "}
+            {SITE.name} guides children from Daycare through Junior High School in{" "}
             {SITE.location.lines[0]} — with warmth, structure, and a genuinely high bar for every
             learner.
           </p>

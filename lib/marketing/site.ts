@@ -1,13 +1,14 @@
 /**
- * SLIS site configuration, the single source of truth for the marketing site's copy.
+ * Kiddiewise site configuration, the single source of truth for the marketing site's copy.
  *
  * Every real-world fact about the client (name, motto, location, contact, programs) lives here
  * exactly once. Marketing pages and components import `SITE` instead of hardcoding strings, so
  * updating a phone number or a program's age range only ever happens in one place.
  *
- * SOURCE: the school's crest logo + admission flyer (`SNAB-Assets/`). Facts not present in that
- * source (e.g. a founding year, precise enrollment figures, social handles) are intentionally
- * left out rather than invented, see `socials` below and the M4 rebrand plan's "honesty guard".
+ * SOURCE: the school's crest badge, plus the school's own site at kiddiewise.vercel.app (contact
+ * details, office hours, program ladder, tagline). Facts not present in either source (a specific
+ * admissions discount, social handles) are intentionally left out rather than invented, see
+ * `socials` below and the "honesty guard" pattern this file follows throughout.
  *
  * SANITY: six of these fields are now editable by the school in the Studio at /studio, which makes the
  * values here their FALLBACK rather than the last word, `contact`, `hours`, `admissionsYear`,
@@ -23,9 +24,11 @@
 import { BRAND } from "@/lib/brand";
 
 /**
- * The school year currently being admitted for, from the 2026/2027 admission flyer. Declared once
- * here because `admissionsNote` embeds it and page copy names it inline, a `const` object cannot
- * reference its own fields, so the alternative is writing the year twice.
+ * The school year currently being admitted for. Kiddiewise's own site does not name a specific
+ * intake year (no flyer with a printed year exists yet), so this follows Ghana's school-year
+ * convention relative to today's date rather than a fabricated one. Declared once here because
+ * `admissionsNote` embeds it and page copy names it inline, a `const` object cannot reference its
+ * own fields, so the alternative is writing the year twice.
  */
 const ADMISSIONS_YEAR = "2026/2027";
 
@@ -125,103 +128,87 @@ export const SITE: SiteConfig = {
   name: BRAND.fullName,
   shortName: BRAND.shortName,
   motto: BRAND.motto,
-  tagline: "Creche to JHS, nurtured with excellence in Oyarifa.",
+  tagline: "Daycare to JHS, nurturing excellence in Adenta – Oyarifa.",
   location: {
-    lines: ["Oyarifa, near the Ghana Flag", "Behind Rehoboth Estate"],
+    lines: ["Oyarifa Road (Off Container Junction)"],
     area: "Accra, Ghana",
   },
   contact: {
-    email: "snab.learner@gmail.com",
-    phones: ["0256855366", "0244210139"],
+    email: "kiddiewise2012@gmail.com",
+    phones: ["+233 54 179 0780"],
   },
   admissionsYear: ADMISSIONS_YEAR,
   admissionsNote: admissionsNoteFor(ADMISSIONS_YEAR),
-  earlyBird: "An early-bird discount applies to families who register early.",
+  earlyBird: "Spaces are limited each term, so early registration is encouraged.",
   hours: {
     entries: [
-      { days: "Monday – Friday", time: "6:00am – 8:00pm" },
-      { days: "Saturday – Sunday", time: "6:00am – 6:00pm" },
+      { days: "Monday – Friday", time: "8:00am – 6:00pm" },
+      { days: "Saturday", time: "9:00am – 2:00pm" },
+      { days: "Sunday", time: "Closed" },
     ],
-    note: "Weekend drop-off service is open to the wider community — not only SNAB learners.",
   },
   programs: [
     {
       key: "creche",
-      name: "Creche",
+      name: "Daycare",
       ageRange: "6 months – 2 years",
       blurb:
-        "A warm, attentive start for our youngest learners — safe, home-like care that builds trust from day one.",
+        "A safe, nurturing start for our youngest learners — sensory play, social skills and early cognitive growth, built on trust from day one.",
     },
     {
       key: "nursery",
-      name: "Nursery",
-      ageRange: "3 – 4 years",
+      name: "Preschool (Nursery)",
+      ageRange: "2 – 4 years",
       blurb:
-        "Play-based learning that grows curiosity, language and social confidence through guided discovery.",
+        "Foundational skills through structured play, early literacy, numeracy and creative expression in a warm, engaging environment.",
     },
     {
       key: "kindergarten",
-      name: "Kindergarten",
-      ageRange: "4 – 5 years",
+      name: "Kindergarten (KG 1 & 2)",
+      ageRange: "4 – 6 years",
       blurb:
-        "Early literacy and numeracy foundations, built through hands-on activities and structured routine.",
+        "Preparing children for primary school with a balanced curriculum in reading, writing, mathematics and character development.",
     },
     {
       key: "primary",
-      name: "Primary",
-      ageRange: "6+ years",
+      name: "Primary School",
+      ageRange: "6 – 12 years",
       blurb:
-        "A strong academic foundation across the core subjects, taught with care, structure and high expectation.",
+        "Comprehensive elementary education on the Ghana Education Service curriculum, with emphasis on critical thinking and problem-solving.",
     },
     {
       key: "jhs",
       name: "Junior High School (JHS)",
-      ageRange: "Basic 7 – 9",
+      ageRange: "12 – 15 years",
       blurb:
-        "Rigorous preparation for BECE and beyond, pairing academic depth with character and leadership.",
+        "Rigorous preparation for BECE, pairing core academic depth with leadership and career guidance.",
     },
   ],
   offerings: [
     {
-      key: "drop-off",
-      name: "Weekend Drop-off Service",
-      blurb:
-        "Safe, supervised weekend care — open to the whole community, not only our own learners.",
+      key: "holiday",
+      name: "Holiday & Weekend Programs",
+      blurb: "Fun-filled learning during school breaks, open to ages 4–15.",
       items: [
-        "Saturday & Sunday, 6:00am – 6:00pm",
-        "Open to children from the wider community",
-        "Familiar, caring staff on hand",
+        "Remedial classes",
+        "Coding & robotics",
+        "Arts & crafts camp",
+        "Sports clinics",
+        "Excursions & field trips",
+        "Public speaking workshop",
       ],
     },
     {
-      key: "sports",
-      name: "Sports & Athletics",
-      blurb: "Movement, teamwork and healthy play for every age.",
-      items: [
-        "Football and team games",
-        "Athletics and physical education",
-        "Friendly, confidence-building play",
-      ],
+      key: "transport",
+      name: "Transport Service",
+      blurb: "Safe, reliable school bus service for daily pick-up and drop-off.",
+      items: ["Supervised daily rides", "Reliable, fixed schedule", "Familiar drivers and staff"],
     },
     {
-      key: "arts",
-      name: "Creative Arts & Music",
-      blurb: "Room to imagine, make and perform.",
-      items: [
-        "Drawing, painting and crafts",
-        "Singing and music",
-        "Creative expression and performance",
-      ],
-    },
-    {
-      key: "ict",
-      name: "ICT & Computing",
-      blurb: "Confident, age-appropriate digital skills from an early start.",
-      items: [
-        "Age-appropriate basic computing",
-        "Keyboard and digital literacy",
-        "Guided, screen-smart learning",
-      ],
+      key: "meals",
+      name: "Meals & Nutrition",
+      blurb: "Healthy, balanced meals provided daily.",
+      items: ["Daily hot meals", "Balanced, age-appropriate menus", "Dietary care for young learners"],
     },
   ],
   socials: [],

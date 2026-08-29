@@ -34,6 +34,7 @@ yarn-error.log*
 # local tooling state
 .claude/
 .superpowers/
-# Raw source photography, video and logo from the school (145MB). The optimised copies in
-# public/slis/ are committed; this source folder is not.
-SNAB-Assets/
+# Raw source photography, video and logo from the school. The optimised copies in
+# public/kiddiewise/ are committed; this source folder is not.
+Kiddiewise-Assets/
+.env*

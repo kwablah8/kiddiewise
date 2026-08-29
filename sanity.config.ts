@@ -20,8 +20,8 @@ const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? "";
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
 
 export default defineConfig({
-  name: "slis",
-  title: "SLIS Website",
+  name: "kiddiewise",
+  title: "Kiddiewise Website",
   basePath: "/studio",
   projectId,
   dataset,

@@ -1,12 +1,12 @@
-# SNAB Learners International School
+# Kiddiewise School Complex
 
-The public website and school management platform for SNAB Learners International School (SLIS)
-in Oyarifa, Accra: enrolment, classes, attendance, results, fees and parent communication. It
-replaces paper registers, manual result sheets and scattered WhatsApp updates.
+The public website and school management platform for Kiddiewise School Complex in
+Adenta – Oyarifa, Accra: enrolment, classes, attendance, results, fees and parent communication.
+It replaces paper registers, manual result sheets and scattered WhatsApp updates.
 
-Running in production for SLIS, the only school in the database and the only brand this build
-carries. The schema stays multi-tenant even so: every row carries a `school_id` and RLS scopes
-every read to one school, which is what the security model rests on. See
+Running in production for Kiddiewise, the only school in the database and the only brand this
+build carries. The schema stays multi-tenant even so: every row carries a `school_id` and RLS
+scopes every read to one school, which is what the security model rests on. See
 [Conventions that matter](#conventions-that-matter).
 
 Money is Ghana Cedi (GHS) everywhere it appears.
@@ -25,8 +25,8 @@ pnpm db:seed         # applies migrations, then seeds a populated demo school
 pnpm dev             # http://localhost:3000
 ```
 
-Demo accounts are `admin@slis.test`, `teacher@slis.test` and `parent@slis.test`, all with the
-password `Password123!`.
+Demo accounts are `admin@kiddiewise.test`, `teacher@kiddiewise.test` and `parent@kiddiewise.test`,
+all with the password `Password123!`.
 
 ## What this is
 
@@ -42,7 +42,8 @@ deployment per audience.
 | Content studio | Whoever edits the public site | `/studio` (Sanity, authenticated by Sanity) |
 
 The roles in use are `school_admin`, `teacher` and `parent`. `super_admin` exists in the enum and
-in the permission checks but nothing seeds one, because SLIS is run by `school_admin` accounts.
+in the permission checks but nothing seeds one, because Kiddiewise is run by `school_admin`
+accounts.
 Login sends each role to its own portal, and `middleware.ts` bounces anyone who navigates into
 another role's subtree.
 
@@ -169,14 +170,16 @@ the ones that caught us.
 | [docs/03-DATABASE.md](docs/03-DATABASE.md) | Schema, relationships, enums, RLS strategy |
 | [docs/04-AUTH-AND-PERMISSIONS.md](docs/04-AUTH-AND-PERMISSIONS.md) | Auth flows, roles, permission matrix, route protection |
 | [docs/05-USER-FLOWS.md](docs/05-USER-FLOWS.md) | Key flows per role |
-| [docs/06-UI-UX-STANDARDS.md](docs/06-UI-UX-STANDARDS.md) | Design system, SLIS palette and type |
+| [docs/06-UI-UX-STANDARDS.md](docs/06-UI-UX-STANDARDS.md) | Design system, Kiddiewise palette and type |
 | [docs/07-ENGINEERING-STANDARDS.md](docs/07-ENGINEERING-STANDARDS.md) | Conventions, data layer, validation, testing, git |
 | [docs/08-ROADMAP.md](docs/08-ROADMAP.md) | Delivery phases, remaining work, hardening backlog |
 | [docs/09-DEV-RUNBOOK.md](docs/09-DEV-RUNBOOK.md) | Setup, demo logins, commands, gotchas |
 
-`00-OVERVIEW.md` still describes a multi-school platform with Kiddiewise as its reference
-deployment, and `01-REQUIREMENTS.md` refers to that build's screenshots. That is where the
-project started. What shipped is this one school's build, branded for SLIS.
+`00-OVERVIEW.md` still describes a multi-school platform with Kiddiewise School Complex as its
+reference deployment, and `01-REQUIREMENTS.md` refers to that build's screenshots. That is where
+the project started. The first real client was a different school (SNAB Learners International
+School, SLIS), so the build was tailored to that brand for a time; this rebrand moves it onto
+Kiddiewise itself, the platform's original reference school, as its live tenant.
 
 ## Current state
 

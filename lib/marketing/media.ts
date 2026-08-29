@@ -1,10 +1,20 @@
 /**
  * Media manifest: the single source of truth for optimised asset paths and alt text.
  *
- * Components import `MEDIA` rather than hardcoding paths under `public/slis/`, so swapping a photo
- * only ever happens here. The current photos came from the school over WhatsApp and are placeholders
- * for a licensed set. Each one was optimised out of `SNAB-Assets/` (the raw source, not committed)
- * with `sips` and `ffmpeg`.
+ * Components import `MEDIA` rather than hardcoding paths under `public/kiddiewise/`, so swapping a
+ * photo only ever happens here.
+ *
+ * TEMPORARY: Kiddiewise has no campus photography yet, and its own reference site
+ * (kiddiewise.vercel.app) turned out to have none either — its "About" photo is a mismatched stock
+ * shot of adults in an office, and every other image there is a stock headshot captioned with a
+ * fictional staff name, neither fits this product or is honest to reuse. Every photo slot below is
+ * instead a free-licence stock photo (Pexels/Unsplash, no attribution required), chosen and
+ * visually verified — not just caption-matched — for tone: African school children, tidy uniforms,
+ * a well-kept setting, nothing that reads as a rival institution's own marketing (a couple of
+ * strong candidates were rejected for exactly that: one had a competing school's name spelled out
+ * across the building behind the kids). None of these depict Kiddiewise's actual campus, staff or
+ * pupils — alt text describes only what each photo shows, never claims it's real. Swap each one for
+ * the school's own photography as it arrives.
  */
 
 import { BRAND } from "@/lib/brand";
@@ -17,8 +27,9 @@ export interface MediaAsset {
   /**
    * A tiny base64 preview to show while the real image loads, passed to `next/image` as
    * `placeholder="blur"`. Only ever set on assets that came from Sanity, which extracts one (an
-   * "LQIP") for every upload. The committed files under `public/slis/` leave this `undefined`, Next
-   * generates their blur placeholder at build time from the local file, so they need nothing here.
+   * "LQIP") for every upload. The committed files under `public/kiddiewise/` leave this
+   * `undefined`, Next generates their blur placeholder at build time from the local file, so they
+   * need nothing here.
    */
   blurDataURL?: string;
 }
@@ -49,140 +60,104 @@ export interface MediaManifest {
   flyer: SizedMediaAsset;
 }
 
-const campusExteriorBanners: MediaAsset = {
-  src: "/slis/photos/campus-exterior-banners.jpg",
-  alt: "SLIS campus exterior with Admission Open and Grand Opening banners on the perimeter wall",
-  width: 1920,
-  height: 1440,
-};
-
-const campusCourtyard: MediaAsset = {
-  src: "/slis/photos/campus-courtyard.jpg",
-  alt: "SLIS campus courtyard with covered walkway, gazebo seating and the front gate",
-  width: 1920,
-  height: 1440,
-};
-
-const campusExteriorGarden: MediaAsset = {
-  src: "/slis/photos/campus-exterior-garden.jpg",
-  alt: "Side view of the SLIS campus building with a landscaped garden and flower beds",
-  width: 1920,
-  height: 1440,
-};
-
-const communityGroup: MediaAsset = {
-  src: "/slis/photos/community-group.jpg",
-  alt: "SLIS staff and community members in yellow and blue polo shirts posing in front of the school building",
-  width: 1920,
-  height: 1440,
-};
-
-const communityGroupAlt: MediaAsset = {
-  src: "/slis/photos/community-group-alt.jpg",
-  alt: "SLIS staff and families gathered in front of the school building, a second view of the same moment",
-  width: 1920,
-  height: 1440,
-};
-
-const classroomCrecheMural: MediaAsset = {
-  src: "/slis/photos/classroom-creche-mural.jpg",
-  alt: "Creche playroom with a Mickey and Minnie Mouse wall mural and colourful children's tables and chairs",
-  width: 1440,
-  height: 1920,
-};
-
-const classroomNurseryCalendar: MediaAsset = {
-  src: "/slis/photos/classroom-nursery-calendar.jpg",
-  alt: "Nursery classroom with a hand-painted months-and-days tree mural and curved children's desks",
-  width: 1920,
-  height: 1440,
-};
-
-const classroomKindergartenCorner: MediaAsset = {
-  src: "/slis/photos/classroom-kindergarten-corner.jpg",
-  alt: "Kindergarten classroom corner with the days-of-the-week tree mural and a colourful storage shelf",
-  width: 1920,
-  height: 1440,
-};
-
-const classroomPrimaryReading: MediaAsset = {
-  src: "/slis/photos/classroom-primary-reading.jpg",
-  alt: "Primary classroom with rows of individual desks and a mural of a child reading a stack of books",
-  width: 1440,
-  height: 1920,
-};
-
-const classroomJhsDesks: MediaAsset = {
-  src: "/slis/photos/classroom-jhs-desks.jpg",
-  alt: "Junior High School classroom with a whiteboard and rows of blue desks with grey chairs",
+const heroTile: MediaAsset = {
+  src: "/kiddiewise/photos/hero-v2.jpg",
+  alt: "Four African schoolchildren in tidy uniforms laughing together against a painted wall",
   width: 1920,
   height: 1280,
 };
 
-const studentPortraitUniform: MediaAsset = {
-  src: "/slis/photos/student-portrait-uniform.jpg",
-  alt: "A young SLIS pupil in the school's blue sailor-collar uniform, seated at a play table",
+const aboutTile: MediaAsset = {
+  src: "/kiddiewise/photos/about-v2.jpg",
+  alt: "Four Junior High School-age boys in matching uniforms reading a book together in a landscaped courtyard in front of a two-storey building",
+  width: 1920,
+  height: 1280,
+};
+
+const introTile: MediaAsset = {
+  src: "/kiddiewise/photos/intro-v2.jpg",
+  alt: "A joyful young child smiling broadly with arms raised overhead in warm outdoor light",
   width: 1280,
   height: 1920,
 };
 
-const hallwayValuesMural: MediaAsset = {
-  src: "/slis/photos/hallway-values-mural.jpg",
-  alt: "School hallway with a hand-washing hygiene mural painted on the wall",
-  width: 1440,
-  height: 1920,
+const communityTile: MediaAsset = {
+  src: "/kiddiewise/photos/community-v2.jpg",
+  alt: "Rows of schoolchildren in colour-grouped uniforms lined up in a school courtyard for assembly",
+  width: 1920,
+  height: 1440,
 };
 
-const eventKidsFuntime: MediaAsset = {
-  src: "/slis/photos/event-kids-funtime.jpg",
-  alt: "Children and staff at the SLIS Grand Opening kids' funtime event around an inflatable pool",
+const programDaycareTile: MediaAsset = {
+  src: "/kiddiewise/photos/program-daycare-v2.jpg",
+  alt: "A caregiver sits with a toddler in a colourful daycare playroom, the child raising both hands",
   width: 1440,
-  height: 1920,
+  height: 960,
+};
+
+const programNurseryTile: MediaAsset = {
+  src: "/kiddiewise/photos/program-nursery-v2.jpg",
+  alt: "A toddler concentrating while stacking colourful toy blocks at a play table",
+  width: 1440,
+  height: 2154,
+};
+
+const programKindergartenTile: MediaAsset = {
+  src: "/kiddiewise/photos/program-kindergarten-v2.jpg",
+  alt: "A group of kindergarten-age children in matching plaid uniforms in a bright, tidy classroom",
+  width: 1920,
+  height: 1589,
+};
+
+const programPrimaryTile: MediaAsset = {
+  src: "/kiddiewise/photos/program-primary-v2.jpg",
+  alt: "A primary school boy in a green uniform writing in his notebook at a wooden desk, classmates around him",
+  width: 1920,
+  height: 1278,
+};
+
+const programJhsTile: MediaAsset = {
+  src: "/kiddiewise/photos/program-jhs-v2.jpg",
+  alt: "Two Junior High School-age boys in matching uniform shirts with backpacks, smiling at each other outdoors",
+  width: 1920,
+  height: 1080,
 };
 
 export const MEDIA: MediaManifest = {
   // derived from `lib/brand.ts`, the crest is shared with the portal sidebar and auth screens now,
   // so its path and alt text live in one place rather than here and there.
   logo: BRAND.crest,
-  heroPhoto: campusExteriorBanners,
-  aboutPhoto: campusCourtyard,
-  introPhoto: studentPortraitUniform,
-  community: communityGroup,
+  heroPhoto: heroTile,
+  aboutPhoto: aboutTile,
+  introPhoto: introTile,
+  community: communityTile,
   programs: {
-    creche: classroomCrecheMural,
-    nursery: classroomNurseryCalendar,
-    kindergarten: classroomKindergartenCorner,
-    primary: classroomPrimaryReading,
-    jhs: classroomJhsDesks,
+    creche: programDaycareTile,
+    nursery: programNurseryTile,
+    kindergarten: programKindergartenTile,
+    primary: programPrimaryTile,
+    jhs: programJhsTile,
   },
-  gallery: [
-    communityGroup,
-    communityGroupAlt,
-    campusExteriorBanners,
-    campusCourtyard,
-    campusExteriorGarden,
-    classroomCrecheMural,
-    classroomNurseryCalendar,
-    classroomKindergartenCorner,
-    classroomPrimaryReading,
-    classroomJhsDesks,
-    studentPortraitUniform,
-    hallwayValuesMural,
-    eventKidsFuntime,
-  ],
-  promoVideo: { src: "/slis/video/promo.mp4" }, // Swap for a hosted or streamed source if it grows.
+  gallery: [heroTile, aboutTile, communityTile, programDaycareTile, programNurseryTile,
+    programKindergartenTile, programPrimaryTile, programJhsTile],
+  // No promo video exists yet (Kiddiewise's own site does not have one either) — `HomeStory` is
+  // not rendered on the home page for that reason, so neither field here is actually shown. Left
+  // populated with a real generated poster (rather than left broken) so the type stays satisfied
+  // and the fields are ready the moment a real video exists.
+  promoVideo: { src: "" },
   promoPoster: {
-    src: "/slis/video/promo-poster.jpg",
-    alt: "SLIS roadside signboard listing Creche through JHS programs and contact details",
+    src: "/kiddiewise/photos/promo-poster.jpg",
+    alt: "Kiddiewise School Complex brand mark on a crimson gradient field",
     width: 1280,
     height: 720,
   },
-  // Next year's artwork replaces this one file and these two lines. Nothing else references the
-  // path, and the alt text is deliberately a description of what the flyer *says*; it is the only
-  // way the flyer's content (a raster) reaches a screen reader or a search engine.
+  // Generated from real, verified facts only (crest, programs and their age ranges, contact
+  // details, address, motto — all sourced from the crest and kiddiewise.vercel.app), not designed
+  // artwork from the school. Swap this file for the school's own admission flyer once they have
+  // one; nothing else references the path.
   flyer: {
-    src: "/slis/flyer-admission-2026-2027.jpg",
-    alt: "SLIS admission flyer: admissions open for the 2026/2027 school year with an early-bird discount. It lists the five levels — Creche (6 months–2 years), Nursery (3–4), KG (4–5), Primary (6+) and JSS — the campus facilities, and the school's email and phone numbers.",
+    src: "/kiddiewise/flyer-admission-2026-2027.jpg",
+    alt: "Kiddiewise School Complex admission flyer: admissions open for the 2026/2027 school year. It lists the five levels — Daycare (6 months–2 years), Preschool/Nursery (2–4), Kindergarten (4–6), Primary (6–12) and JHS (12–15) — plus the school's address, phone and email.",
     width: 1023,
     height: 1537,
   },

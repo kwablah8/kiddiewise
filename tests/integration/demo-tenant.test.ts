@@ -18,9 +18,9 @@ import type { Database } from "@/lib/supabase/types";
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const ADMIN_EMAIL = "admin@slis.test";
-const TEACHER_EMAIL = "teacher@slis.test";
-const PARENT_EMAIL = "parent@slis.test";
+const ADMIN_EMAIL = "admin@kiddiewise.test";
+const TEACHER_EMAIL = "teacher@kiddiewise.test";
+const PARENT_EMAIL = "parent@kiddiewise.test";
 const PASSWORD = "Password123!";
 
 type Client = SupabaseClient<Database>;
@@ -122,15 +122,15 @@ describe("the school identifies itself from the database", () => {
     // literal school name is wrong for every tenant but one, and stays wrong after a rebrand.
     const { data, error } = await admin.from("schools").select("name, slug").single();
     expect(error).toBeNull();
-    expect(data!.name).toBe("SNAB Learners International School");
-    expect(data!.slug).toBe("slis");
+    expect(data!.name).toBe("Kiddiewise School Complex");
+    expect(data!.slug).toBe("kiddiewise");
   });
 
   it("the slug matches the SCHOOL_SLUG public enquiries resolve against", async () => {
-    // publicSchoolId() falls back to "slis"; a mismatch would route every public enquiry submitted
-    // from the marketing site into the wrong tenant's inbox, or fail outright.
+    // publicSchoolId() falls back to "kiddiewise"; a mismatch would route every public enquiry
+    // submitted from the marketing site into the wrong tenant's inbox, or fail outright.
     const { data } = await admin.from("schools").select("slug").single();
-    expect(data!.slug).toBe(process.env.SCHOOL_SLUG ?? "slis");
+    expect(data!.slug).toBe(process.env.SCHOOL_SLUG ?? "kiddiewise");
   });
 });
 

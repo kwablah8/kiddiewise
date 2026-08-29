@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "About" };
 /**
  * About: the real, honest story (01-REQ "Marketing website": About): motto hero, mission &
  * vision drawn from the school's own positioning, a "who we are" narrative grounded in confirmed
- * facts only (one Oyarifa campus, Creche → JHS, community-centered), the crest + motto values,
+ * facts only (one Oyarifa campus, Daycare → JHS, community-centered), the crest + motto values,
  * campus/community photos, and a programs recap linking to Admissions. No fabricated history,
  * enrollment figures, awards or named people, see `AboutWhoWeAre`'s editable placeholder callout.
  */
@@ -36,7 +36,7 @@ export default function AboutPage() {
             {SITE.motto}
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-relaxed text-white sm:text-xl">
-            {SITE.name} guides children from Creche through Junior High School on one campus in{" "}
+            {SITE.name} guides children from Daycare through Junior High School on one campus in{" "}
             {SITE.location.lines[0]} — this is what we believe, and how we try to live it out
             every day.
           </p>

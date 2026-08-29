@@ -9,9 +9,9 @@ const ctaVariants = cva(
   {
     variants: {
       variant: {
-        // Gold: the primary SLIS conversion action. Dark-navy ink on gold reads 11.3:1, and the
-        // navy focus ring stays visible on gold (a gold ring would vanish). Transparent ring
-        // offset so it never prints a white collar over the blue hero / scrolled header.
+        // Gold: the primary conversion action. Dark ink on gold reads 11.4:1, and the dark focus
+        // ring stays visible on gold (a gold ring would vanish). Transparent ring offset so it
+        // never prints a white collar over the crimson hero / scrolled header.
         gold:
           "bg-[var(--m-accent)] text-[var(--m-accent-ink)] shadow-sm hover:bg-[color-mix(in_srgb,var(--m-accent),black_8%)] hover:shadow-md focus-visible:ring-[var(--m-accent-ink)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
         // Royal-blue solid, a strong action on white / warm bands.

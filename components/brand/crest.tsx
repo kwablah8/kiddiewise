@@ -22,10 +22,11 @@ interface CrestProps {
 }
 
 /**
- * The SLIS crest in a white chip.
+ * The school crest in a white chip.
  *
- * The white chip is LOAD-BEARING, not decoration: `public/slis/logo.jpg` has a white background, so
- * without the chip the crest's edges would dissolve into the navy sidebar and auth panel.
+ * The white chip is LOAD-BEARING, not decoration: `public/kiddiewise/logo.jpg` has a white
+ * background, so without the chip the crest's edges would dissolve into the brand-coloured sidebar
+ * and auth panel.
  *
  * Shared by the marketing header/footer, the portal sidebar, the auth screens and the parent shell
  *, which is why it reads `lib/brand.ts` rather than the marketing media manifest.

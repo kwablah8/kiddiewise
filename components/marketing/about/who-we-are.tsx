@@ -7,7 +7,7 @@ import { getMarketingSettings } from "@/lib/marketing/cms/read";
 import { PostBody } from "@/components/marketing/news/post-body";
 
 /**
- * "Who we are", the real, safe facts only: one campus, Creche through JHS, in Oyarifa, a
+ * "Who we are", the real, safe facts only: one campus, Daycare through JHS, in Oyarifa, a
  * community that gathers in person (as the community photos show). No founding date, enrollment
  * figure or named history is asserted (M4 honesty guard).
  *
@@ -35,7 +35,7 @@ export async function AboutWhoWeAre() {
           <div className="mt-6 space-y-5 text-lg leading-relaxed text-[var(--muted-foreground)]">
             <p>
               {SITE.name} ({SITE.shortName}) is a single campus in {SITE.location.lines.join(", ")}
-              , {SITE.location.area} — offering every stage from Creche through Junior High School
+              , {SITE.location.area} — offering every stage from Daycare through Junior High School
               under one roof, so a family only ever needs one school.
             </p>
             <p>

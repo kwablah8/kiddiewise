@@ -3,7 +3,7 @@
  *
  * This exists because brand identity is no longer marketing-only: the authenticated portal's
  * sidebar, the auth screens and the parent shell all show the crest and the school's name now that
- * this build is tailored to SLIS. Those surfaces must not import `lib/marketing/*` (a portal
+ * this build is tailored to Kiddiewise. Those surfaces must not import `lib/marketing/*` (a portal
  * reaching into the public site's config crosses a layer boundary), so the shared facts live here
  * and `lib/marketing/site.ts` and `lib/marketing/media.ts` derive from them rather than
  * re-declaring them. One fact, one home.
@@ -35,11 +35,11 @@ export interface BrandCrest {
  * coupling `renderReceipt` is split apart to avoid. Change one, change the other.
  */
 export interface BrandPalette {
-  /** Deep navy, headings on white. The lighter royal looks thin at display sizes. */
+  /** Darkest brand hue, headings on white. The raw brand hue looks thin at display sizes. */
   deep: string;
-  /** Royal blue, darkened, figures and rules. Same value as `--primary`. */
+  /** Brand hue, darkened, figures and rules. Same value as `--primary`. */
   strong: string;
-  /** Gold, accents and rules only. It fails contrast as text on white. */
+  /** Accent hue, accents and rules only. It fails contrast as text on white. */
   accent: string;
   /** A ~8% `strong` wash over white, emphasis-block fills. */
   tint: string;
@@ -57,36 +57,34 @@ export interface Brand {
   crest: BrandCrest;
   /**
    * Backdrop for the auth screens' desktop side panel. `src` only, deliberately: it sits under a
-   * near-opaque navy scrim as pure decoration, so it is rendered with `alt=""` and needs no
-   * description. Shown from `lg` up only, phones get a flat navy band, so this never costs mobile
-   * data. The same file also appears in the marketing gallery manifest with descriptive alt text;
-   * that is the gallery's fact to own, not a duplicate of this one.
+   * near-opaque brand-colour scrim as pure decoration, so it is rendered with `alt=""` and needs no
+   * description. Shown from `lg` up only, phones get a flat brand-colour band, so this never costs
+   * mobile data. The same file also appears in the marketing gallery manifest with descriptive alt
+   * text; that is the gallery's fact to own, not a duplicate of this one.
    */
   authPanelPhoto: { src: string };
 }
 
 export const BRAND: Brand = {
-  shortName: "SLIS",
-  fullName: "SNAB Learners International School",
-  descriptor: "Learners International",
-  motto: "Nurturing, Growing & Leading with Excellence.",
+  shortName: "Kiddiewise",
+  fullName: "Kiddiewise School Complex",
+  descriptor: "Adenta – Oyarifa",
+  motto: "The Name of the Lord is our Strong Tower.",
   palette: {
-    deep: "#1d2f65",
-    strong: "#2a4bc8",
-    accent: "#ffd700",
-    tint: "#edf0fb",
+    deep: "#710129",
+    strong: "#a4013b",
+    accent: "#ffb605",
+    tint: "#f8ebef",
   },
   crest: {
-    src: "/slis/logo.jpg",
-    alt: "SNAB Learners International School (SLIS) crest — a blue and gold shield with an open book and torch",
-    width: 512,
-    height: 512,
+    src: "/kiddiewise/logo.jpg",
+    alt: "Kiddiewise School Complex crest — a crimson shield with an open book, a lit torch and a pen, above the motto 'The Name of the Lord is our Strong Tower', established 2012",
+    width: 447,
+    height: 700,
   },
-  // Chosen over the campus exteriors for three concrete reasons: it is PORTRAIT (1440x1920), so it
-  // crops into the tall panel with almost no loss where a 4:3 exterior would centre-crop to sky;
-  // it is properly photographed rather than WhatsApp-quality; and the pupil's uniform is royal blue
-  // with the school crest on it, so the frame carries the brand by itself. The exteriors all share
-  // flat overcast sky, overhead power lines and orange pillars that fight the navy/gold palette.
-  // Swap this one line to change the login artwork.
-  authPanelPhoto: { src: "/slis/photos/student-portrait-uniform.jpg" },
+  // TEMPORARY: a brand-colour gradient standing in for a real campus/pupil photo. Swap this one
+  // line for a portrait-orientation photo once the school sends one — see the SLIS build's own
+  // note on what makes a good crop (portrait aspect, properly photographed, subject in school
+  // colours) for what to look for.
+  authPanelPhoto: { src: "/kiddiewise/photos/brand-gradient-placeholder.jpg" },
 } as const;

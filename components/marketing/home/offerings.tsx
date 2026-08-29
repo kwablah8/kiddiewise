@@ -51,7 +51,7 @@ const OFFERING_STYLE: Record<string, { icon: LucideIcon; accent: Accent }> = {
 const FALLBACK = { icon: Sun, accent: "blue" as Accent };
 
 /**
- * "What we offer", the co-curricular life beyond the Creche→JHS academic ladder. Sits directly
+ * "What we offer", the co-curricular life beyond the Daycare→JHS academic ladder. Sits directly
  * after HomePrograms; a `warm` band keeps the page's alternating tone rhythm (white → warm →
  * brand). Every card is real, client-confirmed content from `SITE.offerings`, no invented
  * facilities or events. Each card carries its own soft accent fill and a slightly-tilted "sticker"

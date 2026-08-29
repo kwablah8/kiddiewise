@@ -133,10 +133,10 @@ export function Sidebar({
           {collapsed ? (
             <Crest tone="light" className="size-8 rounded-lg" sizes="32px" standalone />
           ) : (
-            // `compact` drops the "Learners International" descriptor: at w-64, minus the crest and
-            // the collapse chevron, the tracked-out descriptor truncates to "LEARNERS INTERNATIO...",
-            // which looks broken. The crest plus "SLIS" is enough identity for app chrome, the full
-            // lock has room to breathe on the marketing header and the auth panel.
+            // `compact` drops the descriptor line: at w-64, minus the crest and the collapse
+            // chevron, a tracked-out descriptor truncates mid-word, which looks broken. The crest
+            // plus the short name is enough identity for app chrome, the full lock has room to
+            // breathe on the marketing header and the auth panel.
             <BrandLock tone="light" compact crestClassName="size-8 rounded-lg" />
           )}
         </button>
