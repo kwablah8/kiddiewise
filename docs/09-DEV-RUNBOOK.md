@@ -321,9 +321,10 @@ run?", that's why.
 
 ---
 
-## 9. Going to production (not done yet)
+## 9. Going to production
 
-When the hosted project is created, this is the checklist:
+The hosted project exists and carries real school data — real staff and parent accounts, real
+students. This is the checklist that stood it up, kept for reference:
 
 1. Create the Supabase project; copy its URL, anon key and service role key.
 2. Set them in Vercel env vars — **never** in a tracked file. `SUPABASE_SERVICE_ROLE_KEY` must be a
@@ -337,6 +338,59 @@ When the hosted project is created, this is the checklist:
    domain instead of `localhost`.
 7. Re-run `pnpm test:rls` against a staging project before going live — tenant isolation is the one
    thing that must never regress.
+
+### 9a. Moving the project to the school's Supabase organization
+
+The project currently lives in a personal Supabase account. The plan is an **organization
+transfer**, not a new project: it hands the existing project to the school's own Supabase
+organization while keeping the same project ref, URL, both API keys, the database and every
+`auth.users` row. Nothing in Vercel, `.env.local` or this repo changes because of it — only
+ownership and billing move. A rebuild-in-a-new-project path exists as a fallback but is worse on
+every axis here (re-keys Vercel, needs a dump/restore of `auth.users` to keep existing passwords,
+invalidates sessions), so it's the fallback, not the plan.
+
+1. The school creates a Supabase organization with their payment method on it and adds the
+   maintaining developer as Owner or Administrator.
+2. Check the project's current plan and add-ons (PITR, custom domain, compute upgrades) before
+   transferring — the destination org needs a matching plan, or those features drop on transfer.
+3. Take a manual backup first, kept outside the repo: `npx supabase db dump --linked -f backup.sql`.
+4. Dashboard → the project → **Project Settings → General → Transfer project** → select the
+   school's organization → confirm.
+5. Verify by signing in as the real admin and spot-checking a few screens; confirm billing now
+   shows the school's card, not the personal one.
+
+A project can only be transferred with a cooldown between transfers, so this isn't something to
+trial-run — line up the preconditions first. Whoever loses org access after the transfer loses
+`supabase link` / `db push` from this repo too, so keep at least one developer's account as an
+Owner or Administrator on the school's org.
+
+The Vercel account swap is separate — see §9b — and this section's checklist stands independent of
+it either way.
+
+### 9b. Moving to the school's Vercel account
+
+Done. Vercel's in-app project transfer needs you to already be a member of the destination team,
+and adding a member to a Hobby team needs Pro, so the direct transfer wasn't available between two
+unrelated personal accounts. Instead the project was re-imported fresh into the school's Vercel
+account from the same GitHub repo, with Sanity's own Vercel integration connecting the two projects
+directly (Project → Import → Sanity's "Connect Vercel to Sanity" prompt sets
+`NEXT_PUBLIC_SANITY_PROJECT_ID` and `NEXT_PUBLIC_SANITY_DATASET` for you — safe to use, it does not
+overwrite variables already set). The Supabase env vars were copied over by hand from the old
+project's dashboard, and `SANITY_REVALIDATE_SECRET` was regenerated rather than recovered, since
+the integration doesn't carry it and there was no need to dig up the old value.
+
+The live URL changed as a result: **`kiddiewise-zeta.vercel.app`**, replacing
+`kiddiewise.vercel.app`. Whenever the domain changes like this, three things must be updated to
+match or they fail silently rather than with an error:
+
+- `NEXT_PUBLIC_SITE_URL` in the new Vercel project
+- Supabase → Authentication → URL Configuration: Site URL and the `/update-password` redirect entry
+- Sanity → API → CORS origins, and the revalidate webhook's URL
+
+Deployment history and analytics did not carry over from the old project — they weren't relied on
+here, so that was an acceptable trade for avoiding a Pro upgrade. Verified end to end on the new
+URL, including a password-reset round trip (the flow the redirect-URL gotcha breaks), so the old
+project on the personal account is safe to retire.
 
 ---
 

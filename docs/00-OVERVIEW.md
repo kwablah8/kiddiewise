@@ -21,7 +21,7 @@ using and trust with their operations.
 ## Market context
 
 - **Primary market:** Ghana. Currency is displayed and stored in **Ghana Cedi (GHS)**.
-- **Reference deployment:** *Kiddiewise School Complex* (`kiddiewise.vercel.app`). Its Admin
+- **Reference deployment:** *Kiddiewise School Complex* (`kiddiewise-zeta.vercel.app`). Its Admin
   and Teacher portals are the working baseline for scope and visual direction.
 - **Buyer / operator:** private and semi-private schools ("complexes" / K–12) with an
   administrator who owns setup and day-to-day operations.
