@@ -197,18 +197,38 @@ export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF 
   // Original geometry when there is no crest, rather than a 13mm hole where one failed to load.
   const nameX = logo ? MARGIN + crestSize + 4 : MARGIN;
 
+  // Centred within the identity block, same arrangement as the report card's own letterhead
+  // (lib/pdf/report-card.ts#letterhead): name, then each contact field on its own centred line,
+  // address uppercase, email/tel prefixed. No motto — that block's just the school's name and how
+  // to reach it, matching the report card exactly rather than carrying its own separate layout.
+  const blockWidth = 92;
+  const blockCenterX = nameX + blockWidth / 2;
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(...deep);
   // Spaced caps, as the name is set on the school's letterhead. Split over two lines when it is
   // long, so it never runs into the title.
-  const nameLines = doc.splitTextToSize(data.schoolName.toUpperCase(), 92);
-  doc.text(nameLines.slice(0, 2), nameX, 24.5, { charSpace: 0.35, lineHeightFactor: 1.3 });
+  const nameLines = doc.splitTextToSize(data.schoolName.toUpperCase(), blockWidth);
+  doc.text(nameLines.slice(0, 2), blockCenterX, 24.5, {
+    align: "center",
+    charSpace: 0.35,
+    lineHeightFactor: 1.3,
+  });
 
-  doc.setFont("helvetica", "bolditalic");
-  doc.setFontSize(6.8);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.3);
   doc.setTextColor(120);
-  doc.text(BRAND.motto, nameX, nameLines.length > 1 ? 35 : 30, { charSpace: 0.1 });
+  let contactY = nameLines.length > 1 ? 31.5 : 27;
+  const contactLines = [
+    ...(data.schoolAddress?.split("\n").map((l) => l.trim().toUpperCase()) ?? []),
+    data.schoolEmail ? `Email: ${data.schoolEmail}` : "",
+    data.schoolPhone ? `Tel: ${data.schoolPhone}` : "",
+  ].filter(Boolean);
+  for (const line of contactLines) {
+    doc.text(line, blockCenterX, contactY, { align: "center", maxWidth: blockWidth });
+    contactY += 3.4;
+  }
 
   // The form's own title, in the serif it is printed in.
   doc.setFont("times", "bold");

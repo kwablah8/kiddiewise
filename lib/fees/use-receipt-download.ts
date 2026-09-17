@@ -34,6 +34,9 @@ export function useReceiptDownload(): (payment: PaymentVM) => Promise<void> {
           // Read from the tenant, not hardcoded: the receipt is the school's document, and a wrong
           // name on it is worse than a plain one.
           schoolName: school?.name ?? "School",
+          schoolAddress: school?.address ?? null,
+          schoolEmail: school?.email ?? null,
+          schoolPhone: school?.phone ?? null,
           methodLabel: PAYMENT_METHOD_LABEL[payment.method],
           // The tenant's own uploaded crest when there is one; buildReceipt falls back to the
           // bundled crest otherwise.

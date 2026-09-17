@@ -106,6 +106,10 @@ export function amountInWords(amount: number): string {
 export interface ReceiptData {
   receiptNo: string;
   schoolName: string;
+  /** Same three fields the report card's letterhead shows (lib/pdf/report-card.ts). */
+  schoolAddress: string | null;
+  schoolEmail: string | null;
+  schoolPhone: string | null;
   studentName: string;
   className: string;
   feeLabel: string;
@@ -148,6 +152,9 @@ const UNKNOWN_RECORDER = "the school office";
 export function buildReceipt(params: {
   payment: PaymentVM;
   schoolName: string;
+  schoolAddress?: string | null;
+  schoolEmail?: string | null;
+  schoolPhone?: string | null;
   methodLabel: string;
   /** The tenant's own `schools.logo_url`, or null when they haven't uploaded one. */
   logoUrl: string | null;
@@ -155,6 +162,9 @@ export function buildReceipt(params: {
   return {
     receiptNo: receiptNumber(params.payment.id),
     schoolName: params.schoolName,
+    schoolAddress: params.schoolAddress ?? null,
+    schoolEmail: params.schoolEmail ?? null,
+    schoolPhone: params.schoolPhone ?? null,
     studentName: params.payment.student_name,
     className: params.payment.class_name,
     feeLabel: params.payment.fee_label,
