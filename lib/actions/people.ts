@@ -7,12 +7,14 @@ import {
   activeContext,
   assertWrite,
   assertOk,
+  assertAdmin,
   provisionUser,
   rollbackProvisionedUser,
   invitePortalUser,
   reissueTempPassword,
   markTempCredential,
   logActivity,
+  deleteAuthUser,
   type TenantContext,
   type PortalInvite,
   type IssuedCredentials,
@@ -300,6 +302,55 @@ export async function reissueCredentials(input: {
     const { profile_id } = z.object({ profile_id: z.string().min(1) }).parse(input);
     const ctx = await tenant();
     return reissueTempPassword(ctx, profile_id);
+  });
+}
+
+/**
+ * Permanently remove a student. Unconditional: the admin decides, after seeing what goes with them
+ * (`lib/data/deletion-impact.ts#getStudentDeletionImpact`, rendered in the confirm dialog) — unlike
+ * staff, every table keyed on `student_id` is `on delete cascade` (migration 0005 onward), so this
+ * genuinely erases their attendance, scores, invoices, payments and terminal reports, not just their
+ * name off them. A student who has simply left stays a record: set `enrollment_status` to
+ * `withdrawn` or `transferred` through `updateStudent` instead.
+ */
+export async function deleteStudent(input: { id: string }): Promise<ActionResult<{ ok: true }>> {
+  return attempt(async () => {
+    const { id } = z.object({ id: z.string().min(1) }).parse(input);
+    const ctx = await tenant();
+    assertAdmin(ctx);
+
+    const { data: target } = await ctx.db.from("students").select("id").eq("id", id).maybeSingle();
+    if (!target) throw new UserFacingError("That student is not in your school.");
+
+    assertOk(await ctx.db.from("students").delete().eq("id", id), "student");
+    return { ok: true };
+  });
+}
+
+/**
+ * Permanently remove a parent and their auth account. Unconditional, same as `deleteStudent` and
+ * `deleteStaff`. `student_guardians` cascades on the parent's profile (migration 0005), so this
+ * removes the GUARDIAN LINK, not any linked child, a student stays in the system with one fewer
+ * guardian rather than disappearing because their parent's account was deleted.
+ */
+export async function deleteParent(input: { id: string }): Promise<ActionResult<{ ok: true }>> {
+  return attempt(async () => {
+    const { id } = z.object({ id: z.string().min(1) }).parse(input);
+    const ctx = await tenant();
+    assertAdmin(ctx);
+
+    const { data: target } = await ctx.db
+      .from("profiles")
+      .select("id, role")
+      .eq("id", id)
+      .maybeSingle();
+    if (!target) throw new UserFacingError("That parent is not in your school.");
+    if (target.role !== "parent") {
+      throw new UserFacingError("Only parent accounts can be deleted here.");
+    }
+
+    await deleteAuthUser(id); // profile row cascades with the auth account
+    return { ok: true };
   });
 }
 

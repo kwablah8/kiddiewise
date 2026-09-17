@@ -12,6 +12,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { buttonVariants } from "@/components/ui/button";
 import { InvitePortalButton } from "@/components/people/invite-portal-button";
 import { SendCredentialsButton } from "@/components/people/send-credentials-button";
+import { DeleteParentButton } from "@/components/people/delete-parent-button";
 import { StatusPill } from "@/components/data/status-pill";
 import { useParents } from "@/lib/queries/people";
 import { PORTAL_ACCESS_LABEL, type ParentListItemVM, type PortalAccessStatus } from "@/lib/validators/people";
@@ -93,6 +94,7 @@ function buildColumns(): DataTableColumn<ParentListItemVM>[] {
             personName={`${row.first_name} ${row.last_name}`}
             label="Send link"
           />
+          <DeleteParentButton profileId={row.id} personName={`${row.first_name} ${row.last_name}`} />
         </div>
       ),
     },

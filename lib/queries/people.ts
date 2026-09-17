@@ -4,6 +4,7 @@ import { mutate } from "@/lib/actions/result";
 import { queryKeys } from "./keys";
 import * as data from "@/lib/data/people";
 import * as actions from "@/lib/actions/people";
+import { getStudentDeletionImpact, getParentDeletionImpact } from "@/lib/data/deletion-impact";
 
 
 // Each action is bound to a const here rather than wrapped inline at `mutationFn`. That is not
@@ -13,7 +14,9 @@ import * as actions from "@/lib/actions/people";
 // property a concrete function type and inference works as it did before. Do not inline these.
 const createStudent = mutate(actions.createStudent);
 const updateStudent = mutate(actions.updateStudent);
+const deleteStudent = mutate(actions.deleteStudent);
 const createParent = mutate(actions.createParent);
+const deleteParent = mutate(actions.deleteParent);
 const linkGuardian = mutate(actions.linkGuardian);
 const invitePortal = mutate(actions.invitePortal);
 const reissueCredentials = mutate(actions.reissueCredentials);
@@ -70,11 +73,48 @@ export const useUpdateStudent = () => {
   });
 };
 
+/** What a student deletion takes with it — shown in the confirm dialog before an irreversible delete. */
+export const useStudentDeletionImpact = (id: string) =>
+  useQuery({
+    queryKey: queryKeys.deletionImpact.student(id),
+    queryFn: () => getStudentDeletionImpact(id),
+  });
+
+export const useDeleteStudent = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteStudent,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.students.all });
+      qc.invalidateQueries({ queryKey: queryKeys.students.stats });
+      qc.invalidateQueries({ queryKey: queryKeys.parents.all }); // a deleted child drops off any guardian's list
+    },
+  });
+};
+
 export const useCreateParent = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: createParent,
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.parents.all }),
+  });
+};
+
+/** What a parent deletion takes with it — the guardian link, not the child (migration 0005). */
+export const useParentDeletionImpact = (id: string) =>
+  useQuery({
+    queryKey: queryKeys.deletionImpact.parent(id),
+    queryFn: () => getParentDeletionImpact(id),
+  });
+
+export const useDeleteParent = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteParent,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.parents.all });
+      qc.invalidateQueries({ queryKey: queryKeys.students.all }); // their children's guardian list changed
+    },
   });
 };
 

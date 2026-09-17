@@ -490,9 +490,12 @@ export async function updateStaff(
 }
 
 /**
- * Remove a staff member who should never have existed, wrong email, duplicate entry, test row.
- * Anyone the school has actually worked with is blocked and pointed at deactivation, which keeps
- * their name on everything they authored while revoking access.
+ * Permanently remove a staff member and their auth account. Unconditional: the admin decides,
+ * after seeing what goes with them (`lib/data/deletion-impact.ts#getStaffDeletionImpact`, rendered
+ * in the confirm dialog) — every one of those references is `on delete set null`, so a delete
+ * strips this person's name off registers, mark sheets and receipts rather than removing that
+ * history itself. Deactivation (`updateStaff`'s `is_active`) stays the reversible option for
+ * anyone the school would rather keep on record but lock out.
  */
 export async function deleteStaff(input: { id: string }): Promise<ActionResult<{ ok: true }>> {
   return attempt(async () => {
@@ -514,39 +517,6 @@ export async function deleteStaff(input: { id: string }): Promise<ActionResult<{
     if (!target) throw new UserFacingError("That staff member is not in your school.");
     if (target.role !== "teacher" && target.role !== "school_admin") {
       throw new UserFacingError("Only staff accounts can be deleted here.");
-    }
-
-    // What blocks the deletion. The database SET NULLs all of these references on delete, so a
-    // delete would silently strip authorship off registers, mark sheets and receipts, these
-    // checks, not an FK, are the block-if-history boundary here. activity_log is deliberately
-    // absent: audit lines keep their text, and losing the actor link is what any audit trail does
-    // when an account goes away.
-    const head = { count: "exact", head: true } as const;
-    const [classes, assignments, attendance, assessments, results, payments, announcements, events] =
-      await Promise.all([
-        ctx.db.from("classes").select("id", head).eq("class_teacher_id", id),
-        ctx.db.from("class_subjects").select("id", head).eq("teacher_id", id),
-        ctx.db.from("attendance").select("id", head).eq("marked_by", id),
-        ctx.db.from("assessments").select("id", head).eq("created_by", id),
-        ctx.db.from("results").select("id", head).eq("entered_by", id),
-        ctx.db.from("payments").select("id", head).eq("recorded_by", id),
-        ctx.db.from("announcements").select("id", head).eq("created_by", id),
-        ctx.db.from("events").select("id", head).eq("created_by", id),
-      ]);
-    const blocking = [
-      { count: classes.count, what: "is a class teacher" },
-      { count: assignments.count, what: "has subject assignments" },
-      { count: attendance.count, what: "has marked attendance" },
-      { count: assessments.count, what: "has created assessments" },
-      { count: results.count, what: "has entered scores" },
-      { count: payments.count, what: "has recorded payments" },
-      { count: announcements.count, what: "has published announcements" },
-      { count: events.count, what: "has published events" },
-    ].find((b) => (b.count ?? 0) > 0);
-    if (blocking) {
-      throw new UserFacingError(
-        `This staff member ${blocking.what} — deleting them would strip their name off that history. Deactivate them instead.`,
-      );
     }
 
     await deleteAuthUser(id); // profile row cascades with the auth account

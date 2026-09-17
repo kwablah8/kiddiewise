@@ -25,6 +25,7 @@ import {
   useAssignmentsForStaff,
   useClasses,
   useDeleteStaff,
+  useStaffDeletionImpact,
   useStaffMember,
   useUpdateStaff,
 } from "@/lib/queries/academics";
@@ -265,6 +266,7 @@ function ConfirmDeleteStaffDialog({
 }) {
   const router = useAppRouter();
   const deleteStaff = useDeleteStaff();
+  const { data: impact, isLoading: impactLoading } = useStaffDeletionImpact(staff.id);
   const fullName = `${staff.first_name} ${staff.last_name}`;
 
   async function handleConfirm() {
@@ -274,7 +276,6 @@ function ConfirmDeleteStaffDialog({
       onOpenChange(false);
       router.push("/staff");
     } catch (err) {
-      // The common failure is the block-if-history guard; its message points at deactivation.
       toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       onOpenChange(false);
     }
@@ -287,10 +288,20 @@ function ConfirmDeleteStaffDialog({
           <DialogTitle>Delete staff member?</DialogTitle>
           <DialogDescription>
             <strong className="text-[var(--text)]">{fullName}</strong> and their portal account will
-            be permanently removed. This only works for someone with no records — anyone who has
-            marked attendance, entered scores or runs a class must be deactivated instead.
+            be permanently removed. This cannot be undone. If they should just lose access rather
+            than disappear from your records, deactivate them instead.
           </DialogDescription>
         </DialogHeader>
+        {!impactLoading && (impact?.length ?? 0) > 0 && (
+          <div className="mt-3 rounded-lg border border-[var(--warning-border,var(--border))] bg-[var(--warning-bg,var(--bg))] p-3">
+            <p className="text-xs font-medium text-[var(--text)]">Their name will be stripped off:</p>
+            <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs text-[var(--text)]">
+              {impact!.map((i) => (
+                <li key={i.label}>{i.count} {i.label}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <DialogFooter className="mt-2">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel

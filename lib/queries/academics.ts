@@ -4,6 +4,7 @@ import { mutate } from "@/lib/actions/result";
 import { queryKeys } from "./keys";
 import * as data from "@/lib/data/academics";
 import * as actions from "@/lib/actions/academics";
+import { getStaffDeletionImpact } from "@/lib/data/deletion-impact";
 
 
 // Each action is bound to a const here rather than wrapped inline at `mutationFn`. That is not
@@ -244,6 +245,13 @@ export const useUpdateStaff = () => {
     },
   });
 };
+
+/** What a staff deletion takes with it — shown in the confirm dialog before an irreversible delete. */
+export const useStaffDeletionImpact = (id: string) =>
+  useQuery({
+    queryKey: queryKeys.deletionImpact.staff(id),
+    queryFn: () => getStaffDeletionImpact(id),
+  });
 
 export const useDeleteStaff = () => {
   const qc = useQueryClient();

@@ -2,10 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Pencil, UserRoundX, Users } from "lucide-react";
+import { Loader2, Pencil, Trash2, UserRoundX, Users } from "lucide-react";
+import { useAppRouter } from "@/lib/navigation";
+import { toast } from "@/lib/toast";
 import { PageHeader } from "@/components/app/page-header";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { StatusPill } from "@/components/data/status-pill";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { EmptyState } from "@/components/states/empty-state";
@@ -13,7 +23,13 @@ import { ErrorState } from "@/components/states/error-state";
 import { StudentAvatar } from "./student-avatar";
 import { studentStatusTone } from "./student-status";
 import { LinkGuardianDialog } from "./link-guardian-dialog";
-import { useStudent, useStudentAcademics } from "@/lib/queries/people";
+import {
+  useStudent,
+  useStudentAcademics,
+  useStudentDeletionImpact,
+  useDeleteStudent,
+} from "@/lib/queries/people";
+import type { StudentDetailVM } from "@/lib/validators/people";
 import { performanceBand } from "@/lib/grading";
 import { formatDate, formatRole } from "@/lib/format";
 import { cardShellClass } from "@/lib/ui";
@@ -31,6 +47,7 @@ export function StudentProfile({ id }: StudentProfileProps) {
   // Bumped on every open so `LinkGuardianDialog` remounts fresh (RHF state reset without an
   // effect-driven `reset()` call).
   const [linkDialogKey, setLinkDialogKey] = useState(0);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (isLoading) return <ProfileSkeleton />;
 
@@ -88,13 +105,19 @@ export function StudentProfile({ id }: StudentProfileProps) {
         backHref="/students"
         backLabel="Students"
         action={
-          <Link
-            href={`/students/${id}/edit`}
-            className={cn(buttonVariants(), "gap-1.5")}
-          >
-            <Pencil className="size-4" aria-hidden="true" />
-            Edit
-          </Link>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" className="gap-1.5" onClick={() => setDeleteOpen(true)}>
+              <Trash2 className="size-4 text-[var(--danger)]" aria-hidden="true" />
+              Delete
+            </Button>
+            <Link
+              href={`/students/${id}/edit`}
+              className={cn(buttonVariants(), "gap-1.5")}
+            >
+              <Pencil className="size-4" aria-hidden="true" />
+              Edit
+            </Link>
+          </div>
         }
       />
 
@@ -317,7 +340,75 @@ export function StudentProfile({ id }: StudentProfileProps) {
         onOpenChange={setLinkOpen}
         excludeParentIds={data.guardians.map((g) => g.parent_profile_id)}
       />
+      <ConfirmDeleteStudentDialog student={data} open={deleteOpen} onOpenChange={setDeleteOpen} />
     </div>
+  );
+}
+
+function ConfirmDeleteStudentDialog({
+  student,
+  open,
+  onOpenChange,
+}: {
+  student: StudentDetailVM;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const router = useAppRouter();
+  const deleteStudent = useDeleteStudent();
+  const { data: impact, isLoading: impactLoading } = useStudentDeletionImpact(student.id);
+  const fullName = `${student.first_name} ${student.last_name}`;
+
+  async function handleConfirm() {
+    try {
+      await deleteStudent.mutateAsync({ id: student.id });
+      toast.success("Student deleted", { description: `${fullName} has been removed.` });
+      onOpenChange(false);
+      router.push("/students");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      onOpenChange(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete student?</DialogTitle>
+          <DialogDescription>
+            <strong className="text-[var(--text)]">{fullName}</strong> will be permanently removed,
+            along with everything tied to their record. This cannot be undone. If they have simply
+            left the school, set their enrollment status to Withdrawn or Transferred instead —
+            that keeps their history intact.
+          </DialogDescription>
+        </DialogHeader>
+        {!impactLoading && (impact?.length ?? 0) > 0 && (
+          <div className="mt-3 rounded-lg border border-[var(--warning-border,var(--border))] bg-[var(--warning-bg,var(--bg))] p-3">
+            <p className="text-xs font-medium text-[var(--text)]">This permanently deletes:</p>
+            <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs text-[var(--text)]">
+              {impact!.map((i) => (
+                <li key={i.label}>{i.count} {i.label}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <DialogFooter className="mt-2">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={deleteStudent.isPending}
+          >
+            {deleteStudent.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            Delete Student
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
