@@ -64,12 +64,16 @@ export function LessonNoteFormDialog({ teacherId, open, onOpenChange }: LessonNo
       class_id: "",
       subject_id: "",
       term_id: active?.active_term?.id ?? "",
-      date: "",
+      week_ending: "",
       topic: "",
+      materials_needed: null,
       objectives: null,
-      content: null,
-      homework: null,
-      resources: null,
+      lesson1_content: null,
+      lesson1_assessment: null,
+      lesson2_content: null,
+      lesson2_assessment: null,
+      lesson3_content: null,
+      lesson3_assessment: null,
     },
   });
 
@@ -193,9 +197,9 @@ export function LessonNoteFormDialog({ teacherId, open, onOpenChange }: LessonNo
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="ln-date">Date</Label>
-                <Input id="ln-date" type="date" aria-invalid={!!errors.date} {...register("date")} />
-                {errors.date && <p className="text-xs text-[var(--danger)]">{errors.date.message}</p>}
+                <Label htmlFor="ln-week-ending">Week ending</Label>
+                <Input id="ln-week-ending" type="date" aria-invalid={!!errors.week_ending} {...register("week_ending")} />
+                {errors.week_ending && <p className="text-xs text-[var(--danger)]">{errors.week_ending.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="ln-topic">Topic</Label>
@@ -215,20 +219,48 @@ export function LessonNoteFormDialog({ teacherId, open, onOpenChange }: LessonNo
                   <ChangeModeLink onClick={() => setMode(null)} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="ln-objectives">Objectives</Label>
+                  <Label htmlFor="ln-materials">Materials needed</Label>
+                  <textarea id="ln-materials" rows={2} className={textareaClass} {...register("materials_needed")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ln-objectives">Learning objectives</Label>
                   <textarea id="ln-objectives" rows={2} className={textareaClass} {...register("objectives")} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="ln-content">Content / activities</Label>
-                  <textarea id="ln-content" rows={3} className={textareaClass} {...register("content")} />
+
+                <div className="space-y-3 border-t border-[var(--border)] pt-3">
+                  <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">Lesson 1</p>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ln-l1-content">Lesson</Label>
+                    <textarea id="ln-l1-content" rows={3} className={textareaClass} {...register("lesson1_content")} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ln-l1-assessment">Assessment</Label>
+                    <textarea id="ln-l1-assessment" rows={2} className={textareaClass} {...register("lesson1_assessment")} />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="ln-homework">Homework</Label>
-                  <textarea id="ln-homework" rows={2} className={textareaClass} {...register("homework")} />
+
+                <div className="space-y-3 border-t border-[var(--border)] pt-3">
+                  <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">Lesson 2</p>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ln-l2-content">Lesson</Label>
+                    <textarea id="ln-l2-content" rows={3} className={textareaClass} {...register("lesson2_content")} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ln-l2-assessment">Assessment</Label>
+                    <textarea id="ln-l2-assessment" rows={2} className={textareaClass} {...register("lesson2_assessment")} />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="ln-resources">Resources</Label>
-                  <textarea id="ln-resources" rows={2} className={textareaClass} {...register("resources")} />
+
+                <div className="space-y-3 border-t border-[var(--border)] pt-3">
+                  <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">Lesson 3</p>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ln-l3-content">Lesson</Label>
+                    <textarea id="ln-l3-content" rows={3} className={textareaClass} {...register("lesson3_content")} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="ln-l3-assessment">Assessment</Label>
+                    <textarea id="ln-l3-assessment" rows={2} className={textareaClass} {...register("lesson3_assessment")} />
+                  </div>
                 </div>
               </div>
             ) : (

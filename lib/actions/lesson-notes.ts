@@ -18,10 +18,10 @@ import {
 const ATTACHMENT_BUCKET = "lesson-note-attachments";
 
 /**
- * Create a draft lesson note. RLS (ln_teacher_insert, migration 0037) rejects the insert unless the
+ * Create a draft lesson plan. RLS (ln_teacher_insert, migration 0037) rejects the insert unless the
  * caller is the assigned teacher for that class-subject pair, so the pairing isn't re-checked here.
- * The unique(class_id, subject_id, date) constraint is what turns a duplicate into a friendly
- * message instead of a raw 23505.
+ * The unique(class_id, subject_id, week_ending) constraint is what turns a duplicate into a
+ * friendly message instead of a raw 23505.
  */
 export async function createLessonNote(
   input: LessonNoteCreateInput,
@@ -37,11 +37,11 @@ export async function createLessonNote(
         .select("id")
         .single(),
       "lesson note",
-      "You already have a lesson note for that class, subject and date — edit it instead.",
+      "You already have a lesson plan for that class, subject and week — edit it instead.",
     );
 
     const { data: klass } = await ctx.db.from("classes").select("name").eq("id", data.class_id).maybeSingle();
-    await logActivity(ctx, `wrote a lesson note for ${klass?.name ?? "a class"}`, "lesson_note", row.id);
+    await logActivity(ctx, `wrote a lesson plan for ${klass?.name ?? "a class"}`, "lesson_note", row.id);
 
     return { id: row.id };
   });

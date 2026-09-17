@@ -1176,14 +1176,17 @@ export type Database = {
           attachment_name: string | null
           attachment_path: string | null
           class_id: string
-          content: string | null
           created_at: string
           created_by: string | null
-          date: string
-          homework: string | null
           id: string
+          lesson1_assessment: string | null
+          lesson1_content: string | null
+          lesson2_assessment: string | null
+          lesson2_content: string | null
+          lesson3_assessment: string | null
+          lesson3_content: string | null
+          materials_needed: string | null
           objectives: string | null
-          resources: string | null
           school_id: string
           status: Database["public"]["Enums"]["lesson_note_status"]
           subject_id: string
@@ -1191,19 +1194,23 @@ export type Database = {
           term_id: string
           topic: string
           updated_at: string
+          week_ending: string
         }
         Insert: {
           attachment_name?: string | null
           attachment_path?: string | null
           class_id: string
-          content?: string | null
           created_at?: string
           created_by?: string | null
-          date: string
-          homework?: string | null
           id?: string
+          lesson1_assessment?: string | null
+          lesson1_content?: string | null
+          lesson2_assessment?: string | null
+          lesson2_content?: string | null
+          lesson3_assessment?: string | null
+          lesson3_content?: string | null
+          materials_needed?: string | null
           objectives?: string | null
-          resources?: string | null
           school_id: string
           status?: Database["public"]["Enums"]["lesson_note_status"]
           subject_id: string
@@ -1211,19 +1218,23 @@ export type Database = {
           term_id: string
           topic: string
           updated_at?: string
+          week_ending: string
         }
         Update: {
           attachment_name?: string | null
           attachment_path?: string | null
           class_id?: string
-          content?: string | null
           created_at?: string
           created_by?: string | null
-          date?: string
-          homework?: string | null
           id?: string
+          lesson1_assessment?: string | null
+          lesson1_content?: string | null
+          lesson2_assessment?: string | null
+          lesson2_content?: string | null
+          lesson3_assessment?: string | null
+          lesson3_content?: string | null
+          materials_needed?: string | null
           objectives?: string | null
-          resources?: string | null
           school_id?: string
           status?: Database["public"]["Enums"]["lesson_note_status"]
           subject_id?: string
@@ -1231,6 +1242,7 @@ export type Database = {
           term_id?: string
           topic?: string
           updated_at?: string
+          week_ending?: string
         }
         Relationships: [
           {

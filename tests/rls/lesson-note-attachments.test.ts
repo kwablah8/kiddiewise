@@ -11,8 +11,8 @@ const FILE = Buffer.from("%PDF-1.4 test content");
 
 let s: Seeded;
 let termId: string;
-// unique(class_id, subject_id, date): every seed in this file reuses the same class-subject pair,
-// so each call needs its own date or the insert collides with an earlier test's row.
+// unique(class_id, subject_id, week_ending): every seed in this file reuses the same class-subject
+// pair, so each call needs its own week or the insert collides with an earlier test's row.
 let dayCounter = 0;
 
 async function seedNote(
@@ -28,7 +28,7 @@ async function seedNote(
       class_id: classId,
       subject_id: subjectId,
       term_id: termId,
-      date: `2026-09-${String(dayCounter).padStart(2, "0")}`,
+      week_ending: `2026-09-${String(dayCounter).padStart(2, "0")}`,
       topic: "Attachment test",
       status,
       submitted_at: status === "submitted" ? new Date().toISOString() : null,

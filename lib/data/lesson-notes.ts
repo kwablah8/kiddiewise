@@ -6,7 +6,9 @@ import type {
 } from "@/lib/validators/lesson-notes";
 
 const SELECT = `
-  id, class_id, subject_id, term_id, date, topic, objectives, content, homework, resources,
+  id, class_id, subject_id, term_id, week_ending, topic, materials_needed, objectives,
+  lesson1_content, lesson1_assessment, lesson2_content, lesson2_assessment,
+  lesson3_content, lesson3_assessment,
   status, submitted_at, created_by, attachment_path, attachment_name,
   classes(name), subjects(name), terms(name),
   teacher:profiles!lesson_notes_created_by_fkey(first_name, last_name)
@@ -17,12 +19,16 @@ interface LessonNoteRow {
   class_id: string;
   subject_id: string;
   term_id: string;
-  date: string;
+  week_ending: string;
   topic: string;
+  materials_needed: string | null;
   objectives: string | null;
-  content: string | null;
-  homework: string | null;
-  resources: string | null;
+  lesson1_content: string | null;
+  lesson1_assessment: string | null;
+  lesson2_content: string | null;
+  lesson2_assessment: string | null;
+  lesson3_content: string | null;
+  lesson3_assessment: string | null;
   status: "draft" | "submitted";
   submitted_at: string | null;
   created_by: string | null;
@@ -43,7 +49,7 @@ function toListItemVM(n: LessonNoteRow): LessonNoteListItemVM {
     subject_name: n.subjects?.name ?? "",
     term_id: n.term_id,
     term_name: n.terms?.name ?? "",
-    date: n.date,
+    week_ending: n.week_ending,
     topic: n.topic,
     status: n.status,
     submitted_at: n.submitted_at,
@@ -56,10 +62,14 @@ function toListItemVM(n: LessonNoteRow): LessonNoteListItemVM {
 function toDetailVM(n: LessonNoteRow): LessonNoteDetailVM {
   return {
     ...toListItemVM(n),
+    materials_needed: n.materials_needed,
     objectives: n.objectives,
-    content: n.content,
-    homework: n.homework,
-    resources: n.resources,
+    lesson1_content: n.lesson1_content,
+    lesson1_assessment: n.lesson1_assessment,
+    lesson2_content: n.lesson2_content,
+    lesson2_assessment: n.lesson2_assessment,
+    lesson3_content: n.lesson3_content,
+    lesson3_assessment: n.lesson3_assessment,
   };
 }
 
@@ -71,7 +81,7 @@ function toDetailVM(n: LessonNoteRow): LessonNoteDetailVM {
 export async function listLessonNotes(
   filters: LessonNoteFilters = {},
 ): Promise<LessonNoteListItemVM[]> {
-  let q = db().from("lesson_notes").select(SELECT).order("date", { ascending: false });
+  let q = db().from("lesson_notes").select(SELECT).order("week_ending", { ascending: false });
   if (filters.term_id) q = q.eq("term_id", filters.term_id);
   if (filters.class_id) q = q.eq("class_id", filters.class_id);
   if (filters.subject_id) q = q.eq("subject_id", filters.subject_id);
@@ -96,7 +106,7 @@ export async function getLessonNote(id: string): Promise<LessonNoteDetailVM | nu
  */
 export async function listMyLessonNotes(): Promise<LessonNoteListItemVM[]> {
   const rows = unwrapList(
-    await db().from("lesson_notes").select(SELECT).order("date", { ascending: false }),
+    await db().from("lesson_notes").select(SELECT).order("week_ending", { ascending: false }),
     "lesson notes",
   );
   return rows.map(toListItemVM);

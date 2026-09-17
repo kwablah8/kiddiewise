@@ -123,7 +123,15 @@ function LessonNoteEditDialog({
   // (or a later refetch of `detail`) never fights a state update against itself.
   const [manualMode, setManualMode] = useState<LessonNoteMode | null | undefined>(undefined);
   const hasTemplateContent = Boolean(
-    detail && (detail.objectives || detail.content || detail.homework || detail.resources),
+    detail &&
+      (detail.materials_needed ||
+        detail.objectives ||
+        detail.lesson1_content ||
+        detail.lesson1_assessment ||
+        detail.lesson2_content ||
+        detail.lesson2_assessment ||
+        detail.lesson3_content ||
+        detail.lesson3_assessment),
   );
   const inferredMode: LessonNoteMode | null = existingAttachment ? "upload" : hasTemplateContent ? "template" : null;
   const mode = manualMode === undefined ? inferredMode : manualMode;
@@ -139,10 +147,14 @@ function LessonNoteEditDialog({
     values: detail
       ? {
           topic: detail.topic,
+          materials_needed: detail.materials_needed,
           objectives: detail.objectives,
-          content: detail.content,
-          homework: detail.homework,
-          resources: detail.resources,
+          lesson1_content: detail.lesson1_content,
+          lesson1_assessment: detail.lesson1_assessment,
+          lesson2_content: detail.lesson2_content,
+          lesson2_assessment: detail.lesson2_assessment,
+          lesson3_content: detail.lesson3_content,
+          lesson3_assessment: detail.lesson3_assessment,
         }
       : undefined,
   });
@@ -192,8 +204,8 @@ function LessonNoteEditDialog({
           <DialogHeader>
             <DialogTitle>Edit lesson note</DialogTitle>
             <DialogDescription>
-              {note.class_name} · {note.subject_name} · {note.date}. The class, subject and date
-              can&apos;t change, that would make it a different note.
+              {note.class_name} · {note.subject_name} · {note.week_ending}. The class, subject and
+              week can&apos;t change, that would make it a different note.
             </DialogDescription>
           </DialogHeader>
 
@@ -217,20 +229,48 @@ function LessonNoteEditDialog({
                     <ChangeModeLink onClick={() => setManualMode(null)} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="edit_objectives">Objectives</Label>
+                    <Label htmlFor="edit_materials">Materials needed</Label>
+                    <textarea id="edit_materials" rows={2} className={textareaClass} {...register("materials_needed")} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit_objectives">Learning objectives</Label>
                     <textarea id="edit_objectives" rows={2} className={textareaClass} {...register("objectives")} />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="edit_content">Content / activities</Label>
-                    <textarea id="edit_content" rows={3} className={textareaClass} {...register("content")} />
+
+                  <div className="space-y-3 border-t border-[var(--border)] pt-3">
+                    <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">Lesson 1</p>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit_l1_content">Lesson</Label>
+                      <textarea id="edit_l1_content" rows={3} className={textareaClass} {...register("lesson1_content")} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit_l1_assessment">Assessment</Label>
+                      <textarea id="edit_l1_assessment" rows={2} className={textareaClass} {...register("lesson1_assessment")} />
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="edit_homework">Homework</Label>
-                    <textarea id="edit_homework" rows={2} className={textareaClass} {...register("homework")} />
+
+                  <div className="space-y-3 border-t border-[var(--border)] pt-3">
+                    <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">Lesson 2</p>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit_l2_content">Lesson</Label>
+                      <textarea id="edit_l2_content" rows={3} className={textareaClass} {...register("lesson2_content")} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit_l2_assessment">Assessment</Label>
+                      <textarea id="edit_l2_assessment" rows={2} className={textareaClass} {...register("lesson2_assessment")} />
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="edit_resources">Resources</Label>
-                    <textarea id="edit_resources" rows={2} className={textareaClass} {...register("resources")} />
+
+                  <div className="space-y-3 border-t border-[var(--border)] pt-3">
+                    <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">Lesson 3</p>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit_l3_content">Lesson</Label>
+                      <textarea id="edit_l3_content" rows={3} className={textareaClass} {...register("lesson3_content")} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="edit_l3_assessment">Assessment</Label>
+                      <textarea id="edit_l3_assessment" rows={2} className={textareaClass} {...register("lesson3_assessment")} />
+                    </div>
                   </div>
                 </div>
               ) : (

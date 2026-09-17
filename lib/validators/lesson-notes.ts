@@ -1,9 +1,11 @@
 import { z } from "zod";
 
 /**
- * A teacher's lesson note for one class-subject-day (migration 0037). `status` is the whole
- * submission workflow: 'draft' is private to the author, 'submitted' is what makes it visible to
- * the admin (RLS decides that, not this file). There is no "unsubmit".
+ * A teacher's lesson plan for one class-subject-week (migration 0037, reshaped by 0042 to match
+ * the school's actual paper "Lesson Plan" form: Materials Needed + Learning Objectives, then three
+ * numbered Lesson/Assessment pairs). `status` is the whole submission workflow: 'draft' is private
+ * to the author, 'submitted' is what makes it visible to the admin (RLS decides that, not this
+ * file). There is no "unsubmit".
  */
 
 export const lessonNoteStatus = z.enum(["draft", "submitted"]);
@@ -32,7 +34,7 @@ export const lessonNoteListItemVM = z.object({
   subject_name: z.string(),
   term_id: z.string(),
   term_name: z.string(),
-  date: z.string(),
+  week_ending: z.string(),
   topic: z.string(),
   status: lessonNoteStatus,
   submitted_at: z.string().nullable(),
@@ -45,10 +47,14 @@ export const lessonNoteListItemVM = z.object({
 export type LessonNoteListItemVM = z.infer<typeof lessonNoteListItemVM>;
 
 export const lessonNoteDetailVM = lessonNoteListItemVM.extend({
+  materials_needed: z.string().nullable(),
   objectives: z.string().nullable(),
-  content: z.string().nullable(),
-  homework: z.string().nullable(),
-  resources: z.string().nullable(),
+  lesson1_content: z.string().nullable(),
+  lesson1_assessment: z.string().nullable(),
+  lesson2_content: z.string().nullable(),
+  lesson2_assessment: z.string().nullable(),
+  lesson3_content: z.string().nullable(),
+  lesson3_assessment: z.string().nullable(),
 });
 export type LessonNoteDetailVM = z.infer<typeof lessonNoteDetailVM>;
 
@@ -65,19 +71,23 @@ export const lessonNoteCreateSchema = z.object({
   class_id: z.string().min(1, "Select a class"),
   subject_id: z.string().min(1, "Select a subject"),
   term_id: z.string().min(1, "Select a term"),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
+  week_ending: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
   topic: z.string().trim().min(1, "Required").max(200, "Keep this under 200 characters"),
+  materials_needed: noteText(),
   objectives: noteText(),
-  content: noteText(),
-  homework: noteText(),
-  resources: noteText(),
+  lesson1_content: noteText(),
+  lesson1_assessment: noteText(),
+  lesson2_content: noteText(),
+  lesson2_assessment: noteText(),
+  lesson3_content: noteText(),
+  lesson3_assessment: noteText(),
 });
 export type LessonNoteCreateInput = z.infer<typeof lessonNoteCreateSchema>;
 
-// Class, subject, term and date are not editable after creation, the row is keyed on them
-// (unique(class_id, subject_id, date)); changing any is really a new lesson note, not an edit.
+// Class, subject, term and week are not editable after creation, the row is keyed on them
+// (unique(class_id, subject_id, week_ending)); changing any is really a new lesson plan, not an edit.
 export const lessonNoteUpdateSchema = lessonNoteCreateSchema
-  .omit({ class_id: true, subject_id: true, term_id: true, date: true })
+  .omit({ class_id: true, subject_id: true, term_id: true, week_ending: true })
   .extend({ id: z.string().min(1) });
 export type LessonNoteUpdateInput = z.infer<typeof lessonNoteUpdateSchema>;
 

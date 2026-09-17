@@ -37,9 +37,9 @@ export function LessonNotesTable() {
       ),
     },
     {
-      key: "date",
-      header: "Date",
-      render: (r) => <span className="text-[var(--muted-foreground)]">{formatDate(r.date)}</span>,
+      key: "week_ending",
+      header: "Week ending",
+      render: (r) => <span className="text-[var(--muted-foreground)]">{formatDate(r.week_ending)}</span>,
     },
     { key: "term", header: "Term", render: (r) => <span className="text-[var(--muted-foreground)]">{r.term_name}</span> },
     {

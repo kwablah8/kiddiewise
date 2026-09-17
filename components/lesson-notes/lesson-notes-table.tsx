@@ -52,9 +52,9 @@ export function LessonNotesTable() {
 
   const columns: DataTableColumn<LessonNoteListItemVM>[] = [
     {
-      key: "date",
-      header: "Date",
-      render: (r) => <span className="text-[var(--muted-foreground)]">{formatDate(r.date)}</span>,
+      key: "week_ending",
+      header: "Week ending",
+      render: (r) => <span className="text-[var(--muted-foreground)]">{formatDate(r.week_ending)}</span>,
     },
     { key: "class", header: "Class", render: (r) => `${r.class_name} · ${r.subject_name}` },
     { key: "teacher", header: "Teacher", render: (r) => <span className="text-[var(--text)]">{r.teacher_name}</span> },

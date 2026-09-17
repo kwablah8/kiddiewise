@@ -60,15 +60,18 @@ export function LessonNoteDetail({ id, backHref = "/lesson-notes" }: { id: strin
       <div className={cardShellClass}>
         <dl className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Field label="Teacher" value={data.teacher_name} />
-          <Field label="Date" value={formatDate(data.date)} />
+          <Field label="Week ending" value={formatDate(data.week_ending)} />
           <Field label="Term" value={data.term_name} />
           <Field label="Submitted" value={data.submitted_at ? formatDate(data.submitted_at) : "—"} />
         </dl>
         <div className="space-y-5">
-          <Section label="Objectives" value={data.objectives} />
-          <Section label="Content / activities" value={data.content} />
-          <Section label="Homework" value={data.homework} />
-          <Section label="Resources" value={data.resources} />
+          <Section label="Materials needed" value={data.materials_needed} />
+          <Section label="Learning objectives" value={data.objectives} />
+          <div className="grid gap-5 border-t border-[var(--border)] pt-5 sm:grid-cols-3">
+            <LessonBlock n={1} content={data.lesson1_content} assessment={data.lesson1_assessment} />
+            <LessonBlock n={2} content={data.lesson2_content} assessment={data.lesson2_assessment} />
+            <LessonBlock n={3} content={data.lesson3_content} assessment={data.lesson3_assessment} />
+          </div>
           {data.attachment_path && data.attachment_name && (
             <div>
               <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">Attachment</p>
@@ -115,6 +118,16 @@ function Section({ label, value }: { label: string; value: string | null }) {
       <p className="mt-1 whitespace-pre-wrap text-sm text-[var(--text)]">
         {value || <span className="text-[var(--muted-foreground)]">—</span>}
       </p>
+    </div>
+  );
+}
+
+function LessonBlock({ n, content, assessment }: { n: number; content: string | null; assessment: string | null }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-medium tracking-wide text-[var(--label)] uppercase">Lesson {n}</p>
+      <Section label="Lesson" value={content} />
+      <Section label="Assessment" value={assessment} />
     </div>
   );
 }
