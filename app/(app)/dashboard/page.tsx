@@ -11,6 +11,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "@/lib/toast";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,21 @@ import { FeeTrendChart } from "@/components/dashboard/fee-trend-chart";
 import { EnrollmentTrendChart } from "@/components/dashboard/enrollment-trend-chart";
 import { ClassPerformanceTable } from "@/components/dashboard/class-performance-table";
 import { RecentEnquiries } from "@/components/dashboard/recent-enquiries";
-import { useRecentActivities, useUpcomingEvents } from "@/lib/queries/dashboard";
+import {
+  useRecentActivities,
+  useUpcomingEvents,
+  useDashboardStats,
+  useDashboardTrends,
+  useFeeTrend,
+  useEnrollmentTrend,
+  useClassPerformance,
+  useClassAttendance,
+} from "@/lib/queries/dashboard";
+import { useSchool } from "@/lib/queries/school";
+import { useActiveContext, useStaff } from "@/lib/queries/academics";
+import { useFeesOverview } from "@/lib/queries/fees";
+import { downloadDashboardReport, type StaffRosterRow } from "@/lib/pdf/dashboard-report";
+import { BRAND } from "@/lib/brand";
 import { formatDate, formatMonthShort } from "@/lib/format";
 
 const ENTITY_ICONS: Record<string, LucideIcon> = {
@@ -128,12 +143,67 @@ function UpcomingEventsPanel() {
 }
 
 export default function DashboardPage() {
-  function handleExport() {
-    // Stub: the real integration wires this to a Server Action that renders + downloads a
-    // PDF/CSV export. For this UI phase it's just success feedback (06-UI §7 "Success").
-    toast.success("Export started", {
-      description: "Your report will download shortly.",
-    });
+  const [exporting, setExporting] = useState(false);
+  const { data: school } = useSchool();
+  const { data: active } = useActiveContext();
+  const { data: stats } = useDashboardStats();
+  const { data: trends } = useDashboardTrends();
+  const { data: feeTrend } = useFeeTrend();
+  const { data: enrollmentTrend } = useEnrollmentTrend();
+  const { data: classPerformance } = useClassPerformance();
+  const { data: classAttendance } = useClassAttendance();
+  const { data: feesOverview } = useFeesOverview({});
+  const { data: staff } = useStaff();
+
+  // Every hook above already backs a panel already on screen, or (fees overview, staff, class
+  // attendance) the equivalent screen elsewhere in the app: React Query dedupes by query key, so
+  // this reuses whatever's already cached rather than firing a second round of requests. Disabled
+  // rather than hidden while any of it hasn't loaded yet, printing a report with a silently-missing
+  // section would be worse than a wait.
+  const ready =
+    stats && trends && feeTrend && enrollmentTrend && classPerformance && classAttendance && feesOverview && staff;
+
+  async function handleExport() {
+    if (!ready) return;
+    setExporting(true);
+    try {
+      const termLabel =
+        active?.active_term && active?.active_year
+          ? `${active.active_term.name} · ${active.active_year.name}`
+          : null;
+
+      // Same two roles the Staff screen itself shows (super_admin exists in the enum but nothing
+      // seeds one, per README's "roles in use").
+      const staffRoster: StaffRosterRow[] = (["teacher", "school_admin"] as const).map((role) => {
+        const inRole = staff.filter((s) => s.role === role);
+        return {
+          roleLabel: role === "teacher" ? "Teacher" : "School Admin",
+          active: inRole.filter((s) => s.is_active).length,
+          inactive: inRole.filter((s) => !s.is_active).length,
+        };
+      });
+
+      await downloadDashboardReport({
+        schoolName: school?.name ?? BRAND.fullName,
+        schoolAddress: school?.address ?? null,
+        schoolEmail: school?.email ?? null,
+        schoolPhone: school?.phone ?? null,
+        termLabel,
+        stats,
+        trends,
+        enrollmentTrend,
+        feeTrend,
+        feesOverview,
+        staffRoster,
+        classPerformance,
+        classAttendance,
+        logoSrc: school?.logo_url ?? BRAND.crest.src,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't generate the report. Please try again.");
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -142,9 +212,9 @@ export default function DashboardPage() {
         title="Dashboard"
         subtitle="An overview of your school's students, staff, fees, and activity."
         action={
-          <Button type="button" variant="outline" onClick={handleExport}>
+          <Button type="button" variant="outline" onClick={handleExport} disabled={!ready || exporting}>
             <Download className="size-4" aria-hidden="true" />
-            Export Report
+            {exporting ? "Preparing…" : "Export Report"}
           </Button>
         }
       />

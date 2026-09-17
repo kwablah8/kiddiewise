@@ -4,6 +4,7 @@ import type {
   DashboardTrendsVM,
   TrendPointVM,
   ClassPerformanceVM,
+  ClassAttendanceVM,
   RecentActivityVM,
   UpcomingEventVM,
 } from "@/lib/validators/dashboard";
@@ -62,6 +63,17 @@ export async function getClassPerformance(): Promise<ClassPerformanceVM[]> {
     // Null when a class has no submitted results yet, the chart renders that as a gap rather
     // than as a zero, which would read as "they all failed".
     average_score: r.average_score === null ? null : Number(r.average_score),
+  }));
+}
+
+export async function getClassAttendance(): Promise<ClassAttendanceVM[]> {
+  const rows = unwrapList(await db().rpc("class_attendance_summary"), "class_attendance_summary");
+  return rows.map((r) => ({
+    class_id: r.class_id,
+    class_name: r.class_name,
+    level: r.level,
+    present_count: Number(r.present_count),
+    total_count: Number(r.total_count),
   }));
 }
 

@@ -33,6 +33,16 @@ export const classPerformanceVM = z.object({
   average_score: z.number().nullable(),
 });
 
+// Backed by class_attendance_summary() (migration 0040) — counts rather than a pre-computed rate,
+// so a zero-record class reads as "no data" instead of a misleading 0%; the rate is derived by callers.
+export const classAttendanceVM = z.object({
+  class_id: z.string(),
+  class_name: z.string(),
+  level: z.string(),
+  present_count: z.number(),
+  total_count: z.number(),
+});
+
 export const recentActivityVM = z.object({
   id: z.string(),
   action: z.string(),
@@ -52,5 +62,6 @@ export type DashboardStatsVM = z.infer<typeof dashboardStatsVM>;
 export type DashboardTrendsVM = z.infer<typeof dashboardTrendsVM>;
 export type TrendPointVM = z.infer<typeof trendPointVM>;
 export type ClassPerformanceVM = z.infer<typeof classPerformanceVM>;
+export type ClassAttendanceVM = z.infer<typeof classAttendanceVM>;
 export type RecentActivityVM = z.infer<typeof recentActivityVM>;
 export type UpcomingEventVM = z.infer<typeof upcomingEventVM>;

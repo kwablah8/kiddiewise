@@ -20,6 +20,7 @@ export const queryKeys = {
     feeTrend: ["dashboard", "fee-trend"] as const,
     enrollmentTrend: ["dashboard", "enrollment-trend"] as const,
     classPerformance: ["dashboard", "class-performance"] as const,
+    classAttendance: ["dashboard", "class-attendance"] as const,
     recentActivities: ["dashboard", "recent-activities"] as const,
     upcomingEvents: ["dashboard", "upcoming-events"] as const,
   },

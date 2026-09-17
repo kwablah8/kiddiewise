@@ -2122,6 +2122,16 @@ export type Database = {
       }
     }
     Functions: {
+      class_attendance_summary: {
+        Args: never
+        Returns: {
+          class_id: string
+          class_name: string
+          level: string
+          present_count: number
+          total_count: number
+        }[]
+      }
       class_performance: {
         Args: never
         Returns: {

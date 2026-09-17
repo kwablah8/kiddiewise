@@ -13,6 +13,8 @@ export const useEnrollmentTrend = () =>
   useQuery({ queryKey: queryKeys.dashboard.enrollmentTrend, queryFn: data.getEnrollmentTrend });
 export const useClassPerformance = () =>
   useQuery({ queryKey: queryKeys.dashboard.classPerformance, queryFn: data.getClassPerformance });
+export const useClassAttendance = () =>
+  useQuery({ queryKey: queryKeys.dashboard.classAttendance, queryFn: data.getClassAttendance });
 export const useRecentActivities = () =>
   useQuery({ queryKey: queryKeys.dashboard.recentActivities, queryFn: data.getRecentActivities });
 export const useUpcomingEvents = () =>
