@@ -57,6 +57,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Enquiries", href: "/enquiries", icon: ClipboardList, countKey: "new_inquiries" },
   { label: "Assessments", href: "/assessments", icon: FileCheck2 },
   { label: "Lesson Notes", href: "/lesson-notes", icon: NotebookText },
+  { label: "Daily Reports", href: "/daily-reports", icon: NotebookPen },
   { label: "Canteen", href: "/canteen", icon: UtensilsCrossed },
   { label: "Fees", href: "/fees", icon: Wallet },
   { label: "Grading", href: "/grading", icon: SlidersHorizontal },
