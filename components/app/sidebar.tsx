@@ -12,6 +12,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   BookOpen,
+  NotebookText,
   PencilLine,
   School,
   SlidersHorizontal,
@@ -52,6 +53,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   // /admissions, so the admin inquiry module lives at /enquiries. Don't "fix" one to match the other.
   { label: "Enquiries", href: "/enquiries", icon: ClipboardList, countKey: "new_inquiries" },
   { label: "Assessments", href: "/assessments", icon: FileCheck2 },
+  { label: "Lesson Notes", href: "/lesson-notes", icon: NotebookText },
   { label: "Fees", href: "/fees", icon: Wallet },
   { label: "Grading", href: "/grading", icon: SlidersHorizontal },
   { label: "Terminal Reports", href: "/terminal-reports", icon: FileBarChart2 },
@@ -65,6 +67,7 @@ const TEACHER_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
   { label: "Grade", href: "/teacher/grade", icon: PencilLine },
   { label: "Assessment", href: "/teacher/assessment", icon: ClipboardList },
+  { label: "Lesson Notes", href: "/teacher/lesson-notes", icon: NotebookText },
   { label: "Attendance", href: "/teacher/attendance", icon: CalendarCheck },
   { label: "Daily Report", href: "/teacher/daily-report", icon: NotebookPen },
   { label: "Terminal Reports", href: "/teacher/terminal-reports", icon: FileBarChart2 },

@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -411,6 +406,57 @@ export type Database = {
             columns: ["term_id"]
             isOneToOne: false
             referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canteen_menu_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          day_of_week: Database["public"]["Enums"]["weekday"]
+          description: string
+          id: string
+          is_published: boolean
+          published_at: string | null
+          school_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week: Database["public"]["Enums"]["weekday"]
+          description: string
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          school_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week?: Database["public"]["Enums"]["weekday"]
+          description?: string
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          school_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canteen_menu_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canteen_menu_items_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
             referencedColumns: ["id"]
           },
         ]
@@ -1125,6 +1171,105 @@ export type Database = {
           },
         ]
       }
+      lesson_notes: {
+        Row: {
+          attachment_name: string | null
+          attachment_path: string | null
+          class_id: string
+          content: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          homework: string | null
+          id: string
+          objectives: string | null
+          resources: string | null
+          school_id: string
+          status: Database["public"]["Enums"]["lesson_note_status"]
+          subject_id: string
+          submitted_at: string | null
+          term_id: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_path?: string | null
+          class_id: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          date: string
+          homework?: string | null
+          id?: string
+          objectives?: string | null
+          resources?: string | null
+          school_id: string
+          status?: Database["public"]["Enums"]["lesson_note_status"]
+          subject_id: string
+          submitted_at?: string | null
+          term_id: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_path?: string | null
+          class_id?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          homework?: string | null
+          id?: string
+          objectives?: string | null
+          resources?: string | null
+          school_id?: string
+          status?: Database["public"]["Enums"]["lesson_note_status"]
+          subject_id?: string
+          submitted_at?: string | null
+          term_id?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_notes_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_notes_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_notes_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_notes_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -1713,8 +1858,8 @@ export type Database = {
           average_score: number | null
           class_average: number | null
           class_highest_average: number | null
-          class_lowest_average: number | null
           class_id: string
+          class_lowest_average: number | null
           class_teacher_comment: string | null
           conduct: string | null
           enrolled_count: number | null
@@ -1742,8 +1887,8 @@ export type Database = {
           average_score?: number | null
           class_average?: number | null
           class_highest_average?: number | null
-          class_lowest_average?: number | null
           class_id: string
+          class_lowest_average?: number | null
           class_teacher_comment?: string | null
           conduct?: string | null
           enrolled_count?: number | null
@@ -1771,8 +1916,8 @@ export type Database = {
           average_score?: number | null
           class_average?: number | null
           class_highest_average?: number | null
-          class_lowest_average?: number | null
           class_id?: string
+          class_lowest_average?: number | null
           class_teacher_comment?: string | null
           conduct?: string | null
           enrolled_count?: number | null
@@ -2075,6 +2220,7 @@ export type Database = {
         | "accepted"
         | "rejected"
         | "converted"
+      lesson_note_status: "draft" | "submitted"
       payment_method:
         | "cash"
         | "bank_transfer"
@@ -2083,6 +2229,7 @@ export type Database = {
         | "other"
       scholarship_type: "none" | "partial" | "full" | "bursary"
       user_role: "super_admin" | "school_admin" | "teacher" | "parent"
+      weekday: "monday" | "tuesday" | "wednesday" | "thursday" | "friday"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2233,6 +2380,7 @@ export const Constants = {
       gender: ["male", "female", "other"],
       guardian_relationship: ["mother", "father", "guardian", "other"],
       inquiry_status: ["new", "reviewing", "accepted", "rejected", "converted"],
+      lesson_note_status: ["draft", "submitted"],
       payment_method: [
         "cash",
         "bank_transfer",
@@ -2242,6 +2390,8 @@ export const Constants = {
       ],
       scholarship_type: ["none", "partial", "full", "bursary"],
       user_role: ["super_admin", "school_admin", "teacher", "parent"],
+      weekday: ["monday", "tuesday", "wednesday", "thursday", "friday"],
     },
   },
 } as const
+

@@ -80,6 +80,20 @@ export const queryKeys = {
   reports: {
     sheet: (classId: string, termId: string) => ["reports", "sheet", classId, termId] as const,
   },
+  canteen: {
+    menu: ["canteen", "menu"] as const,
+    publishedMenu: ["canteen", "menu", "published"] as const,
+  },
+  deletionImpact: {
+    staff: (id: string) => ["deletion-impact", "staff", id] as const,
+    student: (id: string) => ["deletion-impact", "student", id] as const,
+    parent: (id: string) => ["deletion-impact", "parent", id] as const,
+  },
+  lessonNotes: {
+    list: (filters: unknown) => ["lesson-notes", "list", filters] as const,
+    detail: (id: string) => ["lesson-notes", id] as const,
+    mine: ["lesson-notes", "mine"] as const,
+  },
   dailyReports: {
     report: (studentId: string, date: string) => ["daily-reports", studentId, date] as const,
     classStatus: (classId: string, date: string) =>

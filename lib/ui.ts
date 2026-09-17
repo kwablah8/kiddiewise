@@ -20,3 +20,7 @@ export const navFocusRingClass =
 /** Visible focus ring for hand-rolled interactive chrome on light surfaces (06-UI §11). */
 export const lightFocusRingClass =
   "outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]";
+
+/** Plain `<textarea>` styling to match shadcn's Input, there is no Textarea primitive in the kit. */
+export const textareaClass =
+  "w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none focus-visible:ring-3 focus-visible:ring-ring/50";

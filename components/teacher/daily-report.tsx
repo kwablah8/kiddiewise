@@ -27,7 +27,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { ParentSectionSummary } from "@/components/daily-reports/section-views";
 import { ChoicePills, ToggleChips } from "@/components/daily-reports/choice-pills";
-import { cardShellClass } from "@/lib/ui";
+import { cardShellClass, textareaClass } from "@/lib/ui";
 import { useTeacherClasses } from "@/lib/queries/teacher";
 import {
   useClassDailyStatus,
@@ -45,9 +45,6 @@ import {
   type TeacherDailyReportInput,
   type ToiletingEntry,
 } from "@/lib/validators/daily-reports";
-
-const textareaClass =
-  "w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
 function todayISO(): string {
   const d = new Date();
