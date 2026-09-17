@@ -1,5 +1,6 @@
 import { activeYearId, db, unwrapList, unwrapMaybe } from "./_client";
 import { getFeesOverview, listClassFees, listExtraFeeAssignments, listPayments } from "./fees";
+import { getClassTimetable } from "./timetable";
 import { scoreToGrade } from "@/lib/grading";
 import { aggregateSubjectResults, overallAverage } from "@/lib/results";
 import { summarizeAttendance } from "@/lib/parent/attendance";
@@ -15,6 +16,7 @@ import type {
 } from "@/lib/validators/parent";
 import type { FeesFilter } from "@/lib/validators/fees";
 import type { GradeBandVM } from "@/lib/validators/grading";
+import type { TimetableEntryVM } from "@/lib/validators/timetable";
 
 /**
  * The parent portal.
@@ -295,6 +297,28 @@ export async function getChildProfile(
     class_name: enrollment?.classes?.name ?? null,
     teachers,
   };
+}
+
+interface TimetableEnrollmentRow {
+  enrollments: { status: string; class_id: string }[];
+}
+
+/** The linked child's own class timetable — resolves their active enrollment's class, then reuses
+ *  the same read admin and teacher screens use (lib/data/timetable.ts#getClassTimetable). */
+export async function getChildTimetable(
+  parentId: string,
+  childId: string,
+): Promise<TimetableEntryVM[]> {
+  void parentId;
+
+  const yearId = await activeYearId();
+  let q = db().from("students").select("enrollments(status, class_id)").eq("id", childId);
+  if (yearId) q = q.eq("enrollments.academic_year_id", yearId);
+  const student = unwrapMaybe<TimetableEnrollmentRow>(await q.single(), "child timetable");
+  if (!student) return [];
+
+  const classId = student.enrollments.find((e) => e.status === "active")?.class_id ?? null;
+  return classId ? getClassTimetable(classId) : [];
 }
 
 /** A child's attendance history, newest first. */

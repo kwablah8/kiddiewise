@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarCheck,
+  CalendarClock,
   CalendarDays,
   ChevronLeft,
   ClipboardList,
@@ -50,6 +51,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Parents", href: "/parents", icon: UserRound },
   { label: "Subjects", href: "/subjects", icon: BookOpen },
   { label: "Classes", href: "/classes", icon: School },
+  { label: "Timetable", href: "/timetable", icon: CalendarClock },
   // Label "Admissions" (per spec) but href "/enquiries" on PURPOSE: the public marketing site owns
   // /admissions, so the admin inquiry module lives at /enquiries. Don't "fix" one to match the other.
   { label: "Enquiries", href: "/enquiries", icon: ClipboardList, countKey: "new_inquiries" },
@@ -70,6 +72,7 @@ const TEACHER_NAV_ITEMS: NavItem[] = [
   { label: "Grade", href: "/teacher/grade", icon: PencilLine },
   { label: "Assessment", href: "/teacher/assessment", icon: ClipboardList },
   { label: "Lesson Notes", href: "/teacher/lesson-notes", icon: NotebookText },
+  { label: "Timetable", href: "/teacher/timetable", icon: CalendarClock },
   { label: "Attendance", href: "/teacher/attendance", icon: CalendarCheck },
   { label: "Daily Report", href: "/teacher/daily-report", icon: NotebookPen },
   { label: "Terminal Reports", href: "/teacher/terminal-reports", icon: FileBarChart2 },

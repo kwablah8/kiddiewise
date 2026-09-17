@@ -217,7 +217,8 @@ Sequenced later, not in MVP (from the spec's future list + deferred items):
 
 - **Payments:** mobile money / online gateway on top of the fees module.
 - **Notifications:** SMS and push (parent alerts for results, attendance, announcements).
-- **Academics+:** homework/assignments, timetable management.
+- **Academics+:** homework/assignments. (Timetable management shipped — pulled forward into MVP,
+  see `docs/01-REQUIREMENTS.md`.)
 - **Operations:** payroll, inventory, library, transport, hostel management.
 - **Native app:** React Native / Expo parent app on the same Supabase project.
 - **Analytics:** AI-powered school analytics.

@@ -82,8 +82,9 @@ storage, notifications, business logic, and data security. Built on Supabase.
   backend complexity during MVP.
 
 Deferred modules (candidates for later, not MVP): SMS/push notifications, homework &
-assignments, timetable management, payroll, inventory, library, transport, hostel
-management, and AI-powered analytics.
+assignments, payroll, inventory, library, transport, hostel management, and AI-powered
+analytics. Timetable management, also originally deferred here, was pulled forward into the
+MVP — see `docs/01-REQUIREMENTS.md`.
 
 > **Scope note:** the reference screenshots show several modules the original written spec
 > parked as "future" — **Fees**, **Assessments/Grading**, **Terminal Reports**, and

@@ -1359,6 +1359,47 @@ export type Database = {
           },
         ]
       }
+      periods: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          is_break: boolean
+          name: string
+          ordinal: number
+          school_id: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          is_break?: boolean
+          name: string
+          ordinal: number
+          school_id: string
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          is_break?: boolean
+          name?: string
+          ordinal?: number
+          school_id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periods_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -2025,6 +2066,78 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timetable_entries: {
+        Row: {
+          class_id: string
+          created_at: string
+          created_by: string | null
+          day_of_week: Database["public"]["Enums"]["weekday"]
+          id: string
+          period_id: string
+          school_id: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          created_by?: string | null
+          day_of_week: Database["public"]["Enums"]["weekday"]
+          id?: string
+          period_id: string
+          school_id: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          created_by?: string | null
+          day_of_week?: Database["public"]["Enums"]["weekday"]
+          id?: string
+          period_id?: string
+          school_id?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timetable_entries_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_entries_period_id_fkey"
+            columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_entries_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_entries_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
         ]

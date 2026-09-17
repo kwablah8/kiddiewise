@@ -29,14 +29,22 @@ include*. Where the two disagree, the screenshots win for scope.
 | **Promotion** | not listed | admin nav | **In** |
 | **Fees & payments** | future | full dashboard cards + trend | **In (lightweight)** |
 | Dashboards with trend charts | not detailed | shown | **In** |
+| **Timetable** | future | not shown | **In** (pulled forward, see below) |
 | SMS / push notifications | future | not shown | **Out** |
-| Homework, timetable, payroll, library, transport, hostel | future | not shown | **Out** |
+| Homework, payroll, library, transport, hostel | future | not shown | **Out** |
 | Native mobile apps | future | n/a | **Out** (responsive web only) |
 
 **"Fees (lightweight)"** means: define fee items, generate/record invoices and payments per
 student, and surface revenue totals + a fee-collection trend on the admin dashboard. It does
 **not** mean integrating a payment gateway (e.g. mobile money) — that is a later track. See
 `docs/03-DATABASE.md`.
+
+**Timetable** was originally parked under "Academics+" (post-MVP, see `docs/08-ROADMAP.md`) and
+was deliberately pulled forward: admin defines the school's shared periods once, then builds each
+class's weekly grid from them. A subject can only be placed in a class's grid once that class
+already has it assigned via Subjects (`class_subjects`) — the teacher shown for a slot is that
+assignment, not a second, separately-typed fact. Read-only for teacher (their own classes) and
+parent (their child's class); write is admin-only.
 
 ---
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { weekday } from "./weekday";
 
 /**
  * The school's weekly canteen menu (migration 0039): one row per school day, edited in place — not
@@ -6,20 +7,7 @@ import { z } from "zod";
  * visibility and is fully reversible, unlike lesson notes' one-way submit.
  */
 
-export const weekday = z.enum(["monday", "tuesday", "wednesday", "thursday", "friday"]);
-export type Weekday = z.infer<typeof weekday>;
-
-/** Monday-first display order — the enum's own declaration order matches this, but don't rely on
- *  that implicitly elsewhere; sort against this array. */
-export const WEEKDAY_ORDER: Weekday[] = ["monday", "tuesday", "wednesday", "thursday", "friday"];
-
-export const WEEKDAY_LABEL: Record<Weekday, string> = {
-  monday: "Monday",
-  tuesday: "Tuesday",
-  wednesday: "Wednesday",
-  thursday: "Thursday",
-  friday: "Friday",
-};
+export { weekday, WEEKDAY_ORDER, WEEKDAY_LABEL, type Weekday } from "./weekday";
 
 // ---- view-model ---------------------------------------------------------------
 

@@ -81,6 +81,10 @@ export const queryKeys = {
   reports: {
     sheet: (classId: string, termId: string) => ["reports", "sheet", classId, termId] as const,
   },
+  timetable: {
+    periods: ["timetable", "periods"] as const,
+    classGrid: (classId: string) => ["timetable", "class", classId] as const,
+  },
   canteen: {
     menu: ["canteen", "menu"] as const,
     publishedMenu: ["canteen", "menu", "published"] as const,
@@ -106,6 +110,7 @@ export const queryKeys = {
     child: (id: string) => ["parent", "child", id] as const,
     attendance: (id: string) => ["parent", "attendance", id] as const,
     results: (id: string) => ["parent", "results", id] as const,
+    timetable: (id: string) => ["parent", "timetable", id] as const,
     report: (id: string) => ["parent", "report", id] as const,
     fees: (id: string) => ["parent", "fees", id] as const,
   },

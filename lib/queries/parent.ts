@@ -45,6 +45,16 @@ export function useChildAttendance(childId: string) {
   });
 }
 
+export function useChildTimetable(childId: string) {
+  const { profile } = useSession();
+  const parentId = profile?.id ?? "";
+  return useQuery({
+    queryKey: queryKeys.parent.timetable(childId),
+    queryFn: () => data.getChildTimetable(parentId, childId),
+    enabled: !!parentId && !!childId,
+  });
+}
+
 export function useChildResults(childId: string) {
   const { profile } = useSession();
   const parentId = profile?.id ?? "";

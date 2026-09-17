@@ -256,7 +256,7 @@ async function wipe(): Promise<void> {
   // Child-to-parent order. Most FKs cascade from students/schools, but being explicit keeps the
   // script working if a future migration changes a cascade to a restrict.
   const tables = [
-    "lesson_notes", "canteen_menu_items",
+    "lesson_notes", "canteen_menu_items", "timetable_entries", "periods",
     "payments", "invoice_items", "invoices", "extra_fee_assignments", "extra_fee_items",
     "fee_items", "terminal_report_subjects", "terminal_reports", "results", "assessments", "attendance",
     "student_guardians", "enrollments", "students", "class_subjects", "classes", "subjects",
