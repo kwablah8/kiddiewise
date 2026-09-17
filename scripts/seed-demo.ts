@@ -236,9 +236,27 @@ const TOWNS = ["Oyarifa", "Adenta", "Madina", "Ashaley Botwe"];
 // Teardown, clear the demo tenant so the script is re-runnable
 // ---------------------------------------------------------------------------
 async function wipe(): Promise<void> {
+  // lesson_notes.class_id/subject_id/term_id are ON DELETE RESTRICT (migration 0037), not cascade,
+  // so any note left over from manual testing blocks deleting classes/subjects below unless it goes
+  // first. Its storage attachment (migration 0038) isn't a DB row, so it needs its own cleanup —
+  // best-effort, a leftover object in the dev bucket is harmless, unlike a failed reseed.
+  const { data: notesWithAttachments } = await db
+    .from("lesson_notes")
+    .select("attachment_path")
+    .eq("school_id", SCHOOL_ID)
+    .not("attachment_path", "is", null);
+  const attachmentPaths = (notesWithAttachments ?? [])
+    .map((n) => n.attachment_path)
+    .filter((p): p is string => p !== null);
+  if (attachmentPaths.length > 0) {
+    const { error } = await db.storage.from("lesson-note-attachments").remove(attachmentPaths);
+    if (error) console.error(`wipe lesson-note-attachments: ${error.message}`);
+  }
+
   // Child-to-parent order. Most FKs cascade from students/schools, but being explicit keeps the
   // script working if a future migration changes a cascade to a restrict.
   const tables = [
+    "lesson_notes", "canteen_menu_items",
     "payments", "invoice_items", "invoices", "extra_fee_assignments", "extra_fee_items",
     "fee_items", "terminal_report_subjects", "terminal_reports", "results", "assessments", "attendance",
     "student_guardians", "enrollments", "students", "class_subjects", "classes", "subjects",

@@ -24,6 +24,7 @@ import {
   type LucideIcon,
   Megaphone,
   NotebookPen,
+  UtensilsCrossed,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { BrandLock } from "@/components/brand/brand-lock";
@@ -54,6 +55,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Enquiries", href: "/enquiries", icon: ClipboardList, countKey: "new_inquiries" },
   { label: "Assessments", href: "/assessments", icon: FileCheck2 },
   { label: "Lesson Notes", href: "/lesson-notes", icon: NotebookText },
+  { label: "Canteen", href: "/canteen", icon: UtensilsCrossed },
   { label: "Fees", href: "/fees", icon: Wallet },
   { label: "Grading", href: "/grading", icon: SlidersHorizontal },
   { label: "Terminal Reports", href: "/terminal-reports", icon: FileBarChart2 },

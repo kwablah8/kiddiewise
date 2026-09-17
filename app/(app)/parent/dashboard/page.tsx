@@ -5,6 +5,7 @@ import { useParentChildren } from "@/lib/queries/parent";
 import { ChildCard } from "@/components/parent/child-card";
 import { AnnouncementsPanel } from "@/components/parent/announcements-panel";
 import { EventsPanel } from "@/components/communication/events-panel";
+import { CanteenMenuPanel } from "@/components/parent/canteen-menu-panel";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -59,6 +60,8 @@ export default function ParentDashboardPage() {
           </div>
         )}
       </section>
+
+      <CanteenMenuPanel />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <AnnouncementsPanel />
