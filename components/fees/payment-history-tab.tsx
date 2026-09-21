@@ -68,6 +68,13 @@ export function PaymentHistoryTab({ filter }: { filter: FeesFilter }) {
   const isEmpty = !isLoading && !isError && rows.length === 0;
   const noneAtAll = (data?.length ?? 0) === 0;
 
+  // Two copies on one A4 sheet, the office's file copy and the parent's copy, cut apart after
+  // printing. Admin-only: the parent portal's own download of the same receipt (child-fees.tsx)
+  // calls useReceiptDownload with the default of one, a parent has one copy to keep, not two.
+  function handleReceipt(payment: PaymentVM) {
+    void onReceipt(payment, 2);
+  }
+
   return (
     <div className={cardShellClass}>
       <SearchField
@@ -94,7 +101,7 @@ export function PaymentHistoryTab({ filter }: { filter: FeesFilter }) {
         />
       ) : (
         <DataTable
-          columns={buildColumns(onReceipt)}
+          columns={buildColumns(handleReceipt)}
           data={rows}
           getRowId={(row) => row.id}
           isLoading={isLoading}

@@ -83,10 +83,10 @@ function band(doc: jsPDF, edge: number, dir: 1 | -1): void {
  * grey field, any lighter and it vanishes. Opacity is reset immediately; a stray graphics state
  * would wash out everything drawn afterwards.
  */
-function watermark(doc: jsPDF, logo: PdfImage): void {
+function watermark(doc: jsPDF, logo: PdfImage, yOffset: number): void {
   const size = 82;
   doc.setGState(new GState({ opacity: 0.06 }));
-  doc.addImage(logo.dataUrl, logo.format, (PAGE_WIDTH - size) / 2, 34, size, size);
+  doc.addImage(logo.dataUrl, logo.format, (PAGE_WIDTH - size) / 2, 34 + yOffset, size, size);
   doc.setGState(new GState({ opacity: 1 }));
 }
 
@@ -146,53 +146,26 @@ function value(doc: jsPDF, text: string, x: number, ruleY: number, maxWidth: num
 }
 
 /**
- * Draw a fee receipt on the school's own Official Receipt form and hand it to the browser as a
- * download.
- *
- * The layout is the school's stationery, field for field: its banded letterhead, the crest
- * watermarked behind the body, and the six lines it asks for, received from, the sum in words and
- * figures, what the payment was for, which of Cash/Cheque/Momo, and who received it. Values are
- * typeset on the dotted rules where a pen would have written them, so a parent holding one
- * recognises the same slip the office has always issued.
- *
- * Two things the printed form has no field for are added rather than dropped: the receipt number
- * and the date. A pad of numbered slips carries both on the counterfoil; a generated document has
- * no counterfoil, and without them a reprint cannot be matched to the payment it settles.
- *
- * jsPDF rather than a print stylesheet: "print to PDF" depends on the operating system's print
- * dialog, which on a school's shared Windows machine is as likely to reach a printer with no paper
- * as a file. A generated document downloads the same way everywhere and can be attached to a
- * WhatsApp message, which is how these actually reach parents. jsPDF is the one dependency added
- * outside the original stack.
- *
- * Client-side, so no server round-trip and nothing to store: the receipt is a rendering of a
- * payment row that already exists, not a second copy of it.
- *
- * A5 landscape, not A4. A fee receipt is a slip, the school's own template fills the top third of
- * a portrait page and leaves the rest to be cut off, and A5 landscape is that block at its own
- * size, two to an A4 sheet.
- *
- * `logo` arrives ALREADY DECODED (see `./image`) rather than being fetched here, so this stays
- * synchronous and DOM-free. Pass null or omit it and the crest and its watermark are simply
- * absent, a receipt without them still settles a debt.
+ * Draws one copy of the slip onto `doc`, `yOffset` mm down from where it would otherwise sit.
+ * Every absolute position in the form is measured from this receipt's own top-left corner, an A5
+ * landscape block whichever page it ends up on, so a single offset is enough to place a second
+ * copy under the first on a taller page (`renderReceipt`'s two-up mode) without redrawing it.
  */
-export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF {
-  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a5" });
-
+function drawReceiptBody(doc: jsPDF, data: ReceiptData, logo: PdfImage | null | undefined, yOffset: number): void {
   const deep = rgb(BRAND.palette.deep);
   const strong = rgb(BRAND.palette.strong);
 
   // --- The school's stationery ---------------------------------------------------------------
-  band(doc, 6, 1);
-  band(doc, PAGE_HEIGHT - 6, -1);
-  if (logo) watermark(doc, logo);
+  band(doc, 6 + yOffset, 1);
+  band(doc, PAGE_HEIGHT - 6 + yOffset, -1);
+  if (logo) watermark(doc, logo, yOffset);
 
   // --- Letterhead ----------------------------------------------------------------------------
   // The crest is square (512x512) so a square draw is undistorted, and its white background sits
   // flush on white paper, no chip needed, unlike the on-screen <Crest> against navy.
   const crestSize = 13;
   if (logo) {
-    doc.addImage(logo.dataUrl, logo.format, MARGIN, 19, crestSize, crestSize);
+    doc.addImage(logo.dataUrl, logo.format, MARGIN, 19 + yOffset, crestSize, crestSize);
   }
   // Original geometry when there is no crest, rather than a 13mm hole where one failed to load.
   const nameX = logo ? MARGIN + crestSize + 4 : MARGIN;
@@ -210,7 +183,7 @@ export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF 
   // Spaced caps, as the name is set on the school's letterhead. Split over two lines when it is
   // long, so it never runs into the title.
   const nameLines = doc.splitTextToSize(data.schoolName.toUpperCase(), blockWidth);
-  doc.text(nameLines.slice(0, 2), blockCenterX, 24.5, {
+  doc.text(nameLines.slice(0, 2), blockCenterX, 24.5 + yOffset, {
     align: "center",
     charSpace: 0.35,
     lineHeightFactor: 1.3,
@@ -219,7 +192,7 @@ export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.3);
   doc.setTextColor(120);
-  let contactY = nameLines.length > 1 ? 31.5 : 27;
+  let contactY = (nameLines.length > 1 ? 31.5 : 27) + yOffset;
   const contactLines = [
     ...(data.schoolAddress?.split("\n").map((l) => l.trim().toUpperCase()) ?? []),
     data.schoolEmail ? `Email: ${data.schoolEmail}` : "",
@@ -234,27 +207,27 @@ export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF 
   doc.setFont("times", "bold");
   doc.setFontSize(19);
   doc.setTextColor(...deep);
-  doc.text("Official Receipt", RIGHT, 26, { align: "right" });
+  doc.text("Official Receipt", RIGHT, 26 + yOffset, { align: "right" });
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...strong);
-  doc.text(`No. ${data.receiptNo}`, RIGHT, 33, { align: "right" });
+  doc.text(`No. ${data.receiptNo}`, RIGHT, 33 + yOffset, { align: "right" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(110);
-  doc.text(formatDate(data.paidAt), RIGHT, 38.5, { align: "right" });
+  doc.text(formatDate(data.paidAt), RIGHT, 38.5 + yOffset, { align: "right" });
 
   // --- The form ------------------------------------------------------------------------------
-  const receivedY = 52;
+  const receivedY = 52 + yOffset;
   const fromX = label(doc, "Received from", MARGIN, receivedY);
   leader(doc, fromX, RIGHT, receivedY);
   value(doc, data.studentName, fromX + 2, receivedY, RIGHT - fromX - 4);
 
   // The sum in words, then in figures against the form's pre-printed "GHc". Words first because
   // that is the line that cannot be altered after the fact.
-  const sumY = 65;
-  const wordsY = 76;
+  const sumY = 65 + yOffset;
+  const wordsY = 76 + yOffset;
   const sumX = label(doc, "Being the sum of", MARGIN, sumY);
   const ghcX = 130;
 
@@ -287,13 +260,13 @@ export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF 
 
   // What the money was for, and which class it was for, a parent with two children here needs the
   // second half of that sentence.
-  const forY = 89;
+  const forY = 89 + yOffset;
   const forX = label(doc, "For the payment of", MARGIN, forY);
   leader(doc, forX, RIGHT, forY);
   value(doc, `${data.feeLabel} — ${data.className}`, forX + 2, forY, RIGHT - forX - 4);
 
   // --- Method, reference, and who took it ----------------------------------------------------
-  const methodY = 102;
+  const methodY = 102 + yOffset;
   let boxX = MARGIN;
   for (const box of METHOD_BOXES) {
     const textEnd = label(doc, box.label, boxX, methodY);
@@ -315,7 +288,7 @@ export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF 
     doc.text(notes, boxX + 2, methodY);
   }
 
-  const receivedByY = 117;
+  const receivedByY = 117 + yOffset;
   const byX = label(doc, "Received by", 120, receivedByY);
   leader(doc, byX, RIGHT, receivedByY);
   value(doc, data.issuedBy, byX + 2, receivedByY, RIGHT - byX - 4);
@@ -327,7 +300,61 @@ export function renderReceipt(data: ReceiptData, logo?: PdfImage | null): jsPDF 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(125);
-  doc.text("Computer-generated receipt — valid without a signature.", MARGIN, 130);
+  doc.text("Computer-generated receipt — valid without a signature.", MARGIN, 130 + yOffset);
+}
+
+/**
+ * Draw a fee receipt on the school's own Official Receipt form.
+ *
+ * The layout is the school's stationery, field for field: its banded letterhead, the crest
+ * watermarked behind the body, and the six lines it asks for, received from, the sum in words and
+ * figures, what the payment was for, which of Cash/Cheque/Momo, and who received it. Values are
+ * typeset on the dotted rules where a pen would have written them, so a parent holding one
+ * recognises the same slip the office has always issued.
+ *
+ * Two things the printed form has no field for are added rather than dropped: the receipt number
+ * and the date. A pad of numbered slips carries both on the counterfoil; a generated document has
+ * no counterfoil, and without them a reprint cannot be matched to the payment it settles.
+ *
+ * jsPDF rather than a print stylesheet: "print to PDF" depends on the operating system's print
+ * dialog, which on a school's shared Windows machine is as likely to reach a printer with no paper
+ * as a file. A generated document downloads the same way everywhere and can be attached to a
+ * WhatsApp message, which is how these actually reach parents. jsPDF is the one dependency added
+ * outside the original stack.
+ *
+ * Client-side, so no server round-trip and nothing to store: the receipt is a rendering of a
+ * payment row that already exists, not a second copy of it.
+ *
+ * `logo` arrives ALREADY DECODED (see `./image`) rather than being fetched here, so this stays
+ * synchronous and DOM-free. Pass null or omit it and the crest and its watermark are simply
+ * absent, a receipt without them still settles a debt.
+ *
+ * A5 landscape, not A4, when `copies` is 1: a fee receipt is a slip, the school's own template
+ * fills the top third of a portrait page and leaves the rest to be cut off, and A5 landscape is
+ * that block at its own size. 148mm is exactly half of an A4 sheet's 297mm, so `copies: 2` draws
+ * the same slip twice on one A4 portrait page instead, the office's copy and the parent's copy cut
+ * from a single printout rather than two separate print jobs. Offered on the admin side only
+ * (`useReceiptDownload`), a parent downloading their own receipt has one copy to keep, not two to
+ * cut apart.
+ */
+export function renderReceipt(data: ReceiptData, logo?: PdfImage | null, copies: 1 | 2 = 1): jsPDF {
+  if (copies === 1) {
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a5" });
+    drawReceiptBody(doc, data, logo, 0);
+    return doc;
+  }
+
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  drawReceiptBody(doc, data, logo, 0);
+  drawReceiptBody(doc, data, logo, PAGE_HEIGHT);
+
+  // A faint cut guide at the seam, the same dotted rule the form's own fields use, so it reads as
+  // part of the stationery rather than a stray line down the middle of the page.
+  doc.setDrawColor(190);
+  doc.setLineWidth(0.25);
+  doc.setLineDashPattern([1, 1.5], 0);
+  doc.line(0, PAGE_HEIGHT, PAGE_WIDTH, PAGE_HEIGHT);
+  doc.setLineDashPattern([], 0);
 
   return doc;
 }
@@ -354,7 +381,7 @@ function tickBox(doc: jsPDF, x: number, y: number, ticked: boolean): void {
  * Split from `renderReceipt` so the drawing can be exercised outside a browser, `.save()` and the
  * logo fetch are the only parts that need a DOM, and a layout bug should be findable without one.
  */
-export async function downloadReceipt(data: ReceiptData): Promise<void> {
+export async function downloadReceipt(data: ReceiptData, copies: 1 | 2 = 1): Promise<void> {
   const logo = await loadImageData(data.logoSrc);
-  renderReceipt(data, logo).save(receiptFilename(data));
+  renderReceipt(data, logo, copies).save(receiptFilename(data));
 }

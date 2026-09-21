@@ -18,15 +18,19 @@ import { PAYMENT_METHOD_LABEL, type PaymentVM } from "@/lib/validators/fees";
  *
  * Rendering is client-side and nothing is stored: the receipt is a rendering of an existing
  * `payments` row, not a second copy of it.
+ *
+ * `copies` defaults to 1 (the parent portal's call site never passes it). The admin payments
+ * ledger passes 2, the office's copy and the parent's copy on one A4 sheet, cut apart after
+ * printing, because that's the copy the office keeps for its own file.
  */
-export function useReceiptDownload(): (payment: PaymentVM) => Promise<void> {
+export function useReceiptDownload(): (payment: PaymentVM, copies?: 1 | 2) => Promise<void> {
   const { data: school } = useSchool();
 
   // Async because the crest has to be fetched and decoded before jsPDF can embed it. A failure to
   // load the crest is swallowed inside `downloadReceipt` and still produces a receipt; this catch is
   // for the rarer case of the render or the save itself failing, which must not be silent when an
   // admin is standing at the desk with a parent — or when a parent is trying to prove they paid.
-  return async (payment: PaymentVM) => {
+  return async (payment: PaymentVM, copies: 1 | 2 = 1) => {
     try {
       await downloadReceipt(
         buildReceipt({
@@ -42,6 +46,7 @@ export function useReceiptDownload(): (payment: PaymentVM) => Promise<void> {
           // bundled crest otherwise.
           logoUrl: school?.logo_url ?? null,
         }),
+        copies,
       );
     } catch {
       toast.error("Couldn't generate the receipt. Please try again.");
