@@ -23,6 +23,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { StudentAvatar } from "./student-avatar";
 import { studentStatusTone } from "./student-status";
 import { LinkGuardianDialog } from "./link-guardian-dialog";
+import { StudentExtraFees } from "@/components/fees/student-extra-fees";
 import {
   useStudent,
   useStudentAcademics,
@@ -332,6 +333,8 @@ export function StudentProfile({ id }: StudentProfileProps) {
           )}
         </section>
       )}
+
+      <StudentExtraFees student={{ id, name: fullName, class_id: data.class_id }} />
 
       <LinkGuardianDialog
         key={linkDialogKey}

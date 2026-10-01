@@ -50,10 +50,16 @@ interface PositionRow {
 
 interface ExtraPositionRow {
   id: string;
+  student_id: string;
   student_name: string;
   class_id: string | null;
   class_name: string | null;
+  extra_fee_item_id: string;
   fee_name: string;
+  frequency: ExtraFeeFrequency;
+  academic_year_id: string;
+  fee_term: FeeTerm;
+  billing_month: string | null;
   amount: number;
   paid: number;
   balance: number;
@@ -143,11 +149,16 @@ async function fetchPositions(filter: FeesFilter): Promise<PositionRow[]> {
 async function fetchExtraPositions(filter: FeesFilter): Promise<ExtraPositionRow[]> {
   const rows = await readAllPaged(
     (from, to) => {
-      // Extra fees are scoped by class only; they carry no year/term of their own.
       let q = db()
         .from("extra_fee_positions")
-        .select("id, student_name, class_id, class_name, fee_name, amount, paid, balance, status");
+        .select(
+          `id, student_id, student_name, class_id, class_name, extra_fee_item_id, fee_name, frequency,
+           academic_year_id, fee_term, billing_month, amount, paid, balance, status`,
+        );
       if (filter.class_id) q = q.eq("class_id", filter.class_id);
+      if (filter.academic_year_id) q = q.eq("academic_year_id", filter.academic_year_id);
+      // Monthly charges are year-level (fee_term 'full_year'), so a term filter leaves them out.
+      if (filter.term) q = q.eq("fee_term", filter.term);
       if (filter.student_id) q = q.eq("student_id", filter.student_id);
       return q.range(from, to);
     },
@@ -155,15 +166,24 @@ async function fetchExtraPositions(filter: FeesFilter): Promise<ExtraPositionRow
   );
 
   return rows.flatMap((r) =>
-    r.id === null
+    r.id === null ||
+    r.student_id === null ||
+    r.extra_fee_item_id === null ||
+    r.academic_year_id === null
       ? []
       : [
           {
             id: r.id,
+            student_id: r.student_id,
             student_name: r.student_name ?? "—",
             class_id: r.class_id,
             class_name: r.class_name,
+            extra_fee_item_id: r.extra_fee_item_id,
             fee_name: r.fee_name ?? "—",
+            frequency: (r.frequency ?? "one_time") as ExtraFeeFrequency,
+            academic_year_id: r.academic_year_id,
+            fee_term: (r.fee_term ?? "full_year") as FeeTerm,
+            billing_month: r.billing_month,
             amount: num(r.amount),
             paid: num(r.paid),
             balance: num(r.balance),
@@ -301,29 +321,42 @@ export async function listClassFees(filter: FeesFilter = {}): Promise<StudentFee
     .sort((a, b) => a.student_name.localeCompare(b.student_name));
 }
 
-/** Extra-fee definitions applying to the filtered class (or to all classes). */
+/** Extra-fee definitions offered to the filtered class (or to all classes). */
 export async function listExtraFeeStructures(
   filter: FeesFilter = {},
 ): Promise<ExtraFeeStructureVM[]> {
   const rows = unwrapList(
     await db()
       .from("extra_fee_items")
-      .select("id, name, description, amount, frequency, class_id, classes(name)")
+      .select(
+        `id, name, description, amount, frequency,
+         extra_fee_item_classes(class_id, classes(name)),
+         extra_fee_assignments(count)`,
+      )
       .order("name"),
     "extra fee structures",
   );
 
   return rows
-    // A null class_id means school-wide, so it applies whatever class is selected.
-    .filter((e) => !filter.class_id || e.class_id === null || e.class_id === filter.class_id)
-    .map((e) => ({
-      id: e.id,
-      name: e.name,
-      description: e.description,
-      amount: Number(e.amount),
-      frequency: e.frequency as ExtraFeeFrequency,
-      scope: e.classes?.name ?? "All classes",
-    }));
+    .map((e) => {
+      const classes = e.extra_fee_item_classes
+        .map((l) => ({ id: l.class_id, name: l.classes?.name ?? "—" }))
+        .sort((x, y) => x.name.localeCompare(y.name));
+      return {
+        id: e.id,
+        name: e.name,
+        description: e.description,
+        amount: Number(e.amount),
+        frequency: e.frequency as ExtraFeeFrequency,
+        class_ids: classes.map((c) => c.id),
+        scope: classes.length === 0 ? "All classes" : classes.map((c) => c.name).join(", "),
+        charge_count: e.extra_fee_assignments[0]?.count ?? 0,
+      } satisfies ExtraFeeStructureVM;
+    })
+    // No classes means every class, so it applies whatever class is selected.
+    .filter(
+      (e) => !filter.class_id || e.class_ids.length === 0 || e.class_ids.includes(filter.class_id),
+    );
 }
 
 /** Assigned extra fees, with balance and status derived from payments. */
@@ -335,14 +368,22 @@ export async function listExtraFeeAssignments(
     .map(
       (r): ExtraFeeAssignmentVM => ({
         id: r.id,
+        student_id: r.student_id,
         student_name: r.student_name,
         class_name: r.class_name ?? "—",
+        extra_fee_item_id: r.extra_fee_item_id,
         fee_name: r.fee_name,
+        frequency: r.frequency,
+        academic_year_id: r.academic_year_id,
+        fee_term: r.fee_term,
+        billing_month: r.billing_month,
         amount: r.amount,
         paid: r.paid,
         balance: r.balance,
         status: r.status,
       }),
     )
-    .sort((a, b) => a.student_name.localeCompare(b.student_name));
+    .sort(
+      (a, b) => a.student_name.localeCompare(b.student_name) || a.fee_name.localeCompare(b.fee_name),
+    );
 }

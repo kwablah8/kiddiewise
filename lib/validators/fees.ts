@@ -207,15 +207,26 @@ export const extraFeeStructureVM = z.object({
   description: z.string().nullable(),
   amount: z.number(),
   frequency: extraFeeFrequency,
-  scope: z.string(), // "All classes" or a class name
+  // The classes the fee is offered to. Empty means every class.
+  class_ids: z.array(z.string()),
+  scope: z.string(), // "All classes" or the class names
+  // How many charges have been raised against it. Once there are any, the frequency is fixed and
+  // the fee can no longer be deleted.
+  charge_count: z.number(),
 });
 export type ExtraFeeStructureVM = z.infer<typeof extraFeeStructureVM>;
 
 export const extraFeeAssignmentVM = z.object({
   id: z.string(),
+  student_id: z.string(),
   student_name: z.string(),
   class_name: z.string(),
+  extra_fee_item_id: z.string(),
   fee_name: z.string(),
+  frequency: extraFeeFrequency,
+  academic_year_id: z.string(),
+  fee_term: feeTerm,
+  billing_month: z.string().nullable(),
   amount: z.number(),
   paid: z.number(),
   balance: z.number(),
@@ -224,15 +235,69 @@ export const extraFeeAssignmentVM = z.object({
 export type ExtraFeeAssignmentVM = z.infer<typeof extraFeeAssignmentVM>;
 
 export const extraFeeStructureCreateSchema = z.object({
-  name: z.string().min(1, "Required"),
+  name: z.string().trim().min(1, "Required"),
   amount: amount(),
   frequency: extraFeeFrequency.default("one_time"),
   description: z.string().nullable().default(null),
+  // Empty means every class.
+  class_ids: z.array(z.string().min(1)).default([]),
 });
 export type ExtraFeeStructureCreateInput = z.infer<typeof extraFeeStructureCreateSchema>;
 
+// A full replace, for the same reason as feeStructureUpdateSchema.
+export const extraFeeStructureUpdateSchema = extraFeeStructureCreateSchema.extend({
+  id: z.string().min(1, "Required"),
+});
+export type ExtraFeeStructureUpdateInput = z.infer<typeof extraFeeStructureUpdateSchema>;
+
+export const extraFeeStructureDeleteSchema = z.object({ id: z.string().min(1, "Required") });
+export type ExtraFeeStructureDeleteInput = z.infer<typeof extraFeeStructureDeleteSchema>;
+
+// Who a fee is charged to in one go.
+export const extraFeeTarget = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("all") }),
+  z.object({ kind: z.literal("classes"), class_ids: z.array(z.string().min(1)).min(1, "Select at least one class") }),
+  z.object({ kind: z.literal("students"), student_ids: z.array(z.string().min(1)).min(1, "Select at least one student") }),
+]);
+export type ExtraFeeTarget = z.infer<typeof extraFeeTarget>;
+
+export const assignExtraFeeSchema = z.object({
+  extra_fee_item_id: z.string().min(1, "Select a fee"),
+  target: extraFeeTarget,
+  // The period being billed, in the active academic year. Which of these is required depends on
+  // the fee's frequency; lib/fees/extra.ts#resolveChargePeriod checks the pair.
+  fee_term: feeTerm.default("full_year"),
+  // "YYYY-MM", as an <input type="month"> gives it. Monthly fees only.
+  billing_month: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Select a month")
+    .nullable()
+    .default(null),
+  // Defaults to the fee's price in the form, but may differ (a sibling discount, a part-term joiner).
+  amount: amount(),
+});
+export type AssignExtraFeeInput = z.infer<typeof assignExtraFeeSchema>;
+
+export const updateExtraFeeChargeSchema = z.object({
+  id: z.string().min(1, "Required"),
+  amount: amount(),
+});
+export type UpdateExtraFeeChargeInput = z.infer<typeof updateExtraFeeChargeSchema>;
+
+export const deleteExtraFeeChargeSchema = z.object({ id: z.string().min(1, "Required") });
+export type DeleteExtraFeeChargeInput = z.infer<typeof deleteExtraFeeChargeSchema>;
+
 // ---- Record Payment ----
-export const recordPaymentSchema = z.object({
+// What the Record Payment form collects, whichever kind of fee the payment settles.
+export const paymentDetailsSchema = z.object({
+  amount: amount(),
+  method: paymentMethod.default("cash"),
+  reference: z.string().nullable().default(null),
+  paid_at: z.string().min(1, "Required"),
+});
+export type PaymentDetailsInput = z.infer<typeof paymentDetailsSchema>;
+
+export const recordPaymentSchema = paymentDetailsSchema.extend({
   student_id: z.string().min(1, "Required"),
   // Which of the student's invoices this payment settles. A student can hold a full-year invoice and
   // per-term invoices at once, so the scope of the row the admin clicked must travel with the payment
@@ -240,10 +305,13 @@ export const recordPaymentSchema = z.object({
   // `fee_term`; the action re-resolves the invoice under the caller's RLS from student + active year +
   // this scope, so nothing here is trusted beyond the enum. Defaults to full_year for older callers.
   fee_term: feeTerm.default("full_year"),
-  amount: amount(),
-  method: paymentMethod.default("cash"),
-  reference: z.string().nullable().default(null),
-  paid_at: z.string().min(1, "Required"),
   fee_label: z.string().nullable().default(null),
 });
 export type RecordPaymentInput = z.infer<typeof recordPaymentSchema>;
+
+// A payment against one extra-fee charge. The student is read off the charge, never taken from
+// the request.
+export const recordExtraFeePaymentSchema = paymentDetailsSchema.extend({
+  extra_fee_assignment_id: z.string().min(1, "Required"),
+});
+export type RecordExtraFeePaymentInput = z.infer<typeof recordExtraFeePaymentSchema>;

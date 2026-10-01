@@ -248,7 +248,7 @@ branding, so credential messages and public enquiries read correctly out of the 
 | Attendance | ~720 rows | Last 30 school days (weekdays only), ~96% present-or-late |
 | Assessments | 24 | Maths + English per class, results submitted |
 | Invoices | 24 | Every one of paid / partial / pending occurs, plus scholarships and arrears |
-| Extra fees | 5 definitions | Bus, Feeding, Uniform, Excursion, ICT Lab |
+| Extra fees | 5 definitions, 10 charges | Bus, Feeding, Uniform, ICT Lab for all classes; Excursion for JHS 1 only. Bus and Feeding charged for First Term; charges are settled, half paid or unpaid |
 | Terminal reports | Basic 1 only | Published, so `parent@` sees a real report while other classes show "not published" |
 | Inquiries | 6 | 3 still `new`, so the Admissions sidebar badge has a count |
 

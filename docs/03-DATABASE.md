@@ -446,19 +446,45 @@ Constraint: `unique (student_id, academic_year_id, fee_term)` — so bulk-assign
 ### `invoice_items`
 | id | school_id FK | invoice_id FK | fee_item_id null FK | description | amount numeric |
 
-### `extra_fee_items` (0017)
+### `extra_fee_items` (0017, 0043)
 Optional charges outside the core class fee — bus, feeding, uniform, excursion.
 
-| id | school_id FK | name | description null | amount numeric `> 0` | frequency (extra_fee_frequency) | class_id **null** FK (null = all classes) | created_at |
+| id | school_id FK | name | description null | amount numeric `> 0` | frequency (extra_fee_frequency) | created_at |
 
-Constraint: `unique (school_id, name)`.
+Constraint: `unique (school_id, name)`. `amount` is the list price a new charge starts from; editing
+it never changes charges already raised. 0043 dropped the single nullable `class_id` in favour of
+`extra_fee_item_classes`.
 
-### `extra_fee_assignments` (0017)
-| id | school_id FK | student_id FK | extra_fee_item_id FK | amount numeric `> 0` | created_at |
+### `extra_fee_item_classes` (0043)
+| extra_fee_item_id FK (cascade) | class_id FK (restrict) | school_id FK |
+
+Primary key `(extra_fee_item_id, class_id)`. The classes a fee is offered to; **no rows means every
+class**. Because an empty list widens a fee to the whole school, the list is only ever replaced
+through `set_extra_fee_item_classes(item, class_ids[])`, which swaps it in one transaction and
+raises if any id is not a class of the fee's school. Deleting a class that a fee is offered to is
+refused rather than silently widening the fee. RLS: admins manage, anyone in the school reads.
+
+### `extra_fee_assignments` (0017, 0043)
+One charge: a student owing a fee for one billing period.
+
+| id | school_id FK | student_id FK | extra_fee_item_id FK | academic_year_id FK | fee_term (fee_term) | billing_month date null | amount numeric `> 0` | created_at |
+
+The period depends on the fee's frequency: termly charges bill a term (`first`/`second`/`third`),
+monthly charges bill a month (`fee_term = 'full_year'`, `billing_month` = the first of the month),
+annual and one-time charges bill the year (`full_year`, no month). `lib/fees/extra.ts` holds the
+rule. Nothing is raised automatically; the admin assigns each period, and re-assigning skips
+students already charged for it.
 
 `amount` is copied off the item at assign time and then editable per student: a sibling discount or a
-part-term joiner pays something different from the list price. Constraint:
-`unique (extra_fee_item_id, student_id)`.
+part-term joiner pays something different from the list price. It can never be lowered below what
+has been paid. Constraints: `unique nulls not distinct (extra_fee_item_id, student_id,
+academic_year_id, fee_term, billing_month)`, and a month must be a first-of-month on a `full_year`
+charge.
+
+0043 also made money undeletable as a side effect: `extra_fee_item_id` and
+`payments.extra_fee_assignment_id` are NO ACTION instead of cascade, so a charged fee or a paid charge
+cannot be deleted. NO ACTION rather than RESTRICT because it is checked at the end of the statement,
+so deleting a student still removes their charges and payments together.
 
 ### `payments`
 | id | school_id FK | invoice_id **null** FK | extra_fee_assignment_id **null** FK | student_id FK | amount numeric `> 0` | method (payment_method) | reference text null | paid_at timestamptz | recorded_by FK → profiles |
@@ -477,7 +503,9 @@ caller the whole platform's fee ledger.
   (`greatest(0, total_amount + arrears - paid)`) and `status` (`paid` / `partial` / `pending`), plus
   the student's name and the class from the enrollment **for that invoice's own year**, so a promoted
   student's historical invoices still show the class they were in when the fee was raised.
-- **`extra_fee_positions`** — the same derivation for assigned extra fees.
+- **`extra_fee_positions`** — the same derivation for extra-fee charges, with the fee's name and
+  frequency and the charge's period. Since 0043 the class likewise comes from the enrollment for the
+  charge's own year.
 
 Dashboard **Total Revenue** = `sum(payments.amount)`; **Fee Collection Trend** = payments grouped by
 month (§12). The Overview cards are summed by the pure, unit-tested `summarizeFees` helper rather than

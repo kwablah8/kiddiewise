@@ -257,7 +257,8 @@ async function wipe(): Promise<void> {
   // script working if a future migration changes a cascade to a restrict.
   const tables = [
     "lesson_notes", "canteen_menu_items", "timetable_entries", "periods",
-    "payments", "invoice_items", "invoices", "extra_fee_assignments", "extra_fee_items",
+    "payments", "invoice_items", "invoices", "extra_fee_assignments", "extra_fee_item_classes",
+    "extra_fee_items",
     "fee_items", "terminal_report_subjects", "terminal_reports", "results", "assessments", "attendance",
     "student_guardians", "enrollments", "students", "class_subjects", "classes", "subjects",
     "grade_bands", "assessment_types", "activity_log", "announcements", "events",
@@ -844,13 +845,14 @@ async function main(): Promise<void> {
   });
   await insert("payments", payments);
 
-  // Extra fees: one school-wide set, assigned to a subset of students.
+  // Extra fees: mostly school-wide, one offered to a single class, charged to a subset of students
+  // for the active year. Termly fees are charged for the active (first) term.
   const extraDefs = [
-    { name: "School Bus", description: "Return daily transport", amount: 500, frequency: "termly" as const, classKey: null },
-    { name: "Feeding", description: "Hot lunch programme", amount: 600, frequency: "termly" as const, classKey: null },
-    { name: "Uniform", description: "Full set (2 pairs)", amount: 200, frequency: "one_time" as const, classKey: null },
-    { name: "Excursion", description: "End-of-term educational trip", amount: 400, frequency: "one_time" as const, classKey: "j1" },
-    { name: "ICT Lab", description: "Computer lab maintenance", amount: 150, frequency: "annual" as const, classKey: null },
+    { name: "School Bus", description: "Return daily transport", amount: 500, frequency: "termly" as const, classKeys: [] },
+    { name: "Feeding", description: "Hot lunch programme", amount: 600, frequency: "termly" as const, classKeys: [] },
+    { name: "Uniform", description: "Full set (2 pairs)", amount: 200, frequency: "one_time" as const, classKeys: [] },
+    { name: "Excursion", description: "End-of-term educational trip", amount: 400, frequency: "one_time" as const, classKeys: ["j1"] },
+    { name: "ICT Lab", description: "Computer lab maintenance", amount: 150, frequency: "annual" as const, classKeys: [] },
   ];
   const extraItemId: Record<string, string> = {};
   for (const e of extraDefs) {
@@ -860,10 +862,15 @@ async function main(): Promise<void> {
       description: e.description,
       amount: e.amount,
       frequency: e.frequency,
-      class_id: e.classKey ? classId[e.classKey]! : null,
     }).select("id").single();
     if (error) throw new Error(`extra_fee_items: ${error.message}`);
     extraItemId[e.name] = data.id;
+    if (e.classKeys.length > 0) {
+      await insert(
+        "extra_fee_item_classes",
+        e.classKeys.map((k) => ({ school_id: SCHOOL_ID, extra_fee_item_id: data.id, class_id: classId[k]! })),
+      );
+    }
   }
 
   const extraPayments: TablesInsert<"payments">[] = [];
@@ -873,6 +880,8 @@ async function main(): Promise<void> {
       school_id: SCHOOL_ID,
       extra_fee_item_id: extraItemId[def.name]!,
       student_id: s.id,
+      academic_year_id: YEAR_ID,
+      fee_term: def.frequency === "termly" ? "first" : "full_year",
       amount: def.amount,
     }).select("id").single();
     if (error) throw new Error(`extra_fee_assignments: ${error.message}`);

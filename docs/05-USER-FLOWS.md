@@ -191,6 +191,26 @@ flowchart TD
 
 ---
 
+## 9a. Fees: charge and collect an extra fee (admin)
+
+```mermaid
+flowchart TD
+    A[Fees → Extra Fees, or a student's profile] --> B[Assign: fee, who, period, amount]
+    B --> C{Who}
+    C -- all students --> D[Every enrolled student in a class the fee is offered to]
+    C -- classes --> E[Enrolled students of the chosen classes]
+    C -- students --> F[The chosen students]
+    D & E & F --> G[One charge per student for the period; already-charged skipped]
+    G --> H[Record payment against a charge]
+    H --> I[Balance and status derived; Payment History + receipt]
+```
+
+The period is a term for a termly fee, a month for a monthly fee, and the year otherwise. Charging
+next term or month is the same assignment run again. A student who joins later is picked up by
+re-running it; nobody is charged twice for one period.
+
+---
+
 ## 10. Marketing: admissions inquiry (public)
 
 ```mermaid

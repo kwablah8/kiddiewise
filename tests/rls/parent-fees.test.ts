@@ -89,8 +89,8 @@ beforeAll(async () => {
       .single()
   ).data!.id;
   await db.from("extra_fee_assignments").insert([
-    { school_id: s.schoolA, extra_fee_item_id: item, student_id: s.studentA1, amount: 300 },
-    { school_id: s.schoolA, extra_fee_item_id: item, student_id: s.studentA2, amount: 300 },
+    { school_id: s.schoolA, extra_fee_item_id: item, student_id: s.studentA1, academic_year_id: year, amount: 300 },
+    { school_id: s.schoolA, extra_fee_item_id: item, student_id: s.studentA2, academic_year_id: year, amount: 300 },
   ]);
 });
 

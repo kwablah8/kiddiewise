@@ -122,6 +122,12 @@ enrollments for the next academic year.
 Define fee items/structures per class or level; record invoices and payments per student;
 feed the dashboard's revenue total and fee-collection trend. No online payment gateway in MVP.
 
+Extra fees (bus, feeding, uniform…) are offered to every class or to chosen classes, and charged
+per billing period (a term, a month, or the year, by the fee's frequency) to every student, to
+chosen classes, or to chosen students, at the list price or an adjusted amount. Payments are
+recorded against each charge. A charge can be corrected but never below what has been paid, and
+removed only while unpaid; a fee can be deleted only if it has never been charged.
+
 ### Announcements
 Create and publish announcements; target audiences (Parents only / Teachers only / Everyone).
 

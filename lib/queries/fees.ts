@@ -19,7 +19,13 @@ const deleteFeeStructure = mutate(actions.deleteFeeStructure);
 const bulkAssignFees = mutate(actions.bulkAssignFees);
 const assignIndividualFee = mutate(actions.assignIndividualFee);
 const createExtraFeeStructure = mutate(actions.createExtraFeeStructure);
+const updateExtraFeeStructure = mutate(actions.updateExtraFeeStructure);
+const deleteExtraFeeStructure = mutate(actions.deleteExtraFeeStructure);
+const assignExtraFee = mutate(actions.assignExtraFee);
+const updateExtraFeeCharge = mutate(actions.updateExtraFeeCharge);
+const deleteExtraFeeCharge = mutate(actions.deleteExtraFeeCharge);
 const recordPayment = mutate(actions.recordPayment);
+const recordExtraFeePayment = mutate(actions.recordExtraFeePayment);
 
 export function useFeesOverview(filter: FeesFilter) {
   return useQuery({
@@ -115,6 +121,54 @@ export function useRecordPayment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: recordPayment,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}
+
+export function useUpdateExtraFeeStructure() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: updateExtraFeeStructure,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}
+
+export function useDeleteExtraFeeStructure() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteExtraFeeStructure,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}
+
+export function useAssignExtraFee() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: assignExtraFee,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}
+
+export function useUpdateExtraFeeCharge() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: updateExtraFeeCharge,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}
+
+export function useDeleteExtraFeeCharge() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteExtraFeeCharge,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
+  });
+}
+
+export function useRecordExtraFeePayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: recordExtraFeePayment,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["fees"] }),
   });
 }

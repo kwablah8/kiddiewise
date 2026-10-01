@@ -157,7 +157,7 @@ export function ClassFeesTab({ filter }: { filter: FeesFilter }) {
       {paymentTarget && (
         <RecordPaymentDialog
           key={paymentTarget.id}
-          target={paymentTarget}
+          target={{ kind: "class", fee: paymentTarget }}
           onClose={() => setPaymentTarget(null)}
         />
       )}

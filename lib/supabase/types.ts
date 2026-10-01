@@ -847,30 +847,46 @@ export type Database = {
       }
       extra_fee_assignments: {
         Row: {
+          academic_year_id: string
           amount: number
+          billing_month: string | null
           created_at: string
           extra_fee_item_id: string
+          fee_term: Database["public"]["Enums"]["fee_term"]
           id: string
           school_id: string
           student_id: string
         }
         Insert: {
+          academic_year_id: string
           amount: number
+          billing_month?: string | null
           created_at?: string
           extra_fee_item_id: string
+          fee_term?: Database["public"]["Enums"]["fee_term"]
           id?: string
           school_id: string
           student_id: string
         }
         Update: {
+          academic_year_id?: string
           amount?: number
+          billing_month?: string | null
           created_at?: string
           extra_fee_item_id?: string
+          fee_term?: Database["public"]["Enums"]["fee_term"]
           id?: string
           school_id?: string
           student_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "extra_fee_assignments_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "extra_fee_assignments_extra_fee_item_id_fkey"
             columns: ["extra_fee_item_id"]
@@ -894,10 +910,49 @@ export type Database = {
           },
         ]
       }
+      extra_fee_item_classes: {
+        Row: {
+          class_id: string
+          extra_fee_item_id: string
+          school_id: string
+        }
+        Insert: {
+          class_id: string
+          extra_fee_item_id: string
+          school_id: string
+        }
+        Update: {
+          class_id?: string
+          extra_fee_item_id?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extra_fee_item_classes_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extra_fee_item_classes_extra_fee_item_id_fkey"
+            columns: ["extra_fee_item_id"]
+            isOneToOne: false
+            referencedRelation: "extra_fee_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extra_fee_item_classes_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       extra_fee_items: {
         Row: {
           amount: number
-          class_id: string | null
           created_at: string
           description: string | null
           frequency: Database["public"]["Enums"]["extra_fee_frequency"]
@@ -907,7 +962,6 @@ export type Database = {
         }
         Insert: {
           amount: number
-          class_id?: string | null
           created_at?: string
           description?: string | null
           frequency?: Database["public"]["Enums"]["extra_fee_frequency"]
@@ -917,7 +971,6 @@ export type Database = {
         }
         Update: {
           amount?: number
-          class_id?: string | null
           created_at?: string
           description?: string | null
           frequency?: Database["public"]["Enums"]["extra_fee_frequency"]
@@ -926,13 +979,6 @@ export type Database = {
           school_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "extra_fee_items_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "extra_fee_items_school_id_fkey"
             columns: ["school_id"]
@@ -2158,11 +2204,16 @@ export type Database = {
     Views: {
       extra_fee_positions: {
         Row: {
+          academic_year_id: string | null
           amount: number | null
           balance: number | null
+          billing_month: string | null
           class_id: string | null
           class_name: string | null
+          extra_fee_item_id: string | null
           fee_name: string | null
+          fee_term: Database["public"]["Enums"]["fee_term"] | null
+          frequency: Database["public"]["Enums"]["extra_fee_frequency"] | null
           id: string | null
           paid: number | null
           school_id: string | null
@@ -2176,6 +2227,20 @@ export type Database = {
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extra_fee_assignments_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extra_fee_assignments_extra_fee_item_id_fkey"
+            columns: ["extra_fee_item_id"]
+            isOneToOne: false
+            referencedRelation: "extra_fee_items"
             referencedColumns: ["id"]
           },
           {
@@ -2308,6 +2373,10 @@ export type Database = {
       is_school_admin: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       parent_of_student: { Args: { p_student_id: string }; Returns: boolean }
+      set_extra_fee_item_classes: {
+        Args: { p_class_ids: string[]; p_item_id: string }
+        Returns: undefined
+      }
       sidebar_counts: {
         Args: never
         Returns: {

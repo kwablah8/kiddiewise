@@ -27,10 +27,19 @@ import { getFeesOverview, listExtraFeeAssignments } from "@/lib/data/fees";
 
 let s: Seeded;
 let extraAssignmentId: string;
+let year2Id: string;
 
 beforeAll(async () => {
   s = await seedTwoSchools();
   const svc = admin();
+
+  const { data: year1, error: year1Err } = await svc
+    .from("academic_years")
+    .select("id")
+    .eq("school_id", s.schoolA)
+    .eq("is_active", true)
+    .single();
+  if (year1Err) throw new Error(`year1: ${year1Err.message}`);
 
   // The year the school is rolling into.
   const { data: year2, error: yearErr } = await svc
@@ -45,14 +54,16 @@ beforeAll(async () => {
     .select("id")
     .single();
   if (yearErr) throw new Error(`year2: ${yearErr.message}`);
+  year2Id = year2!.id;
 
   adminClient = await signInAs(s.adminAEmail);
 
-  // An extra fee assigned to the student who is about to be promoted. Extra fees carry no academic
-  // year of their own, so `extra_fee_positions` must pick one enrollment to name the student's
-  // class, migration 0032 scopes that join to the active year. Without it, a promoted student (who
-  // holds one active enrollment per year) yields one row PER YEAR: the fee renders twice and every
-  // extra-fee total doubles. Seeded before the rollover below so the student ends up holding both.
+  // An extra fee charged, for the year being left, to the student who is about to be promoted.
+  // `extra_fee_positions` names the class from the enrollment in the charge's own year (migration
+  // 0043). Before charges carried a year, the join picked enrollments by status alone, so a promoted
+  // student (who holds one active enrollment per year) yielded one row PER YEAR: the fee rendered
+  // twice and every extra-fee total doubled. Seeded before the rollover below so the student ends up
+  // holding both enrollments.
   const { data: item, error: itemErr } = await svc
     .from("extra_fee_items")
     .insert({ school_id: s.schoolA, name: "Feeding", amount: 600 })
@@ -66,6 +77,7 @@ beforeAll(async () => {
       school_id: s.schoolA,
       extra_fee_item_id: item!.id,
       student_id: s.studentA1,
+      academic_year_id: year1!.id,
       amount: 600,
     })
     .select("id")
@@ -133,14 +145,20 @@ describe("after promotion and a year switch, reads follow the active year", () =
     expect(basic2?.student_count).toBe(1);
   });
 
-  // Migration 0032's guarantee, which had no test until a duplicate-key crash on the parent portal's
-  // Fees tab exposed it. Both portals read extra fees through these two functions, so pinning it
-  // here covers the admin Extra Fees tab and the parent's "Other fees" table at once.
-  it("an extra fee on a promoted student is ONE row, at their new class", async () => {
+  // Pinned after a duplicate-key crash on the parent portal's Fees tab. Both portals read extra fees
+  // through these two functions, so this covers the admin Extra Fees tab and the parent's "Other
+  // fees" table at once. The charge billed last year, so it names the class the student was in
+  // then, the same way a class-fee invoice does.
+  it("an extra fee on a promoted student is ONE row, at the class of the year it billed", async () => {
     const rows = await listExtraFeeAssignments();
     const mine = rows.filter((r) => r.id === extraAssignmentId);
     expect(mine).toHaveLength(1);
-    expect(mine[0]!.class_name).toBe("Basic 2");
+    expect(mine[0]!.class_name).toBe("Basic 1");
+  });
+
+  it("drops out of the new year's extra fees", async () => {
+    const rows = await listExtraFeeAssignments({ academic_year_id: year2Id });
+    expect(rows.filter((r) => r.id === extraAssignmentId)).toHaveLength(0);
   });
 
   it("does not double a promoted student's extra-fee total", async () => {

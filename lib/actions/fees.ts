@@ -10,7 +10,13 @@ import {
   bulkAssignFeesSchema,
   assignIndividualFeeSchema,
   extraFeeStructureCreateSchema,
+  extraFeeStructureUpdateSchema,
+  extraFeeStructureDeleteSchema,
+  assignExtraFeeSchema,
+  updateExtraFeeChargeSchema,
+  deleteExtraFeeChargeSchema,
   recordPaymentSchema,
+  recordExtraFeePaymentSchema,
   FEE_TERM_LABEL,
   type FeeStructureCreateInput,
   type FeeStructureUpdateInput,
@@ -18,10 +24,18 @@ import {
   type BulkAssignFeesInput,
   type AssignIndividualFeeInput,
   type ExtraFeeStructureCreateInput,
+  type ExtraFeeStructureUpdateInput,
+  type ExtraFeeStructureDeleteInput,
+  type AssignExtraFeeInput,
+  type UpdateExtraFeeChargeInput,
+  type DeleteExtraFeeChargeInput,
   type RecordPaymentInput,
+  type RecordExtraFeePaymentInput,
   type FeeTerm,
   type ScholarshipType,
 } from "@/lib/validators/fees";
+import { resolveChargePeriod } from "@/lib/fees/extra";
+import { formatGHS } from "@/lib/format";
 
 /**
  * Fee writes.
@@ -338,7 +352,19 @@ export async function recordPayment(input: RecordPaymentInput): Promise<ActionRe
   });
 }
 
-/** An extra-fee definition. `class_id` is null → it applies to all classes. */
+/**
+ * Point a fee at its classes (none = every class). One RPC, so the list is replaced atomically and a
+ * failed write can never leave the fee open to every class.
+ */
+async function setExtraFeeClasses(ctx: TenantContext, itemId: string, classIds: string[]) {
+  assertOk(
+    await ctx.db.rpc("set_extra_fee_item_classes", { p_item_id: itemId, p_class_ids: classIds }),
+    "extra fee classes",
+    "One of the selected classes no longer exists. Refresh and try again.",
+  );
+}
+
+/** An extra-fee definition, offered to the chosen classes or, with none chosen, to every class. */
 export async function createExtraFeeStructure(
   input: ExtraFeeStructureCreateInput,
 ): Promise<ActionResult<{ id: string }>> {
@@ -355,7 +381,6 @@ export async function createExtraFeeStructure(
           description: data.description,
           amount: data.amount,
           frequency: data.frequency,
-          class_id: null,
         })
         .select("id")
         .single(),
@@ -363,6 +388,306 @@ export async function createExtraFeeStructure(
       // unique(school_id, name).
       "An extra fee with this name already exists.",
     );
+
+    if (data.class_ids.length > 0) {
+      try {
+        await setExtraFeeClasses(ctx, row.id, data.class_ids);
+      } catch (err) {
+        // Without its classes the new fee would read as offered to every class. Take it back out
+        // rather than leave that behind; nothing can have been charged against it yet.
+        await ctx.db.from("extra_fee_items").delete().eq("id", row.id);
+        throw err;
+      }
+    }
+    return { id: row.id };
+  });
+}
+
+/**
+ * Edit a fee. A new price applies to charges raised from now on; existing charges keep the amount
+ * they were raised at. The frequency is fixed once anything has been charged, because it decides
+ * what period each existing charge bills for.
+ */
+export async function updateExtraFeeStructure(
+  input: ExtraFeeStructureUpdateInput,
+): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const data = extraFeeStructureUpdateSchema.parse(input);
+    const ctx = await tenant();
+
+    const { data: current, error } = await ctx.db
+      .from("extra_fee_items")
+      .select("frequency, extra_fee_assignments(count)")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(`extra fee: ${error.message}`);
+    if (!current) throw new UserFacingError("This extra fee no longer exists.");
+
+    const charged = (current.extra_fee_assignments[0]?.count ?? 0) > 0;
+    if (charged && current.frequency !== data.frequency) {
+      throw new UserFacingError(
+        "This fee has already been charged, so its frequency can't change. Create a new fee instead.",
+      );
+    }
+
+    const row = assertWrite(
+      await ctx.db
+        .from("extra_fee_items")
+        .update({
+          name: data.name,
+          description: data.description,
+          amount: data.amount,
+          frequency: data.frequency,
+        })
+        .eq("id", data.id)
+        .select("id")
+        .single(),
+      "extra fee",
+      "An extra fee with this name already exists.",
+    );
+    await setExtraFeeClasses(ctx, row.id, data.class_ids);
+    return { id: row.id };
+  });
+}
+
+/** Delete a fee that has never been charged. The FK refuses anything else (migration 0043). */
+export async function deleteExtraFeeStructure(
+  input: ExtraFeeStructureDeleteInput,
+): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const data = extraFeeStructureDeleteSchema.parse(input);
+    const ctx = await tenant();
+
+    const row = assertWrite(
+      await ctx.db.from("extra_fee_items").delete().eq("id", data.id).select("id").single(),
+      "extra fee",
+      "This fee has been charged to students, so it can't be deleted. Remove its charges first.",
+    );
+    return { id: row.id };
+  });
+}
+
+/**
+ * Charge an extra fee, for one period of the active year, to every student, to chosen classes, or
+ * to chosen students.
+ *
+ * A snapshot of who is enrolled now: a student who joins later is charged by running the same
+ * assignment again, which skips everyone already charged for that period rather than doubling them.
+ */
+export async function assignExtraFee(
+  input: AssignExtraFeeInput,
+): Promise<ActionResult<{ charged: number; alreadyCharged: number }>> {
+  return attempt(async () => {
+    const data = assignExtraFeeSchema.parse(input);
+    const ctx = await tenant();
+    const { academicYearId } = await activeContext(ctx);
+
+    if (!academicYearId) {
+      throw new UserFacingError("Set an active academic year before charging extra fees.");
+    }
+
+    const [itemRes, yearRes] = await Promise.all([
+      ctx.db
+        .from("extra_fee_items")
+        .select("id, name, frequency, extra_fee_item_classes(class_id)")
+        .eq("id", data.extra_fee_item_id)
+        .maybeSingle(),
+      ctx.db.from("academic_years").select("start_date, end_date").eq("id", academicYearId).single(),
+    ]);
+    if (itemRes.error) throw new Error(`extra fee: ${itemRes.error.message}`);
+    if (yearRes.error) throw new Error(`academic year: ${yearRes.error.message}`);
+    const item = itemRes.data;
+    if (!item) throw new UserFacingError("This extra fee no longer exists.");
+
+    const resolved = resolveChargePeriod(item.frequency, data, yearRes.data);
+    if (!resolved.ok) throw new UserFacingError(resolved.message);
+    const { period } = resolved;
+
+    const offeredTo = new Set(item.extra_fee_item_classes.map((l) => l.class_id));
+    const isOffered = (classId: string) => offeredTo.size === 0 || offeredTo.has(classId);
+    const { target } = data;
+
+    if (target.kind === "classes") {
+      const notOffered = target.class_ids.filter((id) => !isOffered(id));
+      if (notOffered.length > 0) {
+        throw new UserFacingError(`${item.name} isn't offered to every class you selected.`);
+      }
+    }
+
+    let enrolledQuery = ctx.db
+      .from("enrollments")
+      .select("student_id, class_id")
+      .eq("academic_year_id", academicYearId)
+      .eq("status", "active");
+    if (target.kind === "classes") enrolledQuery = enrolledQuery.in("class_id", target.class_ids);
+    if (target.kind === "students") enrolledQuery = enrolledQuery.in("student_id", target.student_ids);
+    const { data: enrolled, error: enrolledErr } = await enrolledQuery;
+    if (enrolledErr) throw new Error(`enrollments: ${enrolledErr.message}`);
+
+    if (target.kind === "students") {
+      const enrolledIds = new Set(enrolled.map((e) => e.student_id));
+      const missing = new Set(target.student_ids.filter((id) => !enrolledIds.has(id))).size;
+      if (missing > 0) {
+        throw new UserFacingError(
+          missing === 1
+            ? "One of the selected students isn't enrolled in the active year."
+            : `${missing} of the selected students aren't enrolled in the active year.`,
+        );
+      }
+      if (enrolled.some((e) => !isOffered(e.class_id))) {
+        throw new UserFacingError(
+          `${item.name} isn't offered to the class of every student you selected.`,
+        );
+      }
+    }
+
+    // "Every student" means every student in a class the fee is offered to.
+    const studentIds = [...new Set(enrolled.filter((e) => isOffered(e.class_id)).map((e) => e.student_id))];
+    if (studentIds.length === 0) return { charged: 0, alreadyCharged: 0 };
+
+    let existingQuery = ctx.db
+      .from("extra_fee_assignments")
+      .select("student_id")
+      .eq("extra_fee_item_id", item.id)
+      .eq("academic_year_id", academicYearId)
+      .eq("fee_term", period.fee_term)
+      .in("student_id", studentIds);
+    existingQuery = period.billing_month
+      ? existingQuery.eq("billing_month", period.billing_month)
+      : existingQuery.is("billing_month", null);
+    const { data: existing, error: existingErr } = await existingQuery;
+    if (existingErr) throw new Error(`extra fee charges: ${existingErr.message}`);
+
+    const already = new Set(existing.map((e) => e.student_id));
+    const toCharge = studentIds.filter((id) => !already.has(id));
+
+    if (toCharge.length > 0) {
+      assertOk(
+        await ctx.db.from("extra_fee_assignments").insert(
+          toCharge.map((studentId) => ({
+            school_id: ctx.schoolId,
+            extra_fee_item_id: item.id,
+            student_id: studentId,
+            academic_year_id: academicYearId,
+            fee_term: period.fee_term,
+            billing_month: period.billing_month,
+            amount: data.amount,
+          })),
+        ),
+        "extra fee charge",
+        // extra_fee_assignments_period_key: someone else charged one of them a moment ago.
+        "Some of these students were charged for this period just now. Refresh and try again.",
+      );
+      await logActivity(
+        ctx,
+        `charged ${item.name} to ${toCharge.length} student${toCharge.length === 1 ? "" : "s"}`,
+        "extra_fee",
+        item.id,
+      );
+    }
+
+    return { charged: toCharge.length, alreadyCharged: already.size };
+  });
+}
+
+/** Correct what one student is charged. Never below what they have already paid. */
+export async function updateExtraFeeCharge(
+  input: UpdateExtraFeeChargeInput,
+): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const data = updateExtraFeeChargeSchema.parse(input);
+    const ctx = await tenant();
+
+    const position = await findExtraFeePosition(ctx, data.id);
+    if (data.amount < position.paid) {
+      throw new UserFacingError(
+        `${formatGHS(position.paid)} has already been paid against this charge, so it can't be lower than that.`,
+      );
+    }
+
+    const row = assertWrite(
+      await ctx.db
+        .from("extra_fee_assignments")
+        .update({ amount: data.amount })
+        .eq("id", data.id)
+        .select("id")
+        .single(),
+      "extra fee charge",
+    );
+    return { id: row.id };
+  });
+}
+
+/** Remove a charge raised by mistake. Only while nothing has been paid against it. */
+export async function deleteExtraFeeCharge(
+  input: DeleteExtraFeeChargeInput,
+): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const data = deleteExtraFeeChargeSchema.parse(input);
+    const ctx = await tenant();
+
+    const row = assertWrite(
+      await ctx.db.from("extra_fee_assignments").delete().eq("id", data.id).select("id").single(),
+      "extra fee charge",
+      // payments_extra_fee_assignment_id_fkey (migration 0043).
+      "A payment has been recorded against this charge, so it can't be removed.",
+    );
+    return { id: row.id };
+  });
+}
+
+/** A charge's derived position, read under the caller's RLS. */
+async function findExtraFeePosition(
+  ctx: TenantContext,
+  id: string,
+): Promise<{ student_id: string; paid: number; balance: number }> {
+  const { data, error } = await ctx.db
+    .from("extra_fee_positions")
+    .select("student_id, paid, balance")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(`extra fee position: ${error.message}`);
+  if (!data?.student_id) throw new UserFacingError("This charge no longer exists.");
+  return { student_id: data.student_id, paid: Number(data.paid ?? 0), balance: Number(data.balance ?? 0) };
+}
+
+/** Record a payment against one extra-fee charge. */
+export async function recordExtraFeePayment(
+  input: RecordExtraFeePaymentInput,
+): Promise<ActionResult<{ id: string }>> {
+  return attempt(async () => {
+    const data = recordExtraFeePaymentSchema.parse(input);
+    const ctx = await tenant();
+
+    const position = await findExtraFeePosition(ctx, data.extra_fee_assignment_id);
+    if (data.amount > position.balance) {
+      throw new UserFacingError(
+        position.balance <= 0
+          ? "This charge is already fully paid."
+          : `That's more than the ${formatGHS(position.balance)} still owed on this charge.`,
+      );
+    }
+
+    const row = assertWrite(
+      await ctx.db
+        .from("payments")
+        .insert({
+          school_id: ctx.schoolId,
+          extra_fee_assignment_id: data.extra_fee_assignment_id,
+          student_id: position.student_id,
+          amount: data.amount,
+          method: data.method,
+          reference: data.reference,
+          paid_at: new Date(data.paid_at).toISOString(),
+          recorded_by: ctx.profile.id,
+        })
+        .select("id")
+        .single(),
+      "payment",
+    );
+
+    await logActivity(ctx, "recorded an extra fee payment", "payment", row.id);
+
     return { id: row.id };
   });
 }

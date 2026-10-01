@@ -24,58 +24,90 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRecordPayment } from "@/lib/queries/fees";
+import { useRecordExtraFeePayment, useRecordPayment } from "@/lib/queries/fees";
 import {
   FEE_TERM_LABEL,
   PAYMENT_METHOD_LABEL,
-  recordPaymentSchema,
+  paymentDetailsSchema,
+  type ExtraFeeAssignmentVM,
+  type PaymentDetailsInput,
   type PaymentMethod,
-  type RecordPaymentInput,
   type StudentFeeVM,
 } from "@/lib/validators/fees";
+import { chargePeriodLabel } from "@/lib/fees/extra";
 import { formatGHS } from "@/lib/format";
 
-type FormInput = z.input<typeof recordPaymentSchema>;
+type FormInput = z.input<typeof paymentDetailsSchema>;
 const METHODS: PaymentMethod[] = ["cash", "bank_transfer", "mobile_money", "cheque", "other"];
 
-/** Record a payment against one student's fees. `paid` is derived from payments, so saving here
- *  updates the student's balance/status, the Overview, and Payment History together. */
+/** What a payment settles: a class-fee invoice row, or one extra-fee charge. */
+export type PaymentTarget =
+  | { kind: "class"; fee: StudentFeeVM }
+  | { kind: "extra"; charge: ExtraFeeAssignmentVM };
+
+function describe(target: PaymentTarget): { studentName: string; feeLabel: string; balance: number } {
+  if (target.kind === "class") {
+    return {
+      studentName: target.fee.student_name,
+      feeLabel: `${FEE_TERM_LABEL[target.fee.fee_term]} school fees`,
+      balance: target.fee.balance,
+    };
+  }
+  return {
+    studentName: target.charge.student_name,
+    feeLabel: `${target.charge.fee_name}, ${chargePeriodLabel(target.charge)}`,
+    balance: target.charge.balance,
+  };
+}
+
+/** Record a payment against one student's class fees or one extra-fee charge. `paid` is derived
+ *  from payments, so saving here updates the balance/status, the Overview, and Payment History
+ *  together. */
 export function RecordPaymentDialog({
   target,
   onClose,
 }: {
-  target: StudentFeeVM;
+  target: PaymentTarget;
   onClose: () => void;
 }) {
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const record = useRecordPayment();
+  const recordClassFee = useRecordPayment();
+  const recordExtraFee = useRecordExtraFeePayment();
   const today = new Date().toISOString().slice(0, 10);
+  const { studentName, feeLabel, balance } = describe(target);
 
   const {
     register,
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormInput, unknown, RecordPaymentInput>({
-    resolver: zodResolver(recordPaymentSchema),
+  } = useForm<FormInput, unknown, PaymentDetailsInput>({
+    resolver: zodResolver(paymentDetailsSchema),
     defaultValues: {
-      student_id: target.student_id,
-      // Settle the invoice whose row was clicked (a student may hold both full-year and term invoices).
-      fee_term: target.fee_term,
-      amount: target.balance > 0 ? target.balance : undefined,
+      amount: balance > 0 ? balance : undefined,
       method: "cash",
       reference: null,
       paid_at: today,
-      fee_label: `${FEE_TERM_LABEL[target.fee_term]} school fees`,
     },
   });
 
-  async function onSubmit(values: RecordPaymentInput) {
+  async function onSubmit(values: PaymentDetailsInput) {
     setSubmitError(null);
     try {
-      await record.mutateAsync(values);
+      if (target.kind === "class") {
+        await recordClassFee.mutateAsync({
+          ...values,
+          student_id: target.fee.student_id,
+          // Settle the invoice whose row was clicked (a student may hold both full-year and term
+          // invoices).
+          fee_term: target.fee.fee_term,
+          fee_label: feeLabel,
+        });
+      } else {
+        await recordExtraFee.mutateAsync({ ...values, extra_fee_assignment_id: target.charge.id });
+      }
       toast.success("Payment recorded", {
-        description: `${formatGHS(values.amount)} for ${target.student_name}.`,
+        description: `${formatGHS(values.amount)} for ${studentName}.`,
       });
       onClose();
     } catch (err) {
@@ -89,13 +121,15 @@ export function RecordPaymentDialog({
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <DialogHeader>
             <DialogTitle>Record Payment</DialogTitle>
-            <DialogDescription>{target.student_name}</DialogDescription>
+            <DialogDescription>
+              {studentName} · {feeLabel}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="mt-4 space-y-4">
             <div className="flex items-center justify-between rounded-lg bg-[var(--bg)] px-3 py-2 text-sm">
               <span className="text-[var(--muted-foreground)]">Outstanding balance</span>
-              <span className="font-semibold text-[var(--text)]">{formatGHS(target.balance)}</span>
+              <span className="font-semibold text-[var(--text)]">{formatGHS(balance)}</span>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
