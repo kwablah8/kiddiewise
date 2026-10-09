@@ -11,6 +11,7 @@
  * It deliberately does not bypass the schema's rules; it writes through the service role, which
  * skips RLS but still honours every constraint, so a seed that succeeds proves the shape is sound.
  */
+import { createHash } from "node:crypto";
 import { config } from "dotenv";
 
 // Which env file to read. Defaults to local, so `pnpm seed:demo` keeps meaning "seed my laptop".
@@ -30,6 +31,7 @@ import {
   spreadStats,
 } from "../lib/terminal-reports";
 import { scoreToGrade } from "../lib/grading";
+import { ingestScans } from "../lib/gate-ingest";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -65,6 +67,9 @@ const TERM_ID = "00000000-0000-0000-0000-00000000701a";
 const PREV_YEAR_ID = "00000000-0000-0000-0000-00000000601b";
 
 export const DEMO_PASSWORD = "Password123!";
+// The local demo gate device's key, for running tools/attendance-agent against a local stack.
+// Local only, like the password above; a real device's key is issued in the app and never written down.
+export const DEMO_DEVICE_KEY = "kwd_local_demo_device_key";
 
 // ---------------------------------------------------------------------------
 // Dates. Everything is computed relative to today so the seeded term is always
@@ -256,6 +261,7 @@ async function wipe(): Promise<void> {
   // Child-to-parent order. Most FKs cascade from students/schools, but being explicit keeps the
   // script working if a future migration changes a cascade to a restrict.
   const tables = [
+    "parent_notifications", "device_scans", "device_people", "attendance_devices",
     "lesson_notes", "canteen_menu_items", "timetable_entries", "periods",
     "payments", "invoice_items", "invoices", "extra_fee_assignments", "extra_fee_item_classes",
     "extra_fee_items",
@@ -933,6 +939,51 @@ async function main(): Promise<void> {
     { school_id: SCHOOL_ID, applicant_name: "Kelvin Amoah", parent_name: "Doris Amoah", parent_email: "doris.amoah@example.com", parent_phone: null, desired_class: "Basic 2", message: "Do you offer a sibling discount?", status: "new" },
     { school_id: SCHOOL_ID, applicant_name: "Afua Nyarko", parent_name: "Samuel Nyarko", parent_email: "samuel.nyarko@example.com", parent_phone: "+233 24 777 8806", desired_class: "JHS 2", message: "Enquiring about boarding facilities.", status: "rejected" },
   ]);
+
+  // --- gate device ---------------------------------------------------------
+  // One device, everyone linked to a number (staff 1-7, students from 1001), yesterday's arrivals
+  // and departures and this morning's arrivals so far, plus one scan from a number nobody is linked
+  // to. Run through the same ingest the device route uses, so the register and the parent portal's
+  // notices are produced the real way. The device is dated a week back: scans from before a device
+  // was added are kept but not acted on.
+  const { data: device, error: deviceErr } = await db
+    .from("attendance_devices")
+    .insert({
+      school_id: SCHOOL_ID,
+      name: "Main gate",
+      key_hash: createHash("sha256").update(DEMO_DEVICE_KEY).digest("hex"),
+      created_at: new Date(shift(-7)).toISOString(),
+    })
+    .select("id, school_id, created_at")
+    .single();
+  if (deviceErr) throw new Error(`attendance_devices: ${deviceErr.message}`);
+
+  await insert("device_people", [
+    ...STAFF.map((st, i) => ({ school_id: SCHOOL_ID, device_user_id: String(i + 1), staff_id: staffId[st.key]! })),
+    ...activeStudents.map((st, i) => ({ school_id: SCHOOL_ID, device_user_id: String(1001 + i), student_id: st.id })),
+  ]);
+
+  // Ghana is on UTC, so wall-clock times are written straight from the UTC date.
+  const wall = (day: Date, hhmm: string) => `${iso(day)} ${hhmm}:00`;
+  const now = new Date();
+  const nowWall = `${iso(now)} ${now.toISOString().slice(11, 19)}`;
+  const yesterday = shift(-1);
+  const gateScans: { user_id: string; time: string }[] = [];
+  activeStudents.forEach((_, i) => {
+    const userId = String(1001 + i);
+    // Arrivals spread from 06:30; every fifth child is late, the last four don't come in today.
+    const minute = 30 + i * 6;
+    const arrival = i % 5 === 4 ? `09:${String(10 + i).padStart(2, "0")}` : `${String(6 + Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
+    gateScans.push({ user_id: userId, time: wall(yesterday, arrival) });
+    gateScans.push({ user_id: userId, time: wall(yesterday, `14:${String(10 + i).padStart(2, "0")}`) });
+    if (i < 20) gateScans.push({ user_id: userId, time: wall(now, arrival) });
+  });
+  STAFF.forEach((_, i) => {
+    if (i === 6) return; // the inactive teacher
+    gateScans.push({ user_id: String(i + 1), time: wall(now, `06:${String(40 + i * 3).padStart(2, "0")}`) });
+  });
+  gateScans.push({ user_id: "1999", time: wall(now, "07:05") });
+  await ingestScans(db, device, { scans: gateScans.filter((g) => g.time <= nowWall) });
 
   console.log(`
 Demo tenant seeded: Kiddiewise School Complex

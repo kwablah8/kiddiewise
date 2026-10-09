@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Fingerprint, Loader2 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,8 @@ import { StatusControl } from "./status-control";
 import { cardShellClass } from "@/lib/ui";
 import { useTeacherClasses } from "@/lib/queries/teacher";
 import { useRoster, useSaveAttendance } from "@/lib/queries/attendance";
+import { useGateSettings } from "@/lib/queries/gate";
+import { formatClockTime } from "@/lib/format";
 import type { AttendanceStatus } from "@/lib/validators/attendance";
 
 function todayISO(): string {
@@ -38,6 +40,8 @@ export function AttendanceMarker({ teacherId }: { teacherId: string }) {
 
   const { data: roster, isLoading, isError, refetch } = useRoster(classId, date);
   const save = useSaveAttendance();
+  // The school's clock, so a scan time reads as it did at the gate.
+  const timeZone = useGateSettings().data?.timezone;
 
   const entries = roster?.entries ?? [];
   const statusOf = (studentId: string, base: AttendanceStatus | null): AttendanceStatus | null =>
@@ -151,7 +155,18 @@ export function AttendanceMarker({ teacherId }: { teacherId: string }) {
                   <span className="block text-sm font-medium text-[var(--text)]">
                     {e.first_name} {e.last_name}
                   </span>
-                  <span className="block text-xs text-[var(--muted-foreground)]">{e.admission_no}</span>
+                  <span className="block text-xs text-[var(--muted-foreground)]">
+                    {e.admission_no}
+                    {e.scanned_at && timeZone && (
+                      <>
+                        {" · "}
+                        <span className="inline-flex items-center gap-1">
+                          <Fingerprint className="size-3" aria-hidden="true" />
+                          Scanned in {formatClockTime(e.scanned_at, timeZone)}
+                        </span>
+                      </>
+                    )}
+                  </span>
                 </span>
                 <StatusControl
                   value={statusOf(e.student_id, e.status)}

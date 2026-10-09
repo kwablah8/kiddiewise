@@ -4,7 +4,7 @@ import type { AttendanceRosterVM } from "@/lib/validators/attendance";
 
 /**
  * The register for one class on one date: every enrolled student, each carrying that day's status or
- * null when unmarked.
+ * null when unmarked, and the time they scanned in at the gate if they did.
  *
  * The two reads are independent, so they run concurrently. Filtering attendance by class and date
  * (not date alone) matters because a student who changed class mid-term could otherwise pick up a
@@ -22,21 +22,25 @@ export async function getRoster(classId: string, date: string): Promise<Attendan
     .eq("status", "active");
   if (yearId) rosterQuery = rosterQuery.eq("academic_year_id", yearId);
 
-  const [studentsRes, existingRes] = await Promise.all([
+  const [studentsRes, existingRes, arrivalsRes] = await Promise.all([
     rosterQuery,
     db()
       .from("attendance")
       .select("student_id, status")
       .eq("class_id", classId)
       .eq("date", date),
+    // Gate scan-in times. Teachers can't read the scan log itself; this returns only their own
+    // class's arrivals (migration 0045).
+    db().rpc("class_gate_arrivals", { p_class_id: classId, p_date: date }),
   ]);
 
   const enrolled = unwrapList(studentsRes, "class roster");
   const existing = unwrapList(existingRes, "attendance for date");
+  const arrivals = unwrapList(arrivalsRes, "gate arrivals");
 
   const students = enrolled
     .map((e) => e.students)
     .filter((s): s is NonNullable<typeof s> => s !== null);
 
-  return { class_id: classId, date, entries: buildRoster(students, existing) };
+  return { class_id: classId, date, entries: buildRoster(students, existing, arrivals) };
 }

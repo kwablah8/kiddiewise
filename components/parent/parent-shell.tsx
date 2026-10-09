@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BrandLock } from "@/components/brand/brand-lock";
 import { ChildSwitcher } from "@/components/parent/child-switcher";
+import { NotificationsBell } from "@/components/parent/notifications-bell";
 import { BRAND } from "@/lib/brand";
 import { useSession } from "@/lib/auth/useSession";
 import type { Profile } from "@/lib/types";
@@ -45,6 +46,7 @@ export function ParentShell({ profile, children }: ParentShellProps) {
           </div>
 
           <div className="ml-auto flex items-center gap-3">
+            <NotificationsBell parentId={profile.id} />
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-[var(--text)]">{name}</p>
               <p className="text-xs text-[var(--muted-foreground)]">Parent</p>

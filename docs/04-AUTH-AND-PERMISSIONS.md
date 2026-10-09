@@ -121,6 +121,12 @@ Two layers, always both:
 Route protection is convenience + correct UX. **RLS still independently protects the data**,
 so even a forged request to another portal's API returns nothing.
 
+Two API routes are deliberately outside the session guard (`PUBLIC_PATHS` in `lib/auth/access.ts`)
+because their callers are machines, not users, and each authenticates itself: the Sanity publish
+webhook (`/api/revalidate-sanity`, HMAC signature) and the gate device's scans
+(`/api/attendance-device/scans`, a per-device key stored only as a hash, see
+`docs/03-DATABASE.md` §6).
+
 ---
 
 ## 4. Post-login routing

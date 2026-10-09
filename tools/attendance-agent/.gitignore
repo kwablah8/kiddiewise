@@ -1,0 +1,9 @@
+config.ini
+state.json
+state.tmp
+agent.log*
+.venv/
+build/
+dist/
+*.spec
+__pycache__/

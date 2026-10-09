@@ -76,9 +76,10 @@ app/
   (app)/                authenticated shell
     dashboard/ students/ staff/ parents/ classes/ subjects/ academic/
     enquiries/ assessments/ fees/ grading/ terminal-reports/ promotion/
-    announcements/
+    announcements/ attendance/
     teacher/            staff portal
     parent/             parent portal
+  api/                  the Sanity publish webhook and the gate device's scans
   studio/               embedded Sanity Studio
 components/
   ui/                   shadcn primitives
@@ -101,6 +102,7 @@ supabase/
   migrations/           schema and RLS policies; the database source of truth
   seed.sql              a bare tenant, the school row only
 scripts/seed-demo.ts    the populated demo school
+tools/attendance-agent/ Python agent for the school computer that relays the fingerprint device's scans
 tests/
   unit/                 pure logic, no database
   rls/                  tenant isolation and role scoping
@@ -191,7 +193,8 @@ Built and verified end to end: admin dashboard, students, staff and parents incl
 access, classes, subjects, academic years and terms, the admissions inbox, grading scale,
 assessments, fees for both class and extra fees, attendance, score entry, terminal reports,
 parent fees with receipts, promotion into the next year, announcements and events, the child
-daily report, the marketing site with its public enquiry form, and the Sanity-backed public
+daily report, gate check-ins from the fingerprint device with live arrival and departure notices in
+the parent portal, the marketing site with its public enquiry form, and the Sanity-backed public
 content.
 
 Not built yet: school-settings editing, the three Storage buckets for student photos, the school

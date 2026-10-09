@@ -107,6 +107,9 @@ The tenant root.
 | active_term_id | uuid null FK → terms | one active term |
 | ca_weight | int default 50 | continuous-assessment weight on the report card; the exam weight is always `100 - ca_weight`, so the two can never disagree |
 | pass_mark | int default 50 | what counts on the card's "Number Of Passes" line — the grading scale can't say it, because which band is the lowest PASS is the school's call |
+| timezone | text default `Africa/Accra` | how the gate device's wall-clock times are read (0044) |
+| late_after | time default 09:00 | a gate arrival after this is late (0044) |
+| leaving_from | time default 12:00 | a gate scan at or after this is a departure; must be after `late_after` (0044) |
 | created_at | timestamptz | |
 
 ### `profiles`
@@ -266,6 +269,44 @@ Promotion creates new rows for the next year.
 
 Constraint: `unique (student_id, date)`. Attendance percentage per child is derived
 (`present + late` counts vs total marked days) — expose via a view/RPC.
+
+A gate scan (below) also writes here, with `marked_by` null. It only ever raises the register: an
+unmarked or `absent` student becomes `present`, or `late` after the school's `late_after`. A mark
+the teacher has already made is never changed by a scan.
+
+### Gate device (0044)
+
+A ZKTeco fingerprint device at the gate is read by an agent on the school computer
+(`tools/attendance-agent`), which posts each scan to `/api/attendance-device/scans`. The route
+authenticates the device by its key and writes with the service role, scoped to the device's school.
+
+**`attendance_devices`** — `id`, `school_id`, `name` (unique per school), `key_hash` (sha256 of the
+key; the key is shown to the admin once and never stored), `last_seen_at`, `created_at`. Admin only.
+
+**`device_people`** — `device_user_id` (the number enrolled on the device, letters and digits, unique
+per school) → exactly one of `student_id` or `staff_id` (each unique). Admin only.
+
+**`device_scans`** — every scan as the device reported it: `device_id`, `device_user_id`,
+`scanned_at`, `local_date` (the school day). `unique (device_id, device_user_id, scanned_at)`, so a
+re-sent scan lands once. Who it was and whether it was an arrival are not stored; they are resolved
+through `device_people` and the school's times, so a number linked later re-reads its history.
+Admin read only; written only by the route. Scans dated before the device was added are kept but not
+acted on.
+
+**`daily_presence`** (view, `security_invoker`) — one row per number per school day: `arrived_at`
+(first scan before `leaving_from`), `left_at` (first scan at or after it), `late`, and the linked
+`student_id` / `staff_id`. Backs the admin Check-ins tab, including staff attendance.
+
+**`class_gate_arrivals(class_id, date)`** (0045, security definer) — the scan-in time of each student
+on a class's active-year roll that day, read from `daily_presence`. The teacher's register shows it
+as "Scanned in 7:42 AM". Teachers can't read the scan log itself, so this returns only arrivals, and
+only to an admin or a teacher who `teacher_teaches_class`.
+
+**`parent_notifications`** — what a guardian was told: `parent_profile_id`, `student_id`, `event`
+(`gate_event`: `arrived` / `left`), `occurred_at`, `local_date`, `late`, `read_at`.
+`unique (parent_profile_id, student_id, event, local_date)`: one arrival and one departure per child
+per day however often they scan. A guardian reads their own (`pnotif_parent_read`) and may update
+only `read_at`. In the `supabase_realtime` publication, so the portal updates live.
 
 ---
 
@@ -555,6 +596,10 @@ class/subject.
 Marketing forms insert into `admissions_inquiries` for a specific `school_id`. This is the
 one anonymous write path; it is INSERT-only, rate-limited at the edge, and never readable by
 anon.
+
+The gate device's scans also arrive without a session, but not as an anonymous write: the route
+checks the device key against `attendance_devices.key_hash` and writes through the service role,
+scoped to that device's school.
 
 ---
 

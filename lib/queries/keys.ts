@@ -70,6 +70,12 @@ export const queryKeys = {
   attendance: {
     roster: (classId: string, date: string) => ["attendance", "roster", classId, date] as const,
   },
+  gate: {
+    settings: ["gate", "settings"] as const,
+    devices: ["gate", "devices"] as const,
+    people: ["gate", "people"] as const,
+    presence: (date: string) => ["gate", "presence", date] as const,
+  },
   fees: {
     overview: (filter: unknown) => ["fees", "overview", filter] as const,
     structures: (filter: unknown) => ["fees", "structures", filter] as const,
@@ -113,5 +119,7 @@ export const queryKeys = {
     timetable: (id: string) => ["parent", "timetable", id] as const,
     report: (id: string) => ["parent", "report", id] as const,
     fees: (id: string) => ["parent", "fees", id] as const,
+    notifications: ["parent", "notifications"] as const,
+    unreadNotifications: ["parent", "notifications", "unread"] as const,
   },
 } as const;

@@ -211,6 +211,27 @@ re-running it; nobody is charged twice for one period.
 
 ---
 
+## 9b. Gate check-in (fingerprint device)
+
+```mermaid
+flowchart TD
+    A[Child scans at the gate] --> B[Device stores the scan]
+    B --> C[Agent on the school computer reads it]
+    C --> D[POST /api/attendance-device/scans with the device key]
+    D --> E[Scan stored once]
+    E --> F{Before the leaving time?}
+    F -- yes, first of the day --> G[Register: present, or late after the cut-off]
+    G --> H[Guardians: arrived notice]
+    F -- no, first after it --> I[Guardians: left notice]
+    H & I --> J[Parent portal bell updates live]
+```
+
+The register is only raised by a scan, never lowered: a teacher's own mark stands. If the computer
+is off, scans wait on the device and arrive when it is back. Setup and day-to-day running are in
+`tools/attendance-agent/README.md`.
+
+---
+
 ## 10. Marketing: admissions inquiry (public)
 
 ```mermaid

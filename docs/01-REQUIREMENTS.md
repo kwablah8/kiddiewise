@@ -30,7 +30,8 @@ include*. Where the two disagree, the screenshots win for scope.
 | **Fees & payments** | future | full dashboard cards + trend | **In (lightweight)** |
 | Dashboards with trend charts | not detailed | shown | **In** |
 | **Timetable** | future | not shown | **In** (pulled forward, see below) |
-| SMS / push notifications | future | not shown | **Out** |
+| **Gate check-ins (fingerprint device)** | not listed | not shown | **In** (agreed 2026-10-08, see below) |
+| SMS / push notifications | future | not shown | **Out** (gate notices go to the parent portal instead) |
 | Homework, payroll, library, transport, hostel | future | not shown | **Out** |
 | Native mobile apps | future | n/a | **Out** (responsive web only) |
 
@@ -38,6 +39,14 @@ include*. Where the two disagree, the screenshots win for scope.
 student, and surface revenue totals + a fee-collection trend on the admin dashboard. It does
 **not** mean integrating a payment gateway (e.g. mobile money) — that is a later track. See
 `docs/03-DATABASE.md`.
+
+**Gate check-ins** means: the school's ZKTeco fingerprint device is read by an agent on the school
+computer and each scan is sent to the app. A student's first scan before the leaving time (default
+12:00) marks them present, or late after the late time (default 09:00); a scan from the leaving time
+on is a departure. Both times are admin settings. Guardians see "arrived" and "left" notices in the
+parent portal, live. A student who doesn't scan is not marked absent automatically: the teacher
+confirms the register. Staff scans give a staff attendance view, with no notices. SMS is not part of
+it.
 
 **Timetable** was originally parked under "Academics+" (post-MVP, see `docs/08-ROADMAP.md`) and
 was deliberately pulled forward: admin defines the school's shared periods once, then builds each

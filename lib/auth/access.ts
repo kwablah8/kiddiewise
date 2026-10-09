@@ -41,6 +41,9 @@ const PUBLIC_PATHS = new Set([
   // instead, verified in the route itself. Without this entry the middleware redirects the webhook to
   // /login and publishing silently stops reaching the site.
   "/api/revalidate-sanity",
+  // Scans from the school's gate device. The agent on the school computer has no session; the route
+  // authenticates it by its device key instead (app/api/attendance-device/scans/route.ts).
+  "/api/attendance-device/scans",
 ]);
 
 /** Whether a path may be viewed without a session. */

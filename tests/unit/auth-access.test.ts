@@ -61,6 +61,13 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/api/other")).toBe(false);
   });
 
+  it("lets the gate device's scans through, and nothing beside them", () => {
+    // The agent on the school computer has no session; the route checks its device key instead.
+    expect(isPublicPath("/api/attendance-device/scans")).toBe(true);
+    expect(isPublicPath("/api/attendance-device")).toBe(false);
+    expect(isPublicPath("/api/attendance-device/scans/other")).toBe(false);
+  });
+
   it("does not leak protection via a prefix collision", () => {
     // /newsletter is not /news/..., and /admissions-inbox is not /admissions.
     expect(isPublicPath("/newsletter")).toBe(false);

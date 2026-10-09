@@ -251,6 +251,7 @@ branding, so credential messages and public enquiries read correctly out of the 
 | Extra fees | 5 definitions, 10 charges | Bus, Feeding, Uniform, ICT Lab for all classes; Excursion for JHS 1 only. Bus and Feeding charged for First Term; charges are settled, half paid or unpaid |
 | Terminal reports | Basic 1 only | Published, so `parent@` sees a real report while other classes show "not published" |
 | Inquiries | 6 | 3 still `new`, so the Admissions sidebar badge has a count |
+| Gate device | 1 device, everyone numbered | Staff 1-7, students from 1001. Yesterday's arrivals and departures, today's arrivals up to now (every fifth late, four absent), and one unlinked number (1999). Device key `kwd_local_demo_device_key` |
 
 **Dates are always relative to today.** The active term is seeded to bracket the current date, so
 attendance history and the dashboard are never empty just because time has passed.

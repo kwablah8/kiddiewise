@@ -41,6 +41,12 @@ export function formatDate(value: string | Date): string {
   return dateFormatter.format(date);
 }
 
+/** `7:42 AM`, a moment as the school's clock shows it. */
+export function formatClockTime(value: string | Date, timeZone: string): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone }).format(date);
+}
+
 /** `94%` (integer, sensible for attendance/scores) */
 export function formatPercent(value: number): string {
   return `${Math.round(value)}%`;

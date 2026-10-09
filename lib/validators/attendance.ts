@@ -9,6 +9,9 @@ export const rosterEntryVM = z.object({
   last_name: z.string(),
   admission_no: z.string(),
   status: attendanceStatusSchema.nullable(), // null = unmarked
+  // When the student scanned in at the gate that day, if they did. Evidence beside the mark, not
+  // the mark itself: the teacher can still change it.
+  scanned_at: z.string().nullable(),
 });
 export type RosterEntryVM = z.infer<typeof rosterEntryVM>;
 

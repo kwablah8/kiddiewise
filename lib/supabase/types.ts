@@ -410,6 +410,41 @@ export type Database = {
           },
         ]
       }
+      attendance_devices: {
+        Row: {
+          created_at: string
+          id: string
+          key_hash: string
+          last_seen_at: string | null
+          name: string
+          school_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_hash: string
+          last_seen_at?: string | null
+          name: string
+          school_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_hash?: string
+          last_seen_at?: string | null
+          name?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_devices_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       canteen_menu_items: {
         Row: {
           created_at: string
@@ -731,6 +766,100 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_people: {
+        Row: {
+          created_at: string
+          device_user_id: string
+          id: string
+          school_id: string
+          staff_id: string | null
+          student_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_user_id: string
+          id?: string
+          school_id: string
+          staff_id?: string | null
+          student_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_user_id?: string
+          id?: string
+          school_id?: string
+          staff_id?: string | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_people_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_people_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_people_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_scans: {
+        Row: {
+          created_at: string
+          device_id: string
+          device_user_id: string
+          id: string
+          local_date: string
+          scanned_at: string
+          school_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          device_user_id: string
+          id?: string
+          local_date: string
+          scanned_at: string
+          school_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          device_user_id?: string
+          id?: string
+          local_date?: string
+          scanned_at?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_scans_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_scans_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
             referencedColumns: ["id"]
           },
         ]
@@ -1328,6 +1457,67 @@ export type Database = {
           },
         ]
       }
+      parent_notifications: {
+        Row: {
+          created_at: string
+          event: Database["public"]["Enums"]["gate_event"]
+          id: string
+          late: boolean
+          local_date: string
+          occurred_at: string
+          parent_profile_id: string
+          read_at: string | null
+          school_id: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          event: Database["public"]["Enums"]["gate_event"]
+          id?: string
+          late?: boolean
+          local_date: string
+          occurred_at: string
+          parent_profile_id: string
+          read_at?: string | null
+          school_id: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          event?: Database["public"]["Enums"]["gate_event"]
+          id?: string
+          late?: boolean
+          local_date?: string
+          occurred_at?: string
+          parent_profile_id?: string
+          read_at?: string | null
+          school_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_notifications_parent_profile_id_fkey"
+            columns: ["parent_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_notifications_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_notifications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -1621,11 +1811,14 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          late_after: string
+          leaving_from: string
           logo_url: string | null
           name: string
           pass_mark: number
           phone: string | null
           slug: string
+          timezone: string
         }
         Insert: {
           active_academic_year_id?: string | null
@@ -1635,11 +1828,14 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          late_after?: string
+          leaving_from?: string
           logo_url?: string | null
           name: string
           pass_mark?: number
           phone?: string | null
           slug: string
+          timezone?: string
         }
         Update: {
           active_academic_year_id?: string | null
@@ -1649,11 +1845,14 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          late_after?: string
+          leaving_from?: string
           logo_url?: string | null
           name?: string
           pass_mark?: number
           phone?: string | null
           slug?: string
+          timezone?: string
         }
         Relationships: [
           {
@@ -2202,6 +2401,41 @@ export type Database = {
       }
     }
     Views: {
+      daily_presence: {
+        Row: {
+          arrived_at: string | null
+          device_user_id: string | null
+          late: boolean | null
+          left_at: string | null
+          local_date: string | null
+          school_id: string | null
+          staff_id: string | null
+          student_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_people_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_people_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_scans_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       extra_fee_positions: {
         Row: {
           academic_year_id: string | null
@@ -2322,6 +2556,13 @@ export type Database = {
           total_count: number
         }[]
       }
+      class_gate_arrivals: {
+        Args: { p_class_id: string; p_date: string }
+        Returns: {
+          arrived_at: string
+          student_id: string
+        }[]
+      }
       class_performance: {
         Args: never
         Returns: {
@@ -2416,6 +2657,7 @@ export type Database = {
         | "transferred"
       extra_fee_frequency: "one_time" | "termly" | "monthly" | "annual"
       fee_term: "full_year" | "first" | "second" | "third"
+      gate_event: "arrived" | "left"
       gender: "male" | "female" | "other"
       guardian_relationship: "mother" | "father" | "guardian" | "other"
       inquiry_status:
@@ -2581,6 +2823,7 @@ export const Constants = {
       ],
       extra_fee_frequency: ["one_time", "termly", "monthly", "annual"],
       fee_term: ["full_year", "first", "second", "third"],
+      gate_event: ["arrived", "left"],
       gender: ["male", "female", "other"],
       guardian_relationship: ["mother", "father", "guardian", "other"],
       inquiry_status: ["new", "reviewing", "accepted", "rejected", "converted"],
