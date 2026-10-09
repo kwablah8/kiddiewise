@@ -99,23 +99,26 @@ export function CheckinsTab({ timeZone, today }: { timeZone: string; today: stri
             className="w-44"
           />
         </div>
-        <ChoicePills<PersonKind>
-          ariaLabel="Show"
-          value={kind}
-          onChange={(v) => v && setKind(v)}
-          options={[
-            { value: "student", label: "Students" },
-            { value: "staff", label: "Staff" },
-          ]}
-        />
-        {kind === "student" && (
-          <div className="space-y-1.5">
-            <Label htmlFor="gate_class">Class</Label>
-            <Select value={classId} onValueChange={(v) => setClassId(v ?? ALL)}>
+        {/* The class box stays in place for staff, greyed out, so the Students / Staff buttons
+            never move under the cursor. */}
+        <div className="space-y-1.5">
+          <Label htmlFor="gate_class">Class</Label>
+          {/* Wrapped: Select renders a hidden input beside its trigger, which space-y would
+              otherwise give a margin and lift the box out of line. */}
+          <div>
+            <Select
+              value={kind === "student" ? classId : ALL}
+              onValueChange={(v) => setClassId(v ?? ALL)}
+              disabled={kind === "staff"}
+            >
               <SelectTrigger id="gate_class" className="w-44">
                 <SelectValue>
                   {(v: string) =>
-                    v === ALL ? "All classes" : ((classes.data ?? []).find((c) => c.id === v)?.name ?? "All classes")
+                    kind === "staff"
+                      ? "—"
+                      : v === ALL
+                        ? "All classes"
+                        : ((classes.data ?? []).find((c) => c.id === v)?.name ?? "All classes")
                   }
                 </SelectValue>
               </SelectTrigger>
@@ -129,9 +132,24 @@ export function CheckinsTab({ timeZone, today }: { timeZone: string; today: stri
               </SelectContent>
             </Select>
           </div>
-        )}
+        </div>
+        <div className="space-y-1.5">
+          <Label>Show</Label>
+          {/* Same 40px as the inputs beside it, so all three line up top and bottom. */}
+          <div className="flex h-10 items-center">
+            <ChoicePills<PersonKind>
+              ariaLabel="Show"
+              value={kind}
+              onChange={(v) => v && setKind(v)}
+              options={[
+                { value: "student", label: "Students" },
+                { value: "staff", label: "Staff" },
+              ]}
+            />
+          </div>
+        </div>
         {kind === "student" && !isLoading && !presence.isError && (
-          <p className="ml-auto text-sm text-[var(--muted-foreground)]">
+          <p className="ml-auto flex h-10 items-center text-sm text-[var(--muted-foreground)]">
             {rows.filter((r) => r.arrived_at).length} of {studentsOnRoll}{" "}
             {classId === ALL ? "students" : "in this class"} checked in
           </p>
