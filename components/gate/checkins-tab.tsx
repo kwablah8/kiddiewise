@@ -10,10 +10,20 @@ import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChoicePills } from "@/components/daily-reports/choice-pills";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useClasses } from "@/lib/queries/academics";
 import { useDevicePeople, usePresence } from "@/lib/queries/gate";
 import { formatClockTime } from "@/lib/format";
 import { cardShellClass } from "@/lib/ui";
 import type { PersonKind, PresenceVM } from "@/lib/validators/gate";
+
+const ALL = "__all__";
 
 interface Row {
   id: string;
@@ -24,10 +34,12 @@ interface Row {
   late: boolean;
 }
 
-/** Who came through the gate on a day, and when. Staff who didn't scan are listed as well. */
+/** Who came through the gate on a day, and when, for the school, one class, or the staff. */
 export function CheckinsTab({ timeZone, today }: { timeZone: string; today: string }) {
   const [date, setDate] = useState(today);
   const [kind, setKind] = useState<PersonKind>("student");
+  const [classId, setClassId] = useState<string>(ALL);
+  const classes = useClasses();
   const presence = usePresence(date);
   const people = useDevicePeople();
 
@@ -53,20 +65,24 @@ export function CheckinsTab({ timeZone, today }: { timeZone: string; today: stri
     },
   ];
 
-  const scanned = (presence.data ?? []).filter((p) => p.person?.kind === kind);
+  const classOf = new Map((people.data ?? []).map((p) => [p.id, p.class_id]));
+  const inScope = (id: string) => kind === "staff" || classId === ALL || classOf.get(id) === classId;
+
+  const scanned = (presence.data ?? []).filter((p) => p.person?.kind === kind && inScope(p.person.id));
   const unlinked = (presence.data ?? []).filter((p) => p.person === null);
   const rows: Row[] = scanned.map((p) => toRow(p));
-  if (kind === "staff") {
-    // Staff are few, so the whole staff list is shown and the absences are visible at a glance.
+  // Staff are few, and a single class is a register's worth, so in those views everyone is listed
+  // and the absences are visible at a glance. Across the whole school, only who came in.
+  if (kind === "staff" || classId !== ALL) {
     const seen = new Set(rows.map((r) => r.id));
     for (const p of people.data ?? []) {
-      if (p.kind === "staff" && !seen.has(p.id)) {
+      if (p.kind === kind && inScope(p.id) && !seen.has(p.id)) {
         rows.push({ id: p.id, name: p.name, detail: p.detail, arrived_at: null, left_at: null, late: false });
       }
     }
   }
 
-  const studentsOnRoll = (people.data ?? []).filter((p) => p.kind === "student").length;
+  const studentsOnRoll = (people.data ?? []).filter((p) => p.kind === "student" && inScope(p.id)).length;
   const isLoading = presence.isLoading || people.isLoading;
 
   return (
@@ -92,9 +108,32 @@ export function CheckinsTab({ timeZone, today }: { timeZone: string; today: stri
             { value: "staff", label: "Staff" },
           ]}
         />
+        {kind === "student" && (
+          <div className="space-y-1.5">
+            <Label htmlFor="gate_class">Class</Label>
+            <Select value={classId} onValueChange={(v) => setClassId(v ?? ALL)}>
+              <SelectTrigger id="gate_class" className="w-44">
+                <SelectValue>
+                  {(v: string) =>
+                    v === ALL ? "All classes" : ((classes.data ?? []).find((c) => c.id === v)?.name ?? "All classes")
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All classes</SelectItem>
+                {(classes.data ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         {kind === "student" && !isLoading && !presence.isError && (
           <p className="ml-auto text-sm text-[var(--muted-foreground)]">
-            {rows.filter((r) => r.arrived_at).length} of {studentsOnRoll} students checked in
+            {rows.filter((r) => r.arrived_at).length} of {studentsOnRoll}{" "}
+            {classId === ALL ? "students" : "in this class"} checked in
           </p>
         )}
       </div>
@@ -113,11 +152,13 @@ export function CheckinsTab({ timeZone, today }: { timeZone: string; today: stri
         ) : rows.length === 0 ? (
           <EmptyState
             icon={Fingerprint}
-            title="No check-ins"
+            title={kind === "student" && classId !== ALL ? "No students in this class" : "No check-ins"}
             description={
-              date === today
-                ? "Nobody has scanned at the gate yet today."
-                : "Nobody scanned at the gate on this day."
+              kind === "student" && classId !== ALL
+                ? "Students enrolled in this class this year will be listed here."
+                : date === today
+                  ? "Nobody has scanned at the gate yet today."
+                  : "Nobody scanned at the gate on this day."
             }
           />
         ) : (

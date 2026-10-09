@@ -85,6 +85,8 @@ export interface DevicePersonVM {
   name: string;
   /** Class for a student, role for staff. */
   detail: string | null;
+  /** A student's class this year; null for staff. */
+  class_id: string | null;
   device_user_id: string | null;
 }
 

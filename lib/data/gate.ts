@@ -33,7 +33,7 @@ interface StudentRow {
   id: string;
   first_name: string;
   last_name: string;
-  enrollments: { status: string; classes: { name: string } | null }[];
+  enrollments: { status: string; class_id: string; classes: { name: string } | null }[];
 }
 
 interface StaffRow {
@@ -49,7 +49,7 @@ export async function listDevicePeople(): Promise<DevicePersonVM[]> {
   const yearId = await activeYearId();
   let students = db()
     .from("students")
-    .select("id, first_name, last_name, enrollments(status, classes(name))")
+    .select("id, first_name, last_name, enrollments(status, class_id, classes(name))")
     .eq("enrollment_status", "active")
     .order("first_name");
   if (yearId) students = students.eq("enrollments.academic_year_id", yearId);
@@ -79,17 +79,22 @@ export async function listDevicePeople(): Promise<DevicePersonVM[]> {
         id: p.id,
         name: `${p.first_name} ${p.last_name}`,
         detail: p.role === "school_admin" ? "Administrator" : "Teacher",
+        class_id: null,
         device_user_id: byStaff.get(p.id) ?? null,
       }),
     ),
     ...studentRows.map(
-      (s): DevicePersonVM => ({
-        kind: "student",
-        id: s.id,
-        name: `${s.first_name} ${s.last_name}`,
-        detail: s.enrollments.find((e) => e.status === "active")?.classes?.name ?? null,
-        device_user_id: byStudent.get(s.id) ?? null,
-      }),
+      (s): DevicePersonVM => {
+        const enrollment = s.enrollments.find((e) => e.status === "active");
+        return {
+          kind: "student",
+          id: s.id,
+          name: `${s.first_name} ${s.last_name}`,
+          detail: enrollment?.classes?.name ?? null,
+          class_id: enrollment?.class_id ?? null,
+          device_user_id: byStudent.get(s.id) ?? null,
+        };
+      },
     ),
   ];
 }
