@@ -9,9 +9,9 @@ import { saveAttendanceSchema, type SaveAttendanceInput } from "@/lib/validators
 /**
  * Mark or amend a class register for one date.
  *
- * `marked_by` is the caller, never a value from the request. RLS (`att_teacher_write` via
- * `teacher_teaches_class`) rejects the whole statement if the teacher isn't assigned to the class, so
- * no ownership check is repeated here, doing so would imply the client was what enforced it.
+ * `marked_by` is the caller, never a value from the request. RLS (`att_teacher_insert` and
+ * `att_teacher_update` via `teacher_is_class_teacher`) rejects the whole statement unless the caller is
+ * the class's class teacher, so no ownership check is repeated here, doing so would imply the client was what enforced it.
  *
  * Upserted on (student_id, date), the unique constraint from 0007, so re-marking a register
  * corrects the existing rows rather than creating duplicates. That is what makes the register
@@ -29,7 +29,7 @@ export async function saveAttendance(
       throw new UserFacingError("Set an active term before taking attendance.");
     }
 
-    // RLS (att_teacher_write / teacher_teaches_class) proves the caller owns the CLASS, but not that
+    // RLS (teacher_is_class_teacher) proves the caller owns the CLASS, but not that
     // the student_ids in the payload actually belong to it. Without this check a teacher could send
     // another class's student_id and, because the register is upserted on (student_id, date), silently
     // OVERWRITE that student's real register for the day, attributed to a class they aren't in. Confirm

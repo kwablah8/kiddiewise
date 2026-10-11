@@ -153,7 +153,7 @@ webhook (`/api/revalidate-sanity`, HMAC signature) and the gate device's scans
 | Link parents ↔ students | ✓ | ✓ | — | — |
 | Manage classes, subjects, assignments | ✓ | ✓ | R (own) | — |
 | Manage academic years & terms | ✓ | ✓ | R | — |
-| Mark / update attendance | ✓ | ✓ | ✓ own | R (own children) |
+| Mark / update attendance | ✓ | ✓ | ✓ as class teacher | R (own children) |
 | Create assessments / exams | ✓ | ✓ | ✓ own | — |
 | Enter / submit results | ✓ | ✓ | ✓ own | R (own children) |
 | Configure grading scale & assessment types | ✓ | ✓ | R | — |
@@ -173,8 +173,9 @@ disagree, the table (and RLS) are correct.
 ## 6. Data-scope rules (how "own" is defined)
 
 - **Teacher "own":** classes/subjects where the teacher appears in `class_subjects.teacher_id`
-  or `classes.class_teacher_id`. All teacher writes (attendance, assessments, results) are
-  gated by an `EXISTS` check against those assignments.
+  or `classes.class_teacher_id`. All teacher writes (assessments, results) are
+  gated by an `EXISTS` check against those assignments. The exception is attendance: only the
+  class teacher (`classes.class_teacher_id`) may write a register; subject teachers can read it.
 - **Parent "own children":** students linked to the parent via `student_guardians`. Every
   parent read policy joins through that table.
 - **Admin "own school":** everything with `school_id = current_school_id()`.

@@ -18,7 +18,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { StatusControl } from "./status-control";
 import { cardShellClass } from "@/lib/ui";
-import { useTeacherClasses } from "@/lib/queries/teacher";
+import { useRegisterClasses } from "@/lib/queries/teacher";
 import { useRoster, useSaveAttendance } from "@/lib/queries/attendance";
 import { useGateSettings } from "@/lib/queries/gate";
 import { formatClockTime } from "@/lib/format";
@@ -31,7 +31,7 @@ function todayISO(): string {
 }
 
 export function AttendanceMarker({ teacherId }: { teacherId: string }) {
-  const { data: classes, isLoading: classesLoading } = useTeacherClasses(teacherId);
+  const { data: classes, isLoading: classesLoading } = useRegisterClasses(teacherId);
   const [classId, setClassId] = useState<string | null>(null);
   const [date, setDate] = useState<string>(todayISO());
   // Edit overrides for the current class+date only; cleared whenever class or date changes. The shown
@@ -115,7 +115,14 @@ export function AttendanceMarker({ teacherId }: { teacherId: string }) {
       </div>
 
       {/* Roster */}
-      {!classId ? (
+      {!classesLoading && (classes ?? []).length === 0 ? (
+        <div className={cardShellClass}>
+          <EmptyState
+            title="No register to take"
+            description="Attendance is taken by a class's class teacher. Ask the admin if you should be set as one."
+          />
+        </div>
+      ) : !classId ? (
         <div className={cardShellClass}>
           <EmptyState title="Select a class and date" description="Choose a class to take attendance." />
         </div>

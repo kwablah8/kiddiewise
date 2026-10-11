@@ -267,7 +267,8 @@ Promotion creates new rows for the next year.
 | marked_by | uuid FK → profiles | teacher |
 | created_at, updated_at | timestamptz | |
 
-Constraint: `unique (student_id, date)`. Attendance percentage per child is derived
+Only the class's class teacher (`classes.class_teacher_id`) or an admin can write a register, so a class
+with no class teacher is marked by an admin; subject teachers can read it. Constraint: `unique (student_id, date)`. Attendance percentage per child is derived
 (`present + late` counts vs total marked days) — expose via a view/RPC.
 
 A gate scan (below) also writes here, with `marked_by` null. It only ever raises the register: an
@@ -574,7 +575,7 @@ bypass policy on platform-level tables (`schools`, platform settings) only.
 | Table | school_admin | teacher | parent |
 |---|---|---|---|
 | students, classes, subjects, class_subjects, enrollments, academic_years, terms, fee_*, invoices, payments, announcements, events, admissions_inquiries, grade_bands, assessment_types | full CRUD | read (own assignments) | — |
-| attendance | full | insert/update **only for classes they are assigned to** | — |
+| attendance | full | read for classes they are assigned to; insert/update **only as the class's class teacher** (0046) | — |
 | assessments | full | insert/update **for their class_subjects** | — |
 | results | full | insert/update **for their assessments** | — |
 | terminal_reports | full (+ publish) | read (own classes) | read **published** for own children |

@@ -10,7 +10,7 @@ export default function TeacherAttendancePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Attendance" subtitle="Mark and edit daily attendance for your classes." />
+      <PageHeader title="Attendance" subtitle="Mark and edit the daily register for the class you are class teacher of." />
       <AttendanceMarker teacherId={profile.id} />
     </div>
   );

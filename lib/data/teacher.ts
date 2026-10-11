@@ -105,3 +105,15 @@ export async function listTeacherClasses(
     .filter((c) => ids.has(c.id))
     .map((c) => ({ id: c.id, name: c.name, level: c.level }));
 }
+
+/** The classes whose register this teacher may mark: only those they are the class teacher of. */
+export async function listRegisterClasses(
+  teacherId: string,
+): Promise<{ id: string; name: string; level: string }[]> {
+  const res = await db()
+    .from("classes")
+    .select("id, name, level")
+    .eq("class_teacher_id", teacherId)
+    .order("name");
+  return unwrapList(res, "register classes");
+}

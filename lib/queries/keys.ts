@@ -66,6 +66,7 @@ export const queryKeys = {
   teacher: {
     dashboard: (teacherId: string) => ["teacher", "dashboard", teacherId] as const,
     classes: (teacherId: string) => ["teacher", "classes", teacherId] as const,
+    registerClasses: (teacherId: string) => ["teacher", "register-classes", teacherId] as const,
   },
   attendance: {
     roster: (classId: string, date: string) => ["attendance", "roster", classId, date] as const,
