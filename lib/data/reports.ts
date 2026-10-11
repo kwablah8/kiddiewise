@@ -1,4 +1,4 @@
-import { db, unwrapList, unwrapMaybe } from "./_client";
+import { db, readAllPaged, unwrapList, unwrapMaybe } from "./_client";
 import { aggregateSubjectResults } from "@/lib/results";
 import { reportTotals, assignPositions, overallGrade, attendanceTotals } from "@/lib/terminal-reports";
 import type { GradeBandVM } from "@/lib/validators/grading";
@@ -80,22 +80,35 @@ export async function getReportSheet(
   const studentIds = students.map((s) => s.id);
 
   // Live figures for students with no report yet. Fetched for everyone in one go rather than per
-  // student, a class of 40 would otherwise be 80 round trips.
-  const [resultsRes, attendanceRes] = await Promise.all([
-    db()
-      .from("results")
-      .select("student_id, score, teacher_comment, created_at, assessments!inner(max_score, term_id, subjects(name))")
-      .eq("is_submitted", true)
-      .in("student_id", studentIds),
-    db()
-      .from("attendance")
-      .select("student_id, status")
-      .eq("term_id", termId)
-      .in("student_id", studentIds),
+  // student, a class of 40 would otherwise be 80 round trips. Paged, because a class's submitted
+  // results (students x assessments) pass PostgREST's 1000-row page, and a truncated read would
+  // understate the preview's totals with nothing on screen to say so.
+  const [allResults, allAttendance] = await Promise.all([
+    readAllPaged(
+      (from, to) =>
+        db()
+          .from("results")
+          .select(
+            "student_id, score, teacher_comment, created_at, assessments!inner(max_score, term_id, subjects(name))",
+          )
+          .eq("is_submitted", true)
+          .in("student_id", studentIds)
+          .order("id")
+          .range(from, to),
+      "results",
+    ),
+    readAllPaged(
+      (from, to) =>
+        db()
+          .from("attendance")
+          .select("student_id, status")
+          .eq("term_id", termId)
+          .in("student_id", studentIds)
+          .order("id")
+          .range(from, to),
+      "attendance",
+    ),
   ]);
-
-  const allResults = unwrapList(resultsRes, "results");
-  const allAttendance = unwrapList(attendanceRes, "attendance");
 
   // Rows built first WITHOUT positions, because a position only means something once every student's
   // average is known.

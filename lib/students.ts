@@ -1,4 +1,4 @@
-import { toCsv } from "@/lib/csv";
+import type { ExportColumn } from "@/lib/export";
 import { formatRole } from "@/lib/format";
 import type { StudentListItemVM, StudentStatsVM } from "@/lib/validators/people";
 
@@ -13,17 +13,17 @@ export function computeStudentStats(students: StudentListItemVM[]): StudentStats
   };
 }
 
-const STUDENT_CSV_HEADERS = ["Admission No.", "Name", "Class", "Gender", "Status", "Guardian(s)"];
-
-// Same columns as the roster PDF (lib/pdf/students-roster.ts), pure so it's unit-tested the same way.
-export function studentsToCsv(students: StudentListItemVM[]): string {
-  const rows = students.map((s) => [
-    s.admission_no,
-    `${s.first_name} ${s.last_name}`,
-    s.class_name ?? "",
-    formatRole(s.gender),
-    formatRole(s.enrollment_status),
-    s.guardian_names.join(", "),
-  ]);
-  return toCsv(STUDENT_CSV_HEADERS, rows);
-}
+/** The roster as printed and as exported. */
+export const studentColumns: ExportColumn<StudentListItemVM>[] = [
+  { header: "Admission No.", width: 14, pdf: (s) => s.admission_no },
+  { header: "Name", width: 22, pdf: (s) => `${s.first_name} ${s.last_name}` },
+  { header: "Class", width: 16, pdf: (s) => s.class_name ?? "—", csv: (s) => s.class_name ?? "" },
+  { header: "Gender", width: 10, pdf: (s) => formatRole(s.gender) },
+  { header: "Status", width: 14, pdf: (s) => formatRole(s.enrollment_status) },
+  {
+    header: "Guardian(s)",
+    width: 24,
+    pdf: (s) => (s.guardian_names.length > 0 ? s.guardian_names.join(", ") : "—"),
+    csv: (s) => s.guardian_names.join(", "),
+  },
+];
