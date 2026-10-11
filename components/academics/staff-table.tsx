@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAppRouter } from "@/lib/navigation";
 import { Users } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { ExportButtons } from "@/components/data/export-buttons";
 import { SearchField } from "@/components/data/search-field";
 import { InvitePortalButton } from "@/components/people/invite-portal-button";
 import { SendCredentialsButton } from "@/components/people/send-credentials-button";
@@ -14,6 +15,7 @@ import { ErrorState } from "@/components/states/error-state";
 import { Button } from "@/components/ui/button";
 import { StaffAvatar } from "./staff-avatar";
 import { useStaff } from "@/lib/queries/academics";
+import { staffColumns, staffDetails } from "@/lib/staff/export";
 import { useSession } from "@/lib/auth/useSession";
 import type { StaffVM } from "@/lib/validators/academics";
 import { PORTAL_ACCESS_LABEL, type PortalAccessStatus } from "@/lib/validators/people";
@@ -169,13 +171,24 @@ export function StaffTable({ onNewStaff }: StaffTableProps) {
 
   return (
     <div className={cardShellClass}>
-      <SearchField
-        value={query}
-        onChange={setQuery}
-        placeholder="Search by name, email, staff no. or department"
-        label="Search staff"
-        className="mb-3"
-      />
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          placeholder="Search by name, email, staff no. or department"
+          label="Search staff"
+        />
+        <ExportButtons
+          kind="staff"
+          title="Staff List"
+          details={staffDetails(rows)}
+          columns={staffColumns}
+          rows={rows}
+          orientation="landscape"
+          emptyMessage="No staff match this search."
+          disabled={isLoading || isError}
+        />
+      </div>
       {isError ? (
         <ErrorState message="Couldn't load staff." onRetry={() => refetch()} />
       ) : isEmpty ? (

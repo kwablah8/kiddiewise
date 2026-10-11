@@ -9,6 +9,8 @@ import {
 } from "@/lib/fees/export";
 import { buildRegisterSummary, registerSummaryColumns, registerSummaryDetails } from "@/lib/attendance";
 import { buildCheckinRows, checkinColumns, checkinDetails } from "@/lib/gate-export";
+import { staffColumns, staffDetails } from "@/lib/staff/export";
+import type { StaffVM } from "@/lib/validators/academics";
 import { resultsColumns, resultsDetails } from "@/lib/reports/export";
 import type { TerminalReportRowVM, TerminalReportSheetVM } from "@/lib/validators/reports";
 import type { PaymentVM, StudentFeeVM } from "@/lib/validators/fees";
@@ -275,5 +277,45 @@ describe("class results export", () => {
   it("says how many reports are generated", () => {
     const sheet = { rows: [row(), row()], generated_count: 1 } as TerminalReportSheetVM;
     expect(resultsDetails(["Basic 1"], sheet)).toEqual(["Basic 1", "1 of 2 reports generated"]);
+  });
+});
+
+describe("staff export", () => {
+  const staff = (over: Partial<StaffVM> = {}): StaffVM => ({
+    id: "t1",
+    first_name: "Kofi",
+    last_name: "Asare",
+    email: "kofi@school.test",
+    phone: "0244000000",
+    staff_no: "STF-001",
+    role: "teacher",
+    position: "Class Teacher",
+    department: null,
+    gender: null,
+    date_of_birth: null,
+    hire_date: null,
+    qualification: null,
+    is_active: true,
+    class_count: 1,
+    subject_count: 3,
+    portal_status: "active",
+    ...over,
+  });
+
+  it("writes the contact details and counts, with blanks in the spreadsheet and dashes on paper", () => {
+    expect(columnsToCsv(staffColumns, [staff()])).toContain(
+      "STF-001,Kofi Asare,Teacher,Class Teacher,,kofi@school.test,0244000000,1,3,Active",
+    );
+    expect(pdfRows(staffColumns, [staff({ phone: null })])[0]).toContain("—");
+  });
+
+  it("names an admin an Administrator and an inactive member Inactive", () => {
+    const row = pdfRows(staffColumns, [staff({ role: "school_admin", is_active: false })])[0]!;
+    expect(row[2]).toBe("Administrator");
+    expect(row.at(-1)).toBe("Inactive");
+  });
+
+  it("counts staff and active staff", () => {
+    expect(staffDetails([staff(), staff({ id: "t2", is_active: false })])).toEqual(["2 staff", "1 active"]);
   });
 });
