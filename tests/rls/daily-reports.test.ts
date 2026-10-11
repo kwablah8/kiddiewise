@@ -66,7 +66,19 @@ describe("parent side of the daily report", () => {
 });
 
 describe("teacher side of the daily report", () => {
-  it("teacher writes the day section for a student in their class", async () => {
+  it("teacher CANNOT write the day section as a subject teacher of the class", async () => {
+    const teacher = await signInAs(s.teacherAEmail);
+    const { error } = await teacher.from("daily_reports_teacher").insert({
+      school_id: s.schoolA,
+      student_id: s.studentA1,
+      date: DATE,
+      breakfast: "all",
+    });
+    expect(error).not.toBeNull();
+  });
+
+  it("class teacher writes the day section for a student in their class", async () => {
+    await admin().from("classes").update({ class_teacher_id: s.teacherA }).eq("id", s.classA_taught);
     const teacher = await signInAs(s.teacherAEmail);
     const { error } = await teacher.from("daily_reports_teacher").insert({
       school_id: s.schoolA,

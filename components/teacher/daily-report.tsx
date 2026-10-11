@@ -28,7 +28,7 @@ import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { ParentSectionSummary } from "@/components/daily-reports/section-views";
 import { ChoicePills, ToggleChips } from "@/components/daily-reports/choice-pills";
 import { cardShellClass, textareaClass } from "@/lib/ui";
-import { useTeacherClasses } from "@/lib/queries/teacher";
+import { useRegisterClasses } from "@/lib/queries/teacher";
 import {
   useClassDailyStatus,
   useDailyReport,
@@ -54,7 +54,7 @@ function todayISO(): string {
 
 /** The teacher's daily-report sheet: pick a class and day, see who's filled, open a child. */
 export function TeacherDailyReport({ teacherId }: { teacherId: string }) {
-  const { data: classes, isLoading: classesLoading } = useTeacherClasses(teacherId);
+  const { data: classes, isLoading: classesLoading } = useRegisterClasses(teacherId);
   const [classId, setClassId] = useState<string | null>(null);
   const [date, setDate] = useState<string>(todayISO());
   const [openStudent, setOpenStudent] = useState<DailyStatusRowVM | null>(null);
@@ -97,7 +97,15 @@ export function TeacherDailyReport({ teacherId }: { teacherId: string }) {
         </div>
       </div>
 
-      {!classId ? (
+      {!classesLoading && (classes ?? []).length === 0 ? (
+        <div className={cardShellClass}>
+          <EmptyState
+            icon={NotebookPen}
+            title="No daily reports to fill"
+            description="Daily reports are written by a class's class teacher. Ask the admin if you should be set as one."
+          />
+        </div>
+      ) : !classId ? (
         <div className={cardShellClass}>
           <EmptyState
             icon={NotebookPen}

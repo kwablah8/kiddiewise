@@ -576,6 +576,7 @@ bypass policy on platform-level tables (`schools`, platform settings) only.
 |---|---|---|---|
 | students, classes, subjects, class_subjects, enrollments, academic_years, terms, fee_*, invoices, payments, announcements, events, admissions_inquiries, grade_bands, assessment_types | full CRUD | read (own assignments) | — |
 | attendance | full | read for classes they are assigned to; insert/update **only as the class's class teacher** (0046) | — |
+| daily_reports_teacher | full | read for classes they are assigned to; insert/update **only as the class's class teacher** (0047) | read own children |
 | assessments | full | insert/update **for their class_subjects** | — |
 | results | full | insert/update **for their assessments** | — |
 | terminal_reports | full (+ publish) | read (own classes) | read **published** for own children |

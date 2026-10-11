@@ -174,8 +174,9 @@ disagree, the table (and RLS) are correct.
 
 - **Teacher "own":** classes/subjects where the teacher appears in `class_subjects.teacher_id`
   or `classes.class_teacher_id`. All teacher writes (assessments, results) are
-  gated by an `EXISTS` check against those assignments. The exception is attendance: only the
-  class teacher (`classes.class_teacher_id`) may write a register; subject teachers can read it.
+  gated by an `EXISTS` check against those assignments. The exceptions are attendance and the
+  teacher's section of the daily report: only the class teacher (`classes.class_teacher_id`) may write
+  them; subject teachers can read them.
 - **Parent "own children":** students linked to the parent via `student_guardians`. Every
   parent read policy joins through that table.
 - **Admin "own school":** everything with `school_id = current_school_id()`.
