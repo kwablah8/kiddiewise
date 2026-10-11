@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Users } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { ExportButtons } from "@/components/data/export-buttons";
 import { SearchField } from "@/components/data/search-field";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
@@ -13,7 +14,8 @@ import { AssignIndividualDialog } from "./assign-individual-dialog";
 import { RecordPaymentDialog } from "./record-payment-dialog";
 import { feeStatusTone } from "./fee-status";
 import { useClassFees } from "@/lib/queries/fees";
-import { useClasses } from "@/lib/queries/academics";
+import { useAcademicYears, useClasses } from "@/lib/queries/academics";
+import { classFeeColumns, classFeeDetails, feesFilterLabels } from "@/lib/fees/export";
 import { FEE_STATUS_LABEL, type StudentFeeVM, type FeesFilter } from "@/lib/validators/fees";
 import { formatGHS } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
@@ -46,6 +48,7 @@ const columns: DataTableColumn<StudentFeeVM>[] = [
 export function ClassFeesTab({ filter }: { filter: FeesFilter }) {
   const { data, isLoading, isError, refetch } = useClassFees(filter);
   const { data: classes } = useClasses();
+  const { data: years } = useAcademicYears();
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkKey, setBulkKey] = useState(0);
   const [indivOpen, setIndivOpen] = useState(false);
@@ -110,13 +113,24 @@ export function ClassFeesTab({ filter }: { filter: FeesFilter }) {
       )}
 
       <div className={cardShellClass}>
-        <SearchField
-          value={query}
-          onChange={setQuery}
-          placeholder="Search by student or class"
-          label="Search class fees"
-          className="mb-3"
-        />
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <SearchField
+            value={query}
+            onChange={setQuery}
+            placeholder="Search by student or class"
+            label="Search class fees"
+          />
+          <ExportButtons
+            kind="class-fees"
+            title="Class Fees"
+            details={classFeeDetails(feesFilterLabels(filter, classes ?? [], years ?? []), rows)}
+            columns={classFeeColumns}
+            rows={rows}
+            orientation="landscape"
+            emptyMessage="No student fees match these filters."
+            disabled={isLoading || isError}
+          />
+        </div>
         {isError ? (
           <ErrorState message="Couldn't load class fees." onRetry={() => refetch()} />
         ) : isEmpty ? (

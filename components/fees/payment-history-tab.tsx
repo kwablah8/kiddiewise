@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { Download, Receipt } from "lucide-react";
+import { ExportButtons } from "@/components/data/export-buttons";
 import { SearchField } from "@/components/data/search-field";
 import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
+import { useAcademicYears, useClasses } from "@/lib/queries/academics";
 import { usePayments } from "@/lib/queries/fees";
+import { paymentColumns, paymentDetails, feesFilterLabels } from "@/lib/fees/export";
 import { PAYMENT_METHOD_LABEL, type PaymentVM, type FeesFilter } from "@/lib/validators/fees";
 import { formatDate, formatGHS } from "@/lib/format";
 import { matchesQuery } from "@/lib/search";
@@ -57,6 +60,8 @@ function buildColumns(onReceipt: (p: PaymentVM) => void): DataTableColumn<Paymen
 export function PaymentHistoryTab({ filter }: { filter: FeesFilter }) {
   const { data, isLoading, isError, refetch } = usePayments(filter);
   const onReceipt = useReceiptDownload();
+  const { data: classes } = useClasses();
+  const { data: years } = useAcademicYears();
   const [query, setQuery] = useState("");
 
   // Reference is searchable alongside the name because that is how a disputed payment gets found:
@@ -77,13 +82,24 @@ export function PaymentHistoryTab({ filter }: { filter: FeesFilter }) {
 
   return (
     <div className={cardShellClass}>
-      <SearchField
-        value={query}
-        onChange={setQuery}
-        placeholder="Search by student, class or reference"
-        label="Search payments"
-        className="mb-3"
-      />
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          placeholder="Search by student, class or reference"
+          label="Search payments"
+        />
+        <ExportButtons
+          kind="payments"
+          title="Payment History"
+          details={paymentDetails(feesFilterLabels(filter, classes ?? [], years ?? []), rows)}
+          columns={paymentColumns}
+          rows={rows}
+          orientation="landscape"
+          emptyMessage="No payments match these filters."
+          disabled={isLoading || isError}
+        />
+      </div>
       {isError ? (
         <ErrorState message="Couldn't load payments." onRetry={() => refetch()} />
       ) : isEmpty ? (
