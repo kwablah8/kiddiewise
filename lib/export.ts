@@ -12,13 +12,21 @@ export interface ExportColumn<T> {
   align?: "right";
   pdf: (row: T) => string;
   csv?: (row: T) => string;
+  /** Leave out of the other format: "pdf" columns are printed only, "csv" columns are spreadsheet only. */
+  only?: "pdf" | "csv";
+}
+
+/** The columns one format carries. A table can print a summary and give the spreadsheet the detail. */
+export function columnsFor<T>(columns: ExportColumn<T>[], format: "pdf" | "csv"): ExportColumn<T>[] {
+  return columns.filter((c) => !c.only || c.only === format);
 }
 
 export function pdfRows<T>(columns: ExportColumn<T>[], rows: T[]): string[][] {
   return rows.map((row) => columns.map((c) => c.pdf(row)));
 }
 
-export function columnsToCsv<T>(columns: ExportColumn<T>[], rows: T[]): string {
+export function columnsToCsv<T>(all: ExportColumn<T>[], rows: T[]): string {
+  const columns = columnsFor(all, "csv");
   return toCsv(
     columns.map((c) => c.header),
     rows.map((row) => columns.map((c) => (c.csv ?? c.pdf)(row))),

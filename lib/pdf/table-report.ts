@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import { BRAND } from "@/lib/brand";
 import { formatDate } from "@/lib/format";
-import { pdfRows, type ExportColumn } from "@/lib/export";
+import { columnsFor, pdfRows, type ExportColumn } from "@/lib/export";
 import { loadImageData, type PdfImage } from "./image";
 
 /**
@@ -55,9 +55,10 @@ export function renderTableReport<T>(data: TableReportData<T>, logo?: PdfImage |
   const right = pageWidth - MARGIN;
   const deep = rgb(BRAND.palette.deep);
 
-  const totalWeight = data.columns.reduce((sum, c) => sum + c.width, 0);
-  const widths = data.columns.map((c) => (contentWidth * c.width) / totalWeight);
-  const cellX = (i: number, x: number) => (data.columns[i]!.align === "right" ? x + widths[i]! - 2 : x + 2);
+  const columns = columnsFor(data.columns, "pdf");
+  const totalWeight = columns.reduce((sum, c) => sum + c.width, 0);
+  const widths = columns.map((c) => (contentWidth * c.width) / totalWeight);
+  const cellX = (i: number, x: number) => (columns[i]!.align === "right" ? x + widths[i]! - 2 : x + 2);
 
   function drawHeader(y: number): number {
     doc.setFillColor(245, 246, 248);
@@ -66,7 +67,7 @@ export function renderTableReport<T>(data: TableReportData<T>, logo?: PdfImage |
     doc.setFontSize(9);
     doc.setTextColor(90);
     let x = MARGIN;
-    data.columns.forEach((col, i) => {
+    columns.forEach((col, i) => {
       doc.text(fit(doc, col.header, widths[i]! - 4), cellX(i, x), y + ROW_HEIGHT - 2.3, {
         align: col.align === "right" ? "right" : "left",
       });
@@ -121,7 +122,7 @@ export function renderTableReport<T>(data: TableReportData<T>, logo?: PdfImage |
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(30);
-  for (const cells of pdfRows(data.columns, data.rows)) {
+  for (const cells of pdfRows(columns, data.rows)) {
     if (y + ROW_HEIGHT > pageHeight - MARGIN) {
       doc.addPage();
       y = drawHeader(MARGIN);
@@ -132,7 +133,7 @@ export function renderTableReport<T>(data: TableReportData<T>, logo?: PdfImage |
     let x = MARGIN;
     cells.forEach((cell, i) => {
       doc.text(fit(doc, cell, widths[i]! - 4), cellX(i, x), y + ROW_HEIGHT - 2.3, {
-        align: data.columns[i]!.align === "right" ? "right" : "left",
+        align: columns[i]!.align === "right" ? "right" : "left",
       });
       x += widths[i]!;
     });

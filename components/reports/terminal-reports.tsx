@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { ExportButtons } from "@/components/data/export-buttons";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -24,6 +25,7 @@ import {
   useGenerateReports,
   useSetReportsPublished,
 } from "@/lib/queries/reports";
+import { resultsColumns, resultsDetails } from "@/lib/reports/export";
 import { ReportCommentsDialog, type ReportCardContext } from "./report-comments-dialog";
 import { ReopeningDateBanner } from "./reopening-date-banner";
 import type { TerminalReportRowVM } from "@/lib/validators/reports";
@@ -276,6 +278,28 @@ export function TerminalReports({ teacherId }: { teacherId?: string }) {
             {allPublished ? "Retract from parents" : "Publish to parents"}
           </Button>
         </div>
+
+        {/* Admin only for now: the class teacher compiles reports but doesn't export the sheet. */}
+        {!teacherId && sheet && (
+          <div className="ml-auto">
+            <ExportButtons
+              kind="class-results"
+              title="Class Results"
+              details={resultsDetails(
+                [
+                  sheet.class_name,
+                  [sheet.term_name, dialogContext.year_name].filter(Boolean).join(" · "),
+                ],
+                sheet,
+              )}
+              columns={resultsColumns(rows)}
+              rows={rows}
+              orientation="landscape"
+              emptyMessage="No students enrolled in this class."
+              disabled={rows.length === 0}
+            />
+          </div>
+        )}
       </div>
 
       <div className={cardShellClass}>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { columnsToCsv, exportFilename, pdfRows, type ExportColumn } from "@/lib/export";
+import { columnsFor, columnsToCsv, exportFilename, pdfRows, type ExportColumn } from "@/lib/export";
 import {
   classFeeColumns,
   classFeeDetails,
@@ -9,6 +9,8 @@ import {
 } from "@/lib/fees/export";
 import { buildRegisterSummary, registerSummaryColumns, registerSummaryDetails } from "@/lib/attendance";
 import { buildCheckinRows, checkinColumns, checkinDetails } from "@/lib/gate-export";
+import { resultsColumns, resultsDetails } from "@/lib/reports/export";
+import type { TerminalReportRowVM, TerminalReportSheetVM } from "@/lib/validators/reports";
 import type { PaymentVM, StudentFeeVM } from "@/lib/validators/fees";
 import type { PresenceDayVM } from "@/lib/validators/gate";
 
@@ -189,5 +191,89 @@ describe("check-in export", () => {
     expect(columnsToCsv(columns, row)).toContain("2026-10-08,Yaa,Basic 1,07:42,,Late");
     expect(pdfRows(columns, row)[0]).toEqual(["08 Oct 2026", "Yaa", "Basic 1", "7:42 AM", "—", "Late"]);
     expect(checkinDetails(["Basic 1"], row)).toEqual(["Basic 1", "1 check-in", "1 late"]);
+  });
+});
+
+describe("class results export", () => {
+  const subject = (name: string, code: string | null, cls: number, exam: number) => ({
+    subject_name: name,
+    short_code: code,
+    class_score: cls,
+    exam_score: exam,
+    total: cls + exam,
+    class_average: null,
+    class_lowest: null,
+    class_highest: null,
+    grade: null,
+    position: null,
+    remark: null,
+  });
+  const row = (over: Partial<TerminalReportRowVM> = {}): TerminalReportRowVM => ({
+    id: "r1",
+    student_id: "s1",
+    student_name: "Ama Mensah",
+    student_first_name: "Ama",
+    student_last_name: "Mensah",
+    admission_no: "K-1",
+    subject_count: 2,
+    total_score: 150,
+    average_score: 75,
+    overall_grade: "B",
+    position: 2,
+    passes: 2,
+    class_average: null,
+    class_lowest_average: null,
+    class_highest_average: null,
+    level_position: null,
+    level_size: null,
+    attendance_present: 12,
+    attendance_total: 14,
+    class_teacher_comment: null,
+    head_teacher_comment: null,
+    conduct: null,
+    attitude: null,
+    interest: null,
+    promoted_to: null,
+    enrolled_count: 30,
+    subjects: [subject("Mathematics", "MATH", 30, 50), subject("English", null, 20, 50)],
+    is_published: false,
+    generated_at: "2026-10-01T00:00:00Z",
+    ...over,
+  });
+
+  it("prints a total per subject and gives the spreadsheet class, exam and total", () => {
+    const columns = resultsColumns([row()]);
+    expect(pdfRows(columnsFor(columns, "pdf"), [row()])[0]).toEqual([
+      "K-1", "Ama Mensah", "70", "80", "150", "75%", "B", "2", "12/14",
+    ]);
+    const csv = columnsToCsv(columns, [row()]);
+    expect(csv).toContain("English (Class),English (Exam),English (Total),Mathematics (Class),Mathematics (Exam),Mathematics (Total)");
+    expect(csv).toContain("K-1,Ama Mensah,20,50,70,30,50,80,150,75,B,2,12,14");
+  });
+
+  it("heads a printed subject column with its short code, or the name when it has none", () => {
+    const headers = columnsFor(resultsColumns([row()]), "pdf").map((c) => c.header);
+    expect(headers).toContain("MATH");
+    expect(headers).toContain("English");
+  });
+
+  it("leaves a subject a student has no row for blank, and takes subjects from every student", () => {
+    const other = row({ student_id: "s2", student_name: "Yaw Boateng", subjects: [subject("Science", null, 10, 40)] });
+    const columns = resultsColumns([row(), other]);
+    expect(columnsToCsv(columns, [other])).toContain("Yaw Boateng,,,,,,,10,40,50");
+    expect(columns.filter((c) => c.only === "csv" && c.header.startsWith("Science"))).toHaveLength(3);
+  });
+
+  it("has only the overall figures before a class is generated, and no zero for a missing average", () => {
+    const draft = row({ id: null, subjects: [], average_score: null, total_score: null, overall_grade: null, position: null, attendance_present: 0, attendance_total: 0 });
+    expect(pdfRows(columnsFor(resultsColumns([draft]), "pdf"), [draft])[0]).toEqual([
+      "K-1", "Ama Mensah", "—", "—", "—", "—", "—",
+    ]);
+    expect(columnsToCsv(resultsColumns([draft]), [draft])).toContain("K-1,Ama Mensah,,,,,0,0");
+  });
+
+  it("says how many reports are generated", () => {
+    const sheet = { rows: [row(), row()], generated_count: 1 } as TerminalReportSheetVM;
+    expect(resultsDetails(["Basic 1"], sheet)).toEqual(["Basic 1", "1 of 2 reports generated"]);
   });
 });
