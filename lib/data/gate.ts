@@ -1,9 +1,10 @@
-import { activeYearId, db, unwrap, unwrapList } from "./_client";
+import { activeYearId, db, readAllPaged, unwrap, unwrapList } from "./_client";
 import type {
   DevicePersonVM,
   DeviceVM,
   GateSettingsVM,
   ParentNotificationVM,
+  PresenceDayVM,
   PresenceVM,
 } from "@/lib/validators/gate";
 
@@ -99,6 +100,31 @@ export async function listDevicePeople(): Promise<DevicePersonVM[]> {
   ];
 }
 
+interface PresenceRow {
+  device_user_id: string | null;
+  student_id: string | null;
+  staff_id: string | null;
+  arrived_at: string | null;
+  left_at: string | null;
+  late: boolean | null;
+}
+
+function toPresence(r: PresenceRow, byId: Map<string, DevicePersonVM>): PresenceVM | null {
+  if (!r.device_user_id) return null;
+  const key = r.student_id ? `student:${r.student_id}` : r.staff_id ? `staff:${r.staff_id}` : null;
+  const person = key ? byId.get(key) : undefined;
+  return {
+    device_user_id: r.device_user_id,
+    person: person ? { kind: person.kind, id: person.id, name: person.name, detail: person.detail } : null,
+    arrived_at: r.arrived_at,
+    left_at: r.left_at,
+    late: r.late ?? false,
+  };
+}
+
+const byFirstScan = (a: PresenceVM, b: PresenceVM) =>
+  (a.arrived_at ?? a.left_at ?? "").localeCompare(b.arrived_at ?? b.left_at ?? "");
+
 /** Everyone who scanned on a school day, earliest arrival first. */
 export async function listPresence(date: string): Promise<PresenceVM[]> {
   const [rows, people] = await Promise.all([
@@ -110,23 +136,31 @@ export async function listPresence(date: string): Promise<PresenceVM[]> {
     listDevicePeople(),
   ]);
   const byId = new Map(people.map((p) => [`${p.kind}:${p.id}`, p]));
+  return rows.flatMap((r) => toPresence(r, byId) ?? []).sort(byFirstScan);
+}
 
-  return rows
-    .flatMap((r): PresenceVM[] => {
-      if (!r.device_user_id) return [];
-      const key = r.student_id ? `student:${r.student_id}` : r.staff_id ? `staff:${r.staff_id}` : null;
-      const person = key ? byId.get(key) : undefined;
-      return [
-        {
-          device_user_id: r.device_user_id,
-          person: person ? { kind: person.kind, id: person.id, name: person.name, detail: person.detail } : null,
-          arrived_at: r.arrived_at,
-          left_at: r.left_at,
-          late: r.late ?? false,
-        },
-      ];
-    })
-    .sort((a, b) => (a.arrived_at ?? a.left_at ?? "").localeCompare(b.arrived_at ?? b.left_at ?? ""));
+/** Everyone who scanned from one day to another (both included), oldest day first. */
+export async function listPresenceRange(from: string, to: string): Promise<PresenceDayVM[]> {
+  const [rows, people] = await Promise.all([
+    readAllPaged(
+      (start, end) =>
+        db()
+          .from("daily_presence")
+          .select("local_date, device_user_id, student_id, staff_id, arrived_at, left_at, late")
+          .gte("local_date", from)
+          .lte("local_date", to)
+          .order("local_date")
+          .order("device_user_id")
+          .range(start, end),
+      "presence",
+    ),
+    listDevicePeople(),
+  ]);
+  const byId = new Map(people.map((p) => [`${p.kind}:${p.id}`, p]));
+  return rows.flatMap((r) => {
+    const presence = toPresence(r, byId);
+    return presence && r.local_date ? [{ ...presence, date: r.local_date }] : [];
+  });
 }
 
 /** A guardian's gate notices, newest first. RLS returns only their own. */

@@ -99,6 +99,11 @@ export interface PresenceVM {
   late: boolean;
 }
 
+/** A person's scan-in and scan-out on one school day, for exports that span several days. */
+export interface PresenceDayVM extends PresenceVM {
+  date: string;
+}
+
 export interface ParentNotificationVM {
   id: string;
   student_id: string;

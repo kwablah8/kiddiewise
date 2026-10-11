@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Fingerprint } from "lucide-react";
+import { Download, Fingerprint } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
+import { CheckinsExportDialog } from "./checkins-export-dialog";
+import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
@@ -39,6 +41,8 @@ export function CheckinsTab({ timeZone, today }: { timeZone: string; today: stri
   const [date, setDate] = useState(today);
   const [kind, setKind] = useState<PersonKind>("student");
   const [classId, setClassId] = useState<string>(ALL);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportKey, setExportKey] = useState(0);
   const classes = useClasses();
   const presence = usePresence(date);
   const people = useDevicePeople();
@@ -148,12 +152,25 @@ export function CheckinsTab({ timeZone, today }: { timeZone: string; today: stri
             />
           </div>
         </div>
-        {kind === "student" && !isLoading && !presence.isError && (
-          <p className="ml-auto flex h-10 items-center text-sm text-[var(--muted-foreground)]">
-            {rows.filter((r) => r.arrived_at).length} of {studentsOnRoll}{" "}
-            {classId === ALL ? "students" : "in this class"} checked in
-          </p>
-        )}
+        <div className="ml-auto flex h-10 items-center gap-4">
+          {kind === "student" && !isLoading && !presence.isError && (
+            <p className="text-sm text-[var(--muted-foreground)]">
+              {rows.filter((r) => r.arrived_at).length} of {studentsOnRoll}{" "}
+              {classId === ALL ? "students" : "in this class"} checked in
+            </p>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setExportKey((k) => k + 1);
+              setExportOpen(true);
+            }}
+          >
+            <Download className="size-4" aria-hidden="true" /> Export
+          </Button>
+        </div>
       </div>
 
       <div className={cardShellClass}>
@@ -183,6 +200,19 @@ export function CheckinsTab({ timeZone, today }: { timeZone: string; today: stri
           <DataTable columns={columns} data={rows} getRowId={(r) => r.id} />
         )}
       </div>
+
+      <CheckinsExportDialog
+        key={exportKey}
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        date={date}
+        today={today}
+        timeZone={timeZone}
+        kind={kind}
+        classId={classId === ALL ? null : classId}
+        className={classId === ALL ? null : ((classes.data ?? []).find((c) => c.id === classId)?.name ?? null)}
+        classOf={classOf}
+      />
 
       {unlinked.length > 0 && (
         <div className={cardShellClass}>

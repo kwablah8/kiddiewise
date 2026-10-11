@@ -70,6 +70,8 @@ export const queryKeys = {
   },
   attendance: {
     roster: (classId: string, date: string) => ["attendance", "roster", classId, date] as const,
+    registerSummary: (classId: string, termId: string) =>
+      ["attendance", "register-summary", classId, termId] as const,
   },
   gate: {
     settings: ["gate", "settings"] as const,

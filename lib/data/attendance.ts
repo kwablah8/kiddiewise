@@ -1,6 +1,6 @@
-import { activeYearId, db, unwrapList } from "./_client";
-import { buildRoster } from "@/lib/attendance";
-import type { AttendanceRosterVM } from "@/lib/validators/attendance";
+import { activeYearId, db, readAllPaged, unwrapList } from "./_client";
+import { buildRegisterSummary, buildRoster } from "@/lib/attendance";
+import type { AttendanceRosterVM, RegisterSummaryRowVM } from "@/lib/validators/attendance";
 
 /**
  * The register for one class on one date: every enrolled student, each carrying that day's status or
@@ -43,4 +43,40 @@ export async function getRoster(classId: string, date: string): Promise<Attendan
     .filter((s): s is NonNullable<typeof s> => s !== null);
 
   return { class_id: classId, date, entries: buildRoster(students, existing, arrivals) };
+}
+
+/**
+ * Every student on a class's roll, tallied over one term's register. Marks are read for this class
+ * and term, so a mark recorded against a student's old class (they moved mid-term) is left out, the
+ * same rule the daily roster follows. Paged: a term's marks for a class run well past 1000 rows.
+ */
+export async function getRegisterSummary(classId: string, termId: string): Promise<RegisterSummaryRowVM[]> {
+  const yearId = await activeYearId();
+  let rosterQuery = db()
+    .from("enrollments")
+    .select("students!inner(id, first_name, last_name, admission_no)")
+    .eq("class_id", classId)
+    .eq("status", "active");
+  if (yearId) rosterQuery = rosterQuery.eq("academic_year_id", yearId);
+
+  const [studentsRes, records] = await Promise.all([
+    rosterQuery,
+    readAllPaged(
+      (from, to) =>
+        db()
+          .from("attendance")
+          .select("student_id, status")
+          .eq("class_id", classId)
+          .eq("term_id", termId)
+          .order("date")
+          .order("student_id")
+          .range(from, to),
+      "register marks",
+    ),
+  ]);
+
+  const students = unwrapList(studentsRes, "class roster")
+    .map((e) => e.students)
+    .filter((s): s is NonNullable<typeof s> => s !== null);
+  return buildRegisterSummary(students, records);
 }

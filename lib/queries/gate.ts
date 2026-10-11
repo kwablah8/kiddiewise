@@ -26,6 +26,10 @@ export const useDevicePeople = () =>
 export const usePresence = (date: string) =>
   useQuery({ queryKey: queryKeys.gate.presence(date), queryFn: () => data.listPresence(date) });
 
+/** A one-off read for an export: nothing is cached, it runs when the admin presses the button. */
+export const useFetchPresenceRange = () =>
+  useMutation({ mutationFn: ({ from, to }: { from: string; to: string }) => data.listPresenceRange(from, to) });
+
 function useGateMutation<TInput, TResult>(fn: (input: TInput) => Promise<TResult>) {
   const qc = useQueryClient();
   return useMutation({ mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey: ["gate"] }) });

@@ -7,7 +7,10 @@ import {
   paymentColumns,
   paymentDetails,
 } from "@/lib/fees/export";
+import { buildRegisterSummary, registerSummaryColumns, registerSummaryDetails } from "@/lib/attendance";
+import { buildCheckinRows, checkinColumns, checkinDetails } from "@/lib/gate-export";
 import type { PaymentVM, StudentFeeVM } from "@/lib/validators/fees";
+import type { PresenceDayVM } from "@/lib/validators/gate";
 
 const payment = (over: Partial<PaymentVM> = {}): PaymentVM => ({
   id: "p1",
@@ -114,5 +117,77 @@ describe("feesFilterLabels", () => {
       "Second Term",
     ]);
     expect(feesFilterLabels({}, classes, years)).toEqual([]);
+  });
+});
+
+describe("register summary", () => {
+  const students = [
+    { id: "s2", first_name: "Yaw", last_name: "Boateng", admission_no: "K-2" },
+    { id: "s1", first_name: "Ama", last_name: "Mensah", admission_no: "K-1" },
+  ];
+
+  it("tallies each student's marks, by name, and rates present and late as attended", () => {
+    const rows = buildRegisterSummary(students, [
+      { student_id: "s1", status: "present" },
+      { student_id: "s1", status: "late" },
+      { student_id: "s1", status: "absent" },
+      { student_id: "s1", status: "present" },
+    ]);
+    expect(rows.map((r) => r.name)).toEqual(["Ama Mensah", "Yaw Boateng"]);
+    expect(rows[0]).toMatchObject({ present: 2, late: 1, absent: 1, marked: 4, pct: 75 });
+  });
+
+  it("keeps a student with no marks, with no rate rather than 0%", () => {
+    const [ama, yaw] = buildRegisterSummary(students, [{ student_id: "s1", status: "present" }]);
+    expect(ama!.pct).toBe(100);
+    expect(yaw).toMatchObject({ marked: 0, pct: null });
+    expect(columnsToCsv(registerSummaryColumns, [yaw!])).toContain("K-2,Yaw Boateng,0,0,0,0,");
+    expect(pdfRows(registerSummaryColumns, [yaw!])[0]!.at(-1)).toBe("—");
+  });
+
+  it("reports the class rate across every marked day", () => {
+    const rows = buildRegisterSummary(students, [
+      { student_id: "s1", status: "present" },
+      { student_id: "s1", status: "absent" },
+    ]);
+    expect(registerSummaryDetails(["Basic 1"], rows)).toEqual(["Basic 1", "2 students", "Class attendance 50%"]);
+    expect(registerSummaryDetails([], buildRegisterSummary(students, []))).toEqual(["2 students"]);
+  });
+});
+
+describe("check-in export", () => {
+  const scan = (over: Partial<PresenceDayVM> & { id: string; name: string; kind?: "student" | "staff" }): PresenceDayVM => ({
+    date: "2026-10-08",
+    device_user_id: over.id,
+    person: { kind: over.kind ?? "student", id: over.id, name: over.name, detail: "Basic 1" },
+    arrived_at: "2026-10-08T07:42:00.000Z",
+    left_at: null,
+    late: false,
+    ...over,
+  });
+  const classOf = new Map<string, string | null>([["a", "c1"], ["b", "c2"]]);
+
+  it("keeps one kind of person, narrows to a class, and orders by day then name", () => {
+    const presence = [
+      scan({ id: "b", name: "Zed", date: "2026-10-07" }),
+      scan({ id: "a", name: "Yaa", date: "2026-10-09" }),
+      scan({ id: "a", name: "Yaa", date: "2026-10-07" }),
+      scan({ id: "t", name: "Mr Staff", kind: "staff" }),
+    ];
+    expect(buildCheckinRows(presence, "student", null, classOf).map((r) => `${r.date} ${r.name}`)).toEqual([
+      "2026-10-07 Yaa",
+      "2026-10-07 Zed",
+      "2026-10-09 Yaa",
+    ]);
+    expect(buildCheckinRows(presence, "student", "c1", classOf)).toHaveLength(2);
+    expect(buildCheckinRows(presence, "staff", "c1", classOf)).toHaveLength(1);
+  });
+
+  it("writes 24-hour times to the spreadsheet and 12-hour times on paper", () => {
+    const row = buildCheckinRows([scan({ id: "a", name: "Yaa", late: true })], "student", null, classOf);
+    const columns = checkinColumns("student", "Africa/Accra");
+    expect(columnsToCsv(columns, row)).toContain("2026-10-08,Yaa,Basic 1,07:42,,Late");
+    expect(pdfRows(columns, row)[0]).toEqual(["08 Oct 2026", "Yaa", "Basic 1", "7:42 AM", "—", "Late"]);
+    expect(checkinDetails(["Basic 1"], row)).toEqual(["Basic 1", "1 check-in", "1 late"]);
   });
 });

@@ -2,7 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { mutate } from "@/lib/actions/result";
 import { queryKeys } from "./keys";
-import { getRoster } from "@/lib/data/attendance";
+import { getRegisterSummary, getRoster } from "@/lib/data/attendance";
 import { saveAttendance as saveAttendanceAction } from "@/lib/actions/attendance";
 
 
@@ -18,6 +18,13 @@ export const useRoster = (classId: string | null, date: string) =>
     queryKey: queryKeys.attendance.roster(classId ?? "", date),
     queryFn: () => getRoster(classId as string, date),
     enabled: !!classId && !!date,
+  });
+
+export const useRegisterSummary = (classId: string | null, termId: string | null) =>
+  useQuery({
+    queryKey: queryKeys.attendance.registerSummary(classId ?? "", termId ?? ""),
+    queryFn: () => getRegisterSummary(classId as string, termId as string),
+    enabled: !!classId && !!termId,
   });
 
 export function useSaveAttendance() {

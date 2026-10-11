@@ -1,4 +1,4 @@
-import { activeYearId, db, unwrapList } from "./_client";
+import { activeYearId, db, readAllPaged, unwrapList } from "./_client";
 import { summarizeFees } from "@/lib/fees/summary";
 import {
   SCHOLARSHIP_LABEL,
@@ -83,26 +83,6 @@ const EMPTY_OVERVIEW: FeesOverviewVM = {
   pending: 0,
   total_records: 0,
 };
-
-// Read every matching row, not just PostgREST's first page (default 1000). getFeesOverview sums these
-// client-side across the whole school, so a truncated read would silently understate the expected /
-// collected / outstanding totals a school reconciles its cash against, money is wrong with nothing on
-// screen to say so. Page until a short read. (A SQL aggregate RPC would be leaner for a very large
-// school; correctness first, and the same paged read also keeps the Class Fees table complete.)
-async function readAllPaged<T>(
-  make: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
-  label: string,
-  pageSize = 1000,
-): Promise<T[]> {
-  const all: T[] = [];
-  for (let from = 0; ; from += pageSize) {
-    const { data, error } = await make(from, from + pageSize - 1);
-    if (error) throw new Error(`${label}: ${error.message}`);
-    const rows = data ?? [];
-    all.push(...rows);
-    if (rows.length < pageSize) return all;
-  }
-}
 
 async function fetchPositions(filter: FeesFilter): Promise<PositionRow[]> {
   const rows = await readAllPaged(

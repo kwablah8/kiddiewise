@@ -30,3 +30,17 @@ export const saveAttendanceSchema = z.object({
     .min(1, "Mark at least one student"),
 });
 export type SaveAttendanceInput = z.infer<typeof saveAttendanceSchema>;
+
+/** One student's tally of a class's register over a term. */
+export interface RegisterSummaryRowVM {
+  student_id: string;
+  name: string;
+  admission_no: string;
+  present: number;
+  late: number;
+  absent: number;
+  /** Days the register was marked for this student. */
+  marked: number;
+  /** Present or late over marked days, as a whole percent; null when nothing is marked. */
+  pct: number | null;
+}

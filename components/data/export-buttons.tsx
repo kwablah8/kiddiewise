@@ -4,11 +4,10 @@ import { useState } from "react";
 import { Download, FileText } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
-import { BRAND } from "@/lib/brand";
 import { downloadCsv } from "@/lib/csv";
 import { columnsToCsv, exportFilename, type ExportColumn } from "@/lib/export";
 import { downloadTableReport } from "@/lib/pdf/table-report";
-import { useSchool } from "@/lib/queries/school";
+import { useReportSchool } from "@/lib/pdf/use-report-school";
 
 interface ExportButtonsProps<T> {
   /** Used in the filename: `payments` gives `payments-School-2026-10-12.pdf`. */
@@ -35,22 +34,15 @@ export function ExportButtons<T>({
   emptyMessage,
   disabled,
 }: ExportButtonsProps<T>) {
-  const { data: school } = useSchool();
+  const school = useReportSchool();
   const [busy, setBusy] = useState(false);
-  const schoolName = school?.name ?? BRAND.fullName;
 
   async function exportPdf() {
     setBusy(true);
     try {
       await downloadTableReport(
         {
-          school: {
-            name: schoolName,
-            address: school?.address ?? null,
-            email: school?.email ?? null,
-            phone: school?.phone ?? null,
-            logoSrc: school?.logo_url ?? BRAND.crest.src,
-          },
+          school,
           title,
           details,
           columns,
@@ -58,7 +50,7 @@ export function ExportButtons<T>({
           orientation,
           emptyMessage,
         },
-        exportFilename(kind, schoolName, "pdf"),
+        exportFilename(kind, school.name, "pdf"),
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't generate the PDF. Please try again.");
@@ -68,7 +60,7 @@ export function ExportButtons<T>({
   }
 
   function exportCsv() {
-    downloadCsv(exportFilename(kind, schoolName, "csv"), columnsToCsv(columns, rows));
+    downloadCsv(exportFilename(kind, school.name, "csv"), columnsToCsv(columns, rows));
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/app/page-header";
+import { RegisterSummaryTab } from "@/components/attendance/register-summary-tab";
 import { CheckinsTab } from "@/components/gate/checkins-tab";
 import { DeviceNumbersTab } from "@/components/gate/device-numbers-tab";
 import { GateSettingsTab } from "@/components/gate/gate-settings-tab";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { id: "checkins", label: "Check-ins" },
+  { id: "registers", label: "Registers" },
   { id: "numbers", label: "Device numbers" },
   { id: "settings", label: "Settings" },
 ] as const;
@@ -28,7 +30,7 @@ export default function AttendancePage() {
     <div className="space-y-6">
       <PageHeader
         title="Attendance"
-        subtitle="Gate check-ins from the fingerprint device, for students and staff."
+        subtitle="Gate check-ins from the fingerprint device, and the class registers."
       />
 
       <div className="overflow-x-auto">
@@ -64,6 +66,8 @@ export default function AttendancePage() {
           timeZone={settings.data.timezone}
           today={localParts(new Date(), settings.data.timezone).date}
         />
+      ) : tab === "registers" ? (
+        <RegisterSummaryTab />
       ) : tab === "numbers" ? (
         <DeviceNumbersTab />
       ) : (
