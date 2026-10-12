@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { Bell, LogIn, LogOut } from "lucide-react";
-import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { SkeletonBlock } from "@/components/states/skeleton-block";
@@ -89,7 +88,6 @@ export function NotificationsList() {
                   {n.event === "arrived" ? "arrived at school" : "left school"} at{" "}
                   {formatClockTime(n.occurred_at, tz)}
                 </p>
-                {n.event === "arrived" && n.late && <StatusPill label="Late" tone="warning" />}
               </li>
             ))}
           </ul>

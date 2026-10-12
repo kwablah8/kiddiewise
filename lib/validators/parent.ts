@@ -61,7 +61,6 @@ export type AttendanceRecordVM = z.infer<typeof attendanceRecordVM>;
 export const attendanceSummaryVM = z.object({
   present: z.number(),
   absent: z.number(),
-  late: z.number(),
   total: z.number(),
   pct: z.number().nullable(),
 });
