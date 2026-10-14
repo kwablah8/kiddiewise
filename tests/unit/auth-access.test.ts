@@ -99,6 +99,17 @@ describe("homePathForRole", () => {
   });
 });
 
+describe("non-teaching staff", () => {
+  it("have no portal: no (app) path is allowed and home is the public login page", () => {
+    expect(isPathAllowedForRole("non_teaching", "/dashboard")).toBe(false);
+    expect(isPathAllowedForRole("non_teaching", "/students")).toBe(false);
+    expect(isPathAllowedForRole("non_teaching", "/teacher/dashboard")).toBe(false);
+    expect(isPathAllowedForRole("non_teaching", "/parent/dashboard")).toBe(false);
+    expect(homePathForRole("non_teaching")).toBe("/login");
+    expect(isPublicPath(homePathForRole("non_teaching"))).toBe(true);
+  });
+});
+
 describe("isPathAllowedForRole", () => {
   it("lets teachers into the teacher subtree only", () => {
     expect(isPathAllowedForRole("teacher", "/teacher/dashboard")).toBe(true);

@@ -86,6 +86,7 @@ const NAV_BY_ROLE: Partial<Record<Profile["role"], NavItem[]>> = {
   school_admin: ADMIN_NAV_ITEMS,
   super_admin: ADMIN_NAV_ITEMS,
   teacher: TEACHER_NAV_ITEMS,
+  non_teaching: [],
 };
 
 interface SidebarProps {

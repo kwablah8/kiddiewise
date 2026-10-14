@@ -25,7 +25,7 @@ export default function StaffPage() {
     <div className="space-y-6">
       <PageHeader
         title="Staff"
-        subtitle="Manage teaching staff, departments, and class/subject assignments."
+        subtitle="Manage staff, departments, and class/subject assignments."
         action={<Button onClick={openCreate}>New Staff</Button>}
       />
       <StaffTable onNewStaff={openCreate} />

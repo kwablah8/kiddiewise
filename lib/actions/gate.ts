@@ -106,7 +106,7 @@ export async function setDeviceUserId(
 
     if (person.kind === "staff") {
       const { data: profile } = await ctx.db.from("profiles").select("role").eq("id", person.id).maybeSingle();
-      if (!profile || (profile.role !== "teacher" && profile.role !== "school_admin")) {
+      if (!profile || (profile.role !== "teacher" && profile.role !== "school_admin" && profile.role !== "non_teaching")) {
         throw new UserFacingError("Only staff members can be linked to the device.");
       }
     }

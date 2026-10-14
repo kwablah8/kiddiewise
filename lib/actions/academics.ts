@@ -39,9 +39,11 @@ import {
   type ClassUpdateInput,
   type SubjectCreateInput,
   type StaffCreateInput,
+  type StaffRole,
   type AssignSubjectInput,
   type SetReopeningDateInput,
 } from "@/lib/validators/academics";
+import { STAFF_NO_PREFIX } from "@/lib/staff/roles";
 import type { TablesUpdate } from "@/lib/supabase/types";
 import { z } from "zod";
 
@@ -365,12 +367,12 @@ export async function updateSubject(
 // Staff
 // ---------------------------------------------------------------------------
 
-/** Next staff number for a role: TCH-<n> for teachers, ADM-<n> for administrators. */
+/** Next staff number for a role: TCH-<n> for teachers, ADM-<n> for administrators, NTS-<n> for non-teaching staff. */
 async function nextStaffNo(
   ctx: Awaited<ReturnType<typeof tenant>>,
-  role: "teacher" | "school_admin",
+  role: StaffRole,
 ): Promise<string> {
-  const prefix = role === "teacher" ? "TCH" : "ADM";
+  const prefix = STAFF_NO_PREFIX[role];
   const { data } = await ctx.db.from("profiles").select("staff_no").like("staff_no", `${prefix}-%`);
 
   const max = (data ?? []).reduce((acc, r) => {
@@ -391,11 +393,14 @@ async function nextStaffNo(
  * password there and then needs no SMTP account, no working email address, and no second visit. The
  * holder must replace it on first sign-in, so the window in which the admin knows it is short.
  *
+ * Non-teaching staff have no portal: no credentials are issued (the result is null) and the account
+ * is locked, see `provisionUser`.
+ *
  * The two writes span `auth.users` and `profiles` with no shared transaction, so a failed profile
  * insert is compensated by deleting the auth account. Without that, a half-created person would hold
  * the email address hostage and the admin could never retry.
  */
-export async function createStaff(input: StaffCreateInput): Promise<ActionResult<IssuedCredentials>> {
+export async function createStaff(input: StaffCreateInput): Promise<ActionResult<IssuedCredentials | null>> {
   return attempt(async () => {
     const data = staffCreateSchema.parse(input);
     const ctx = await tenant();
@@ -403,7 +408,8 @@ export async function createStaff(input: StaffCreateInput): Promise<ActionResult
     const staff_no = await nextStaffNo(ctx, data.role);
     const tempPassword = generateTempPassword();
     const expiresAt = tempPasswordExpiry(new Date());
-    const userId = await provisionUser(ctx, data.email, tempPassword);
+    const noPortal = data.role === "non_teaching";
+    const userId = await provisionUser(ctx, data.email, tempPassword, { noPortal });
 
     try {
       assertOk(
@@ -426,12 +432,13 @@ export async function createStaff(input: StaffCreateInput): Promise<ActionResult
         }),
         "staff member",
       );
-      await markTempCredential(userId, expiresAt);
+      if (!noPortal) await markTempCredential(userId, expiresAt);
     } catch (err) {
       await rollbackProvisionedUser(userId);
       throw err;
     }
 
+    if (noPortal) return null;
     return {
       profileId: userId,
       personName: `${data.first_name} ${data.last_name}`,
@@ -515,7 +522,7 @@ export async function deleteStaff(input: { id: string }): Promise<ActionResult<{
       .eq("id", id)
       .maybeSingle();
     if (!target) throw new UserFacingError("That staff member is not in your school.");
-    if (target.role !== "teacher" && target.role !== "school_admin") {
+    if (target.role !== "teacher" && target.role !== "school_admin" && target.role !== "non_teaching") {
       throw new UserFacingError("Only staff accounts can be deleted here.");
     }
 

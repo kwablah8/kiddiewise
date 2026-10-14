@@ -184,6 +184,9 @@ export function passwordSetupUrl(): string {
   return `${base.replace(/\/$/, "")}/update-password`;
 }
 
+// About 100 years: GoTrue takes a duration, not a flag, and has no "banned forever".
+const NO_PORTAL_BAN = "876000h";
+
 /**
  * Create the auth account behind a new staff member or parent, and return its id.
  *
@@ -199,11 +202,16 @@ export function passwordSetupUrl(): string {
  *
  * `tempPassword` is required: an account with no usable password is one the holder can only reach via
  * an invite link, which is a state neither create flow wants.
+ *
+ * `noPortal` is for people who need a profile but never sign in (non-teaching staff). Their
+ * password is never issued and the account is banned for good, so even a password reset cannot
+ * open it; the profile row needs an auth user behind it, which is the only reason one exists.
  */
 export async function provisionUser(
   ctx: TenantContext,
   email: string,
   tempPassword: string,
+  options: { noPortal?: boolean } = {},
 ): Promise<string> {
   assertAdmin(ctx);
 
@@ -214,6 +222,7 @@ export async function provisionUser(
     // Pre-confirmed so the recipient goes straight to signing in rather than confirming an address
     // the school already vouched for face to face.
     email_confirm: true,
+    ...(options.noPortal ? { ban_duration: NO_PORTAL_BAN } : {}),
   });
 
   if (error || !data.user) {
@@ -282,7 +291,7 @@ export async function reissueTempPassword(
   // this would be a cross-tenant password-reset machine.
   const { data: target, error } = await ctx.db
     .from("profiles")
-    .select("first_name, last_name, email, is_active")
+    .select("first_name, last_name, email, is_active, role")
     .eq("id", profileId)
     .maybeSingle();
 
@@ -290,6 +299,9 @@ export async function reissueTempPassword(
   if (!target) throw new UserFacingError("That person is not in your school.");
   if (!target.is_active) {
     throw new UserFacingError("This account is deactivated. Reactivate it before issuing a new password.");
+  }
+  if (target.role === "non_teaching") {
+    throw new UserFacingError("Non-teaching staff have no portal, so there is nothing to sign in to.");
   }
 
   const tempPassword = generateTempPassword();
@@ -344,7 +356,7 @@ export async function invitePortalUser(
   // action a cross-tenant invitation machine.
   const { data: target, error } = await ctx.db
     .from("profiles")
-    .select("is_active")
+    .select("is_active, role")
     .eq("id", profileId)
     .maybeSingle();
 
@@ -352,6 +364,9 @@ export async function invitePortalUser(
   if (!target) throw new UserFacingError("That person is not in your school.");
   if (!target.is_active) {
     throw new UserFacingError("This account is deactivated. Reactivate it before inviting them.");
+  }
+  if (target.role === "non_teaching") {
+    throw new UserFacingError("Non-teaching staff have no portal, so there is nothing to invite them to.");
   }
 
   // Resolve the recovery address from the AUTH record, never from profiles.email.

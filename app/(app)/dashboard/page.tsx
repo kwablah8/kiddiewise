@@ -39,6 +39,7 @@ import { useFeesOverview } from "@/lib/queries/fees";
 import { downloadDashboardReport, type StaffRosterRow } from "@/lib/pdf/dashboard-report";
 import { BRAND } from "@/lib/brand";
 import { formatDate, formatMonthShort } from "@/lib/format";
+import { STAFF_ROLE_LABEL } from "@/lib/staff/roles";
 
 const ENTITY_ICONS: Record<string, LucideIcon> = {
   student: GraduationCap,
@@ -172,12 +173,12 @@ export default function DashboardPage() {
           ? `${active.active_term.name} · ${active.active_year.name}`
           : null;
 
-      // Same two roles the Staff screen itself shows (super_admin exists in the enum but nothing
+      // The roles the Staff screen itself shows (super_admin exists in the enum but nothing
       // seeds one, per README's "roles in use").
-      const staffRoster: StaffRosterRow[] = (["teacher", "school_admin"] as const).map((role) => {
+      const staffRoster: StaffRosterRow[] = (["teacher", "school_admin", "non_teaching"] as const).map((role) => {
         const inRole = staff.filter((s) => s.role === role);
         return {
-          roleLabel: role === "teacher" ? "Teacher" : "School Admin",
+          roleLabel: role === "school_admin" ? "School Admin" : STAFF_ROLE_LABEL[role],
           active: inRole.filter((s) => s.is_active).length,
           inactive: inRole.filter((s) => !s.is_active).length,
         };

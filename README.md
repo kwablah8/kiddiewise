@@ -41,7 +41,7 @@ deployment per audience.
 | Parent portal | Parents and guardians | `/parent/*` |
 | Content studio | Whoever edits the public site | `/studio` (Sanity, authenticated by Sanity) |
 
-The roles in use are `school_admin`, `teacher` and `parent`. `super_admin` exists in the enum and
+The roles in use are `school_admin`, `teacher`, `parent` and `non_teaching` (staff with a record and a gate number but no login). `super_admin` exists in the enum and
 in the permission checks but nothing seeds one, because Kiddiewise is run by `school_admin`
 accounts.
 Login sends each role to its own portal, and `middleware.ts` bounces anyone who navigates into

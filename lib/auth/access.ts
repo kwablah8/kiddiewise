@@ -1,6 +1,6 @@
 import type { Profile } from "@/lib/types";
 
-export type AppRole = Profile["role"]; // "super_admin" | "school_admin" | "teacher" | "parent"
+export type AppRole = Profile["role"]; // "super_admin" | "school_admin" | "teacher" | "parent" | "non_teaching"
 
 const TEACHER_ROOT = "/teacher";
 const PARENT_ROOT = "/parent";
@@ -13,6 +13,8 @@ function inSubtree(pathname: string, root: string): boolean {
 export function homePathForRole(role: AppRole): string {
   if (role === "teacher") return "/teacher/dashboard";
   if (role === "parent") return "/parent/dashboard";
+  // Non-teaching staff have no portal; /login is public, so this cannot loop.
+  if (role === "non_teaching") return "/login";
   return "/dashboard"; // school_admin | super_admin
 }
 
@@ -74,5 +76,6 @@ export function isPathAllowedForRole(role: AppRole, pathname: string): boolean {
   const inParent = inSubtree(pathname, PARENT_ROOT);
   if (role === "teacher") return inTeacher;
   if (role === "parent") return inParent;
+  if (role === "non_teaching") return false;
   return !inTeacher && !inParent; // school_admin | super_admin
 }

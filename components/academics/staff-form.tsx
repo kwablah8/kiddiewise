@@ -28,7 +28,13 @@ import { SkeletonBlock } from "@/components/states/skeleton-block";
 import { ErrorState } from "@/components/states/error-state";
 import { useCreateStaff, useStaffMember, useUpdateStaff } from "@/lib/queries/academics";
 import type { IssuedCredentials } from "@/lib/temp-password";
-import { staffCreateSchema, type StaffCreateInput, type StaffVM } from "@/lib/validators/academics";
+import { STAFF_ROLE_LABEL } from "@/lib/staff/roles";
+import {
+  staffCreateSchema,
+  type StaffCreateInput,
+  type StaffRole,
+  type StaffVM,
+} from "@/lib/validators/academics";
 
 // `staffCreateSchema` has `.default(...)`s on the optional fields, so its input type (what the
 // form collects) differs from its output type (what create/update require), same pattern as
@@ -36,10 +42,10 @@ import { staffCreateSchema, type StaffCreateInput, type StaffVM } from "@/lib/va
 type StaffFormInput = z.input<typeof staffCreateSchema>;
 
 const GENDER_NONE = "__none__";
-const ROLE_OPTIONS = [
-  { value: "teacher", label: "Teacher" },
-  { value: "school_admin", label: "Administrator" },
-] as const;
+const ROLE_OPTIONS = (Object.keys(STAFF_ROLE_LABEL) as StaffRole[]).map((value) => ({
+  value,
+  label: STAFF_ROLE_LABEL[value],
+}));
 const GENDER_OPTIONS = [
   { value: "male", label: "Male" },
   { value: "female", label: "Female" },
@@ -218,7 +224,15 @@ function StaffFormFields({
         // staff_no is auto-assigned server-side, never client input. No success toast here: the
         // credentials dialog the caller opens is the confirmation, and a toast on top of it would
         // compete with the one thing the admin must not miss.
-        onCreated?.(await createStaff.mutateAsync(values));
+        const credentials = await createStaff.mutateAsync(values);
+        if (credentials) {
+          onCreated?.(credentials);
+        } else {
+          // No portal, so no credentials dialog to confirm it: say so here.
+          toast.success("Staff added", {
+            description: `${values.first_name} ${values.last_name} has been added. They have no portal login.`,
+          });
+        }
       } else if (staffId) {
         await updateStaff.mutateAsync({ id: staffId, ...values });
         toast.success("Staff updated", {
@@ -241,7 +255,7 @@ function StaffFormFields({
             <DialogTitle>{mode === "create" ? "New staff" : "Edit staff"}</DialogTitle>
             <DialogDescription>
               {mode === "create"
-                ? "Add a staff member. A staff number (TCH-… / ADM-…) is assigned automatically by role."
+                ? "Add a staff member. A staff number (TCH-… / ADM-… / NTS-…) is assigned automatically by role."
                 : "Update this staff member's details."}
             </DialogDescription>
           </DialogHeader>
@@ -291,6 +305,14 @@ function StaffFormFields({
                   />
                 </div>
               </FieldRow>
+
+              {role === "non_teaching" && (
+                <p className="flex items-start gap-2 rounded-lg bg-[var(--bg)] px-3 py-2 text-xs text-[var(--muted-foreground)]">
+                  <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                  Non-teaching staff are kept on record and can be given a gate fingerprint number,
+                  but they have no portal login.
+                </p>
+              )}
 
               {role === "teacher" && (
                 <p className="flex items-start gap-2 rounded-lg bg-[var(--bg)] px-3 py-2 text-xs text-[var(--muted-foreground)]">

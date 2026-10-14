@@ -165,7 +165,7 @@ interface StaffRow {
   email: string;
   phone: string | null;
   staff_no: string | null;
-  role: "super_admin" | "school_admin" | "teacher" | "parent";
+  role: "super_admin" | "school_admin" | "teacher" | "parent" | "non_teaching";
   position: string | null;
   department: string | null;
   gender: "male" | "female" | "other" | null;
@@ -196,9 +196,9 @@ function toStaffVM(s: StaffRow, now: number): StaffVM {
     // The VM contracts a string because the UI always shows a staff number; profiles.staff_no is
     // nullable because parents have none. Staff rows always have one assigned at creation.
     staff_no: s.staff_no ?? "—",
-    // Only teacher/school_admin reach these screens (the query filters on it), so the narrowing is
-    // safe, but assert it rather than casting blindly.
-    role: (s.role === "teacher" ? "teacher" : "school_admin") satisfies StaffRole,
+    // Only staff roles reach these screens (the query filters on it), so the narrowing is safe, but
+    // assert it rather than casting blindly.
+    role: (s.role === "teacher" || s.role === "non_teaching" ? s.role : "school_admin") satisfies StaffRole,
     position: s.position,
     department: s.department,
     gender: s.gender satisfies StaffGender | null,
@@ -217,8 +217,8 @@ export async function listStaff(): Promise<StaffVM[]> {
     await db()
       .from("profiles")
       .select(STAFF_SELECT)
-      // Parents live in the same table; the Staff screen is teaching + admin staff only.
-      .in("role", ["teacher", "school_admin"])
+      // Parents live in the same table; the Staff screen is staff roles only.
+      .in("role", ["teacher", "school_admin", "non_teaching"])
       .order("staff_no"),
     "staff",
   );

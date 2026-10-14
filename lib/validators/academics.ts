@@ -44,9 +44,9 @@ export const subjectVM = z.object({
 });
 export type SubjectVM = z.infer<typeof subjectVM>;
 
-// A staff member's auth role (drives portal access + staff_no prefix). Non-teaching staff are
-// filed under `school_admin`; `position` carries the finer job title. (03-DATABASE user_role.)
-export const staffRole = z.enum(["teacher", "school_admin"]);
+// A staff member's auth role (drives portal access + staff_no prefix). `position` carries the finer
+// job title. `non_teaching` staff have a record and a gate number but no portal. (03-DATABASE user_role.)
+export const staffRole = z.enum(["teacher", "school_admin", "non_teaching"]);
 export type StaffRole = z.infer<typeof staffRole>;
 export const staffGender = z.enum(["male", "female", "other"]);
 export type StaffGender = z.infer<typeof staffGender>;

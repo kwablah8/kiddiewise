@@ -2634,6 +2634,10 @@ export type Database = {
           total: number
         }[]
       }
+      teacher_is_class_teacher: {
+        Args: { p_class_id: string }
+        Returns: boolean
+      }
       teacher_teaches: {
         Args: { p_class_id: string; p_subject_id: string }
         Returns: boolean
@@ -2674,7 +2678,12 @@ export type Database = {
         | "cheque"
         | "other"
       scholarship_type: "none" | "partial" | "full" | "bursary"
-      user_role: "super_admin" | "school_admin" | "teacher" | "parent"
+      user_role:
+        | "super_admin"
+        | "school_admin"
+        | "teacher"
+        | "parent"
+        | "non_teaching"
       weekday: "monday" | "tuesday" | "wednesday" | "thursday" | "friday"
     }
     CompositeTypes: {
@@ -2836,7 +2845,13 @@ export const Constants = {
         "other",
       ],
       scholarship_type: ["none", "partial", "full", "bursary"],
-      user_role: ["super_admin", "school_admin", "teacher", "parent"],
+      user_role: [
+        "super_admin",
+        "school_admin",
+        "teacher",
+        "parent",
+        "non_teaching",
+      ],
       weekday: ["monday", "tuesday", "wednesday", "thursday", "friday"],
     },
   },

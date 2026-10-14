@@ -73,7 +73,7 @@ erDiagram
 
 | Enum | Values |
 |---|---|
-| `user_role` | `super_admin`, `school_admin`, `teacher`, `parent` |
+| `user_role` | `super_admin`, `school_admin`, `teacher`, `parent`, `non_teaching` |
 | `gender` | `male`, `female`, `other` |
 | `enrollment_status` | `active`, `inactive`, `graduated`, `withdrawn`, `transferred` |
 | `attendance_status` | `present`, `absent`, `late` |

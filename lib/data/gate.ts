@@ -60,7 +60,7 @@ export async function listDevicePeople(): Promise<DevicePersonVM[]> {
     db()
       .from("profiles")
       .select("id, first_name, last_name, role, is_active")
-      .in("role", ["teacher", "school_admin"])
+      .in("role", ["teacher", "school_admin", "non_teaching"])
       .eq("is_active", true)
       .order("first_name")
       .then((r) => unwrapList<StaffRow>(r, "staff")),
@@ -79,7 +79,7 @@ export async function listDevicePeople(): Promise<DevicePersonVM[]> {
         kind: "staff",
         id: p.id,
         name: `${p.first_name} ${p.last_name}`,
-        detail: p.role === "school_admin" ? "Administrator" : "Teacher",
+        detail: p.role === "school_admin" ? "Administrator" : p.role === "non_teaching" ? "Non-teaching" : "Teacher",
         class_id: null,
         device_user_id: byStaff.get(p.id) ?? null,
       }),

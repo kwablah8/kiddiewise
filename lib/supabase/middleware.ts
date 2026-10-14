@@ -57,9 +57,9 @@ export async function updateSession(request: NextRequest) {
     .eq("id", user.id)
     .single();
 
-  if (!profile) {
-    // Authenticated but not provisioned into a school, nothing can be scoped, so don't let them
-    // into the app shell. Sign-out happens client-side; here we just refuse the protected route.
+  if (!profile || profile.role === "non_teaching") {
+    // Authenticated but not provisioned into a school (or a role with no portal), nothing can be
+    // scoped, so don't let them into the app shell. Sign-out happens client-side; here we just refuse the protected route.
     if (isPublicPath(pathname)) return response;
     const url = request.nextUrl.clone();
     url.pathname = "/login";

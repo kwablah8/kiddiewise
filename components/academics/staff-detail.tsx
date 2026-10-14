@@ -29,13 +29,14 @@ import {
   useStaffMember,
   useUpdateStaff,
 } from "@/lib/queries/academics";
+import { STAFF_ROLE_LABEL } from "@/lib/staff/roles";
 import type { StaffRole, StaffVM } from "@/lib/validators/academics";
 import { formatDate } from "@/lib/format";
 import { cardShellClass } from "@/lib/ui";
 import { cn } from "@/lib/utils";
 
 const GENDER_LABEL: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
-const roleLabel = (role: StaffRole) => (role === "teacher" ? "Teacher" : "Administrator");
+const roleLabel = (role: StaffRole) => STAFF_ROLE_LABEL[role];
 
 interface StaffDetailProps {
   id: string;

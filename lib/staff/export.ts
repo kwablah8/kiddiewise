@@ -1,4 +1,5 @@
 import type { ExportColumn } from "@/lib/export";
+import { STAFF_ROLE_LABEL } from "@/lib/staff/roles";
 import type { StaffVM } from "@/lib/validators/academics";
 
 const dash = (value: string | null) => value ?? "—";
@@ -7,7 +8,7 @@ const dash = (value: string | null) => value ?? "—";
 export const staffColumns: ExportColumn<StaffVM>[] = [
   { header: "Staff No.", width: 1.1, pdf: (s) => s.staff_no },
   { header: "Name", width: 2.2, pdf: (s) => `${s.first_name} ${s.last_name}` },
-  { header: "Role", width: 1.3, pdf: (s) => (s.role === "teacher" ? "Teacher" : "Administrator") },
+  { header: "Role", width: 1.3, pdf: (s) => STAFF_ROLE_LABEL[s.role] },
   { header: "Position", width: 1.6, pdf: (s) => dash(s.position), csv: (s) => s.position ?? "" },
   { header: "Department", width: 1.5, pdf: (s) => dash(s.department), csv: (s) => s.department ?? "" },
   { header: "Email", width: 2.6, pdf: (s) => s.email },

@@ -13,12 +13,14 @@ import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/states/empty-state";
 import { ErrorState } from "@/components/states/error-state";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StaffAvatar } from "./staff-avatar";
 import { useStaff } from "@/lib/queries/academics";
 import { staffColumns, staffDetails } from "@/lib/staff/export";
 import { useSession } from "@/lib/auth/useSession";
-import type { StaffVM } from "@/lib/validators/academics";
+import type { StaffRole, StaffVM } from "@/lib/validators/academics";
 import { PORTAL_ACCESS_LABEL, type PortalAccessStatus } from "@/lib/validators/people";
+import { hasPortal, STAFF_ROLE_LABEL } from "@/lib/staff/roles";
 import { matchesQuery } from "@/lib/search";
 import { cardShellClass } from "@/lib/ui";
 
@@ -30,6 +32,8 @@ const PORTAL_TONE: Record<PortalAccessStatus, "success" | "warning" | "danger" |
   expired: "danger",
   no_access: "neutral",
 };
+
+const ALL_ROLES = "all";
 
 function buildColumns(currentUserId: string | null): DataTableColumn<StaffVM>[] {
   return [
@@ -61,7 +65,7 @@ function buildColumns(currentUserId: string | null): DataTableColumn<StaffVM>[] 
       header: "Role",
       render: (row) => (
         <span className="inline-flex rounded-full bg-[var(--bg)] px-2.5 py-0.5 text-xs font-medium text-[var(--text)]">
-          {row.role === "teacher" ? "Teacher" : "Administrator"}
+          {STAFF_ROLE_LABEL[row.role]}
         </span>
       ),
     },
@@ -107,12 +111,15 @@ function buildColumns(currentUserId: string | null): DataTableColumn<StaffVM>[] 
       header: "Portal access",
       // "Active" means they signed in and replaced the temporary password, i.e. the account is
       // genuinely theirs and the admin no longer knows the credential.
-      render: (row) => (
-        <StatusPill
-          label={PORTAL_ACCESS_LABEL[row.portal_status]}
-          tone={PORTAL_TONE[row.portal_status]}
-        />
-      ),
+      render: (row) =>
+        hasPortal(row.role) ? (
+          <StatusPill
+            label={PORTAL_ACCESS_LABEL[row.portal_status]}
+            tone={PORTAL_TONE[row.portal_status]}
+          />
+        ) : (
+          <span className="text-[var(--muted-foreground)]">No portal</span>
+        ),
     },
     {
       key: "actions",
@@ -129,7 +136,7 @@ function buildColumns(currentUserId: string | null): DataTableColumn<StaffVM>[] 
         }
         // Deactivated staff get no actions at all: both the reissue and the invite reject them
         // server-side, so offering the buttons would only produce an error toast.
-        if (!row.is_active) {
+        if (!row.is_active || !hasPortal(row.role)) {
           return <span className="block text-right text-[var(--muted-foreground)]">—</span>;
         }
         return (
@@ -163,8 +170,11 @@ export function StaffTable({ onNewStaff }: StaffTableProps) {
   // the row shows its buttons for a moment, the server guard is what makes pressing one safe.
   const { profile } = useSession();
   const [query, setQuery] = useState("");
-  const rows = (data ?? []).filter((r) =>
-    matchesQuery(query, r.first_name, r.last_name, r.email, r.staff_no, r.department, r.position),
+  const [roleFilter, setRoleFilter] = useState<StaffRole | typeof ALL_ROLES>(ALL_ROLES);
+  const rows = (data ?? []).filter(
+    (r) =>
+      (roleFilter === ALL_ROLES || r.role === roleFilter) &&
+      matchesQuery(query, r.first_name, r.last_name, r.email, r.staff_no, r.department, r.position),
   );
   const isEmpty = !isLoading && !isError && rows.length === 0;
   const noneAtAll = (data?.length ?? 0) === 0;
@@ -172,12 +182,29 @@ export function StaffTable({ onNewStaff }: StaffTableProps) {
   return (
     <div className={cardShellClass}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <SearchField
-          value={query}
-          onChange={setQuery}
-          placeholder="Search by name, email, staff no. or department"
-          label="Search staff"
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchField
+            value={query}
+            onChange={setQuery}
+            placeholder="Search by name, email, staff no. or department"
+            label="Search staff"
+          />
+          <Select value={roleFilter} onValueChange={(v) => setRoleFilter((v ?? ALL_ROLES) as StaffRole | typeof ALL_ROLES)}>
+            <SelectTrigger aria-label="Filter by role" className="w-44">
+              <SelectValue>
+                {(v: string) => (v === ALL_ROLES ? "All roles" : STAFF_ROLE_LABEL[v as StaffRole])}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_ROLES}>All roles</SelectItem>
+              {(Object.keys(STAFF_ROLE_LABEL) as StaffRole[]).map((role) => (
+                <SelectItem key={role} value={role}>
+                  {STAFF_ROLE_LABEL[role]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <ExportButtons
           kind="staff"
           title="Staff List"
@@ -198,7 +225,7 @@ export function StaffTable({ onNewStaff }: StaffTableProps) {
           description={
             noneAtAll
               ? "Add your first staff member to start assigning classes and subjects."
-              : `Nothing matches “${query}”. Check the spelling, or clear the search.`
+              : "Nothing matches this search or filter. Check the spelling, or clear them."
           }
           action={
             noneAtAll ? (

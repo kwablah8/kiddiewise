@@ -15,6 +15,13 @@ Auth uses **Supabase Auth**. Authorization is enforced primarily by **RLS**
 | `school_admin` | One school | Runs a school: users, students, academics, fees, announcements, reports. |
 | `teacher` | Own assignments | Marks attendance, enters results, runs assessments for assigned classes/subjects. |
 | `parent` | Own children | Read-only view of their linked children's data. |
+| `non_teaching` | None | Non-teaching staff (security, cook, driver). A staff record and a gate fingerprint number, no portal. |
+
+`non_teaching` is safe by default: every policy and helper names the roles it admits, so this role
+matches none and reads or writes nothing (`tests/rls/non-teaching.test.ts`). The account is created
+with no issued password and banned for good, so it cannot sign in; if a session ever existed, the
+middleware treats the role as having no portal and sends it to `/login`. Credential reissue and
+portal invites are refused for it server-side.
 
 A user's role and `school_id` live on their `profiles` row and are resolved from `auth.uid()`.
 Role is assigned at account creation and is not self-editable.
@@ -137,6 +144,7 @@ webhook (`/api/revalidate-sanity`, HMAC signature) and the gate device's scans
 | `school_admin` | `/dashboard` |
 | `teacher` | `/teacher/dashboard` |
 | `parent` | `/parent/dashboard` |
+| `non_teaching` | None (cannot sign in) |
 
 ---
 
