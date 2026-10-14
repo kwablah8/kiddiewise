@@ -33,7 +33,6 @@ interface Row {
   detail: string | null;
   arrived_at: string | null;
   left_at: string | null;
-  late: boolean;
 }
 
 /** Who came through the gate on a day, and when, for the school, one class, or the staff. */
@@ -60,7 +59,7 @@ export function CheckinsTab({ timeZone, today }: { timeZone: string; today: stri
       header: "Status",
       render: (r) =>
         r.arrived_at ? (
-          <StatusPill label={r.late ? "Late" : "On time"} tone={r.late ? "warning" : "success"} />
+          <StatusPill label="Present" tone="success" />
         ) : r.left_at ? (
           <StatusPill label="No arrival scan" tone="neutral" />
         ) : (
@@ -81,7 +80,7 @@ export function CheckinsTab({ timeZone, today }: { timeZone: string; today: stri
     const seen = new Set(rows.map((r) => r.id));
     for (const p of people.data ?? []) {
       if (p.kind === kind && inScope(p.id) && !seen.has(p.id)) {
-        rows.push({ id: p.id, name: p.name, detail: p.detail, arrived_at: null, left_at: null, late: false });
+        rows.push({ id: p.id, name: p.name, detail: p.detail, arrived_at: null, left_at: null });
       }
     }
   }
@@ -248,6 +247,5 @@ function toRow(p: PresenceVM): Row {
     detail: p.person!.detail,
     arrived_at: p.arrived_at,
     left_at: p.left_at,
-    late: p.late,
   };
 }

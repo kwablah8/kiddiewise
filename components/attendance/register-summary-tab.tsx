@@ -24,7 +24,6 @@ const columns: DataTableColumn<RegisterSummaryRowVM>[] = [
   { key: "name", header: "Student", render: (r) => <span className="font-medium text-[var(--text)]">{r.name}</span> },
   { key: "admission", header: "Admission No.", hideOnMobile: true, render: (r) => r.admission_no },
   { key: "present", header: "Present", align: "right", render: (r) => r.present },
-  { key: "late", header: "Late", align: "right", render: (r) => r.late },
   { key: "absent", header: "Absent", align: "right", render: (r) => r.absent },
   {
     key: "pct",
@@ -34,7 +33,7 @@ const columns: DataTableColumn<RegisterSummaryRowVM>[] = [
   },
 ];
 
-/** How often each student in a class was present, late or absent over a term, from the register. */
+/** How often each student in a class was present or absent over a term, from the register. */
 export function RegisterSummaryTab() {
   const classes = useClasses();
   const active = useActiveContext();

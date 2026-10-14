@@ -130,7 +130,7 @@ describe("register summary", () => {
     { id: "s1", first_name: "Ama", last_name: "Mensah", admission_no: "K-1" },
   ];
 
-  it("tallies each student's marks, by name, and rates present and late as attended", () => {
+  it("tallies each student's marks, by name, and counts a late mark as a present day", () => {
     const rows = buildRegisterSummary(students, [
       { student_id: "s1", status: "present" },
       { student_id: "s1", status: "late" },
@@ -138,14 +138,14 @@ describe("register summary", () => {
       { student_id: "s1", status: "present" },
     ]);
     expect(rows.map((r) => r.name)).toEqual(["Ama Mensah", "Yaw Boateng"]);
-    expect(rows[0]).toMatchObject({ present: 2, late: 1, absent: 1, marked: 4, pct: 75 });
+    expect(rows[0]).toMatchObject({ present: 3, absent: 1, marked: 4, pct: 75 });
   });
 
   it("keeps a student with no marks, with no rate rather than 0%", () => {
     const [ama, yaw] = buildRegisterSummary(students, [{ student_id: "s1", status: "present" }]);
     expect(ama!.pct).toBe(100);
     expect(yaw).toMatchObject({ marked: 0, pct: null });
-    expect(columnsToCsv(registerSummaryColumns, [yaw!])).toContain("K-2,Yaw Boateng,0,0,0,0,");
+    expect(columnsToCsv(registerSummaryColumns, [yaw!])).toContain("K-2,Yaw Boateng,0,0,0,");
     expect(pdfRows(registerSummaryColumns, [yaw!])[0]!.at(-1)).toBe("—");
   });
 
@@ -190,9 +190,9 @@ describe("check-in export", () => {
   it("writes 24-hour times to the spreadsheet and 12-hour times on paper", () => {
     const row = buildCheckinRows([scan({ id: "a", name: "Yaa", late: true })], "student", null, classOf);
     const columns = checkinColumns("student", "Africa/Accra");
-    expect(columnsToCsv(columns, row)).toContain("2026-10-08,Yaa,Basic 1,07:42,,Late");
-    expect(pdfRows(columns, row)[0]).toEqual(["08 Oct 2026", "Yaa", "Basic 1", "7:42 AM", "—", "Late"]);
-    expect(checkinDetails(["Basic 1"], row)).toEqual(["Basic 1", "1 check-in", "1 late"]);
+    expect(columnsToCsv(columns, row)).toContain("2026-10-08,Yaa,Basic 1,07:42,,Present");
+    expect(pdfRows(columns, row)[0]).toEqual(["08 Oct 2026", "Yaa", "Basic 1", "7:42 AM", "—", "Present"]);
+    expect(checkinDetails(["Basic 1"], row)).toEqual(["Basic 1", "1 check-in"]);
   });
 });
 

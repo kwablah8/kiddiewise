@@ -37,10 +37,9 @@ export interface RegisterSummaryRowVM {
   name: string;
   admission_no: string;
   present: number;
-  late: number;
   absent: number;
   /** Days the register was marked for this student. */
   marked: number;
-  /** Present or late over marked days, as a whole percent; null when nothing is marked. */
+  /** Present days over marked days, as a whole percent; null when nothing is marked. */
   pct: number | null;
 }

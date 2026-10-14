@@ -10,11 +10,10 @@ export interface CheckinExportRow {
   detail: string | null;
   arrived_at: string | null;
   left_at: string | null;
-  late: boolean;
 }
 
 function status(r: CheckinExportRow): string {
-  if (r.arrived_at) return r.late ? "Late" : "On time";
+  if (r.arrived_at) return "Present";
   return "No arrival scan";
 }
 
@@ -54,7 +53,6 @@ export function buildCheckinRows(
           detail: p.person.detail,
           arrived_at: p.arrived_at,
           left_at: p.left_at,
-          late: p.late,
         },
       ];
     })
@@ -62,7 +60,5 @@ export function buildCheckinRows(
 }
 
 export function checkinDetails(labels: string[], rows: CheckinExportRow[]): string[] {
-  const arrivals = rows.filter((r) => r.arrived_at);
-  const late = arrivals.filter((r) => r.late).length;
-  return [...labels, `${rows.length} check-in${rows.length === 1 ? "" : "s"}`, `${late} late`];
+  return [...labels, `${rows.length} check-in${rows.length === 1 ? "" : "s"}`];
 }
