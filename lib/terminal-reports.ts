@@ -168,7 +168,7 @@ export function computeSubjectComponents(
     .sort((a, b) => a.subject_name.localeCompare(b.subject_name));
 }
 
-/** The template's "Class Ave. / Class Low. / Class High. Score" columns for one subject. */
+/** The class average, low and high for one subject. Stored on the report, no longer printed on the card. */
 export interface SpreadStats {
   average: number | null;
   lowest: number | null;

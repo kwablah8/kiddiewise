@@ -402,7 +402,7 @@ report is the official record of a term and must not change because a mark was e
 Constraint: `unique (student_id, term_id)`.
 
 ### `terminal_report_subjects`
-One frozen row per subject on a report card — the twelve-column table the paper form prints.
+One frozen row per subject on a report card — the subject table the report card prints (the stored class average, low and high are no longer shown on it).
 Replaced wholesale on regeneration, so a subject dropped from the class disappears from the card.
 
 | Column | Type | Notes |

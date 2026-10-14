@@ -126,7 +126,7 @@ function fitCell(
 
 /**
  * The school's report card, field for field: letterhead, the boxed term title, the student's
- * identity block, the grading key, the twelve-column subject table, the summary line, and the
+ * identity block, the grading key, the nine-column subject table, the summary line, and the
  * section a class teacher and head teacher sign.
  *
  * A4 portrait; this one is a full page, unlike the A5 receipt. Same reasoning for jsPDF over a
@@ -281,21 +281,18 @@ interface Column {
   align: "left" | "center";
 }
 
-/** The template's twelve columns. Widths sum to CONTENT_WIDTH, asserted by the unit test. */
+/** The card's nine columns. Widths sum to CONTENT_WIDTH, asserted by the unit test. */
 function columns(caWeight: number): Column[] {
   return [
     { header: "", width: 5, align: "center" },
-    { header: "Subject", width: 38, align: "left" },
-    { header: "Short Code", width: 12, align: "center" },
-    { header: `Class Score ${caWeight}%`, width: 14, align: "center" },
-    { header: `Exam Score ${100 - caWeight}%`, width: 14, align: "center" },
-    { header: "Total Score 100%", width: 14, align: "center" },
-    { header: "Class Ave. Score", width: 13, align: "center" },
-    { header: "Class Low. Score", width: 13, align: "center" },
-    { header: "Class High. Score", width: 13, align: "center" },
-    { header: "Grade", width: 10, align: "center" },
-    { header: "Pos.", width: 13, align: "center" },
-    { header: "Remarks", width: 27, align: "left" },
+    { header: "Subject", width: 46, align: "left" },
+    { header: "Short Code", width: 14, align: "center" },
+    { header: `Class Score ${caWeight}%`, width: 17, align: "center" },
+    { header: `Exam Score ${100 - caWeight}%`, width: 17, align: "center" },
+    { header: "Total Score 100%", width: 17, align: "center" },
+    { header: "Grade", width: 12, align: "center" },
+    { header: "Pos.", width: 15, align: "center" },
+    { header: "Remarks", width: 43, align: "left" },
   ];
 }
 
@@ -336,9 +333,6 @@ function subjectTable(doc: jsPDF, data: ReportCardData, top: number): number {
       dec(s.class_score),
       dec(s.exam_score),
       dec(s.total),
-      dec(s.class_average),
-      dec(s.class_lowest),
-      dec(s.class_highest),
       s.grade ?? "",
       // Position out of the number on roll, exactly as the paper card writes it: "2/16".
       s.position === null ? "" : rank(s.position, data.enrolledCount),
@@ -537,6 +531,6 @@ export async function downloadReportCard(data: ReportCardData): Promise<void> {
   renderReportCard(data, logo).save(reportCardFilename(data));
 }
 
-/** Exported for the layout test, the twelve columns must exactly fill the card's width. */
+/** Exported for the layout test, the nine columns must exactly fill the card's width. */
 export const reportCardColumns = columns;
 export const REPORT_CARD_CONTENT_WIDTH = CONTENT_WIDTH;

@@ -61,21 +61,6 @@ export function ReportCardTable({
               <br />
               100%
             </th>
-            <th className={headCell}>
-              Class
-              <br />
-              ave.
-            </th>
-            <th className={headCell}>
-              Class
-              <br />
-              low.
-            </th>
-            <th className={headCell}>
-              Class
-              <br />
-              high.
-            </th>
             <th className={headCell}>Grade</th>
             <th className={headCell}>Pos.</th>
             <th className="py-1.5 pr-3 pl-2 text-[11px] font-medium">Remarks</th>
@@ -93,9 +78,6 @@ export function ReportCardTable({
               <td className={numCell}>{dec(s.class_score)}</td>
               <td className={numCell}>{dec(s.exam_score)}</td>
               <td className={`${numCell} font-semibold text-[var(--text)]`}>{dec(s.total)}</td>
-              <td className={`${numCell} text-[var(--muted-foreground)]`}>{dec(s.class_average)}</td>
-              <td className={`${numCell} text-[var(--muted-foreground)]`}>{dec(s.class_lowest)}</td>
-              <td className={`${numCell} text-[var(--muted-foreground)]`}>{dec(s.class_highest)}</td>
               <td className={`${numCell} font-medium`}>{s.grade ?? "—"}</td>
               <td className={numCell}>{rank(s.position, enrolledCount)}</td>
               <td className="py-1.5 pr-3 pl-2 whitespace-nowrap text-[var(--muted-foreground)]">
