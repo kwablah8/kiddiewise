@@ -48,6 +48,12 @@ parent portal, live. A student who doesn't scan is not marked absent automatical
 confirms the register. Staff scans give a staff attendance view, with no notices. SMS is not part of
 it.
 
+The admin Attendance page's Registers tab has a Staff view that totals a term per staff member (all staff, or teachers,
+administrators or non-teaching staff alone) and exports it as PDF or CSV. Staff have no register to
+mark, so it is derived from scans: a school day is any day at least one staff member scanned, and a
+staff member with a device number who did not scan that day is absent. Staff without a device number
+are listed but not measured, and days before a hire date are not counted.
+
 **Timetable** was originally parked under "Academics+" (post-MVP, see `docs/08-ROADMAP.md`) and
 was deliberately pulled forward: admin defines the school's shared periods once, then builds each
 class's weekly grid from them. A subject can only be placed in a class's grid once that class

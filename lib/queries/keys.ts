@@ -78,6 +78,7 @@ export const queryKeys = {
     devices: ["gate", "devices"] as const,
     people: ["gate", "people"] as const,
     presence: (date: string) => ["gate", "presence", date] as const,
+    staffDays: (from: string, to: string) => ["gate", "staff-days", from, to] as const,
   },
   fees: {
     overview: (filter: unknown) => ["fees", "overview", filter] as const,

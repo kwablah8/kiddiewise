@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/app/page-header";
-import { RegisterSummaryTab } from "@/components/attendance/register-summary-tab";
+import { RegistersTab } from "@/components/attendance/registers-tab";
 import { CheckinsTab } from "@/components/gate/checkins-tab";
 import { DeviceNumbersTab } from "@/components/gate/device-numbers-tab";
 import { GateSettingsTab } from "@/components/gate/gate-settings-tab";
@@ -30,7 +30,7 @@ export default function AttendancePage() {
     <div className="space-y-6">
       <PageHeader
         title="Attendance"
-        subtitle="Gate check-ins from the fingerprint device, and the class registers."
+        subtitle="Gate check-ins from the fingerprint device, the class registers, and staff attendance."
       />
 
       <div className="overflow-x-auto">
@@ -67,7 +67,7 @@ export default function AttendancePage() {
           today={localParts(new Date(), settings.data.timezone).date}
         />
       ) : tab === "registers" ? (
-        <RegisterSummaryTab />
+        <RegistersTab today={localParts(new Date(), settings.data.timezone).date} />
       ) : tab === "numbers" ? (
         <DeviceNumbersTab />
       ) : (

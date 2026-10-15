@@ -26,6 +26,13 @@ export const useDevicePeople = () =>
 export const usePresence = (date: string) =>
   useQuery({ queryKey: queryKeys.gate.presence(date), queryFn: () => data.listPresence(date) });
 
+export const useStaffPresenceDays = (from: string | null, to: string | null) =>
+  useQuery({
+    queryKey: queryKeys.gate.staffDays(from ?? "", to ?? ""),
+    queryFn: () => data.listStaffPresenceDays(from!, to!),
+    enabled: !!from && !!to,
+  });
+
 /** A one-off read for an export: nothing is cached, it runs when the admin presses the button. */
 export const useFetchPresenceRange = () =>
   useMutation({ mutationFn: ({ from, to }: { from: string; to: string }) => data.listPresenceRange(from, to) });

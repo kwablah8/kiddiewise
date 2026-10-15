@@ -163,6 +163,27 @@ export async function listPresenceRange(from: string, to: string): Promise<Prese
   });
 }
 
+/** The days each staff member scanned between two dates (both included): one row per person per day. */
+export async function listStaffPresenceDays(
+  from: string,
+  to: string,
+): Promise<{ date: string; staff_id: string }[]> {
+  const rows = await readAllPaged(
+    (start, end) =>
+      db()
+        .from("daily_presence")
+        .select("local_date, staff_id")
+        .not("staff_id", "is", null)
+        .gte("local_date", from)
+        .lte("local_date", to)
+        .order("local_date")
+        .order("staff_id")
+        .range(start, end),
+    "staff presence",
+  );
+  return rows.flatMap((r) => (r.local_date && r.staff_id ? [{ date: r.local_date, staff_id: r.staff_id }] : []));
+}
+
 /** A guardian's gate notices, newest first. RLS returns only their own. */
 export async function listParentNotifications(limit = 50): Promise<ParentNotificationVM[]> {
   const rows = unwrapList(

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { StaffRole } from "@/lib/validators/academics";
 
 export const attendanceStatusSchema = z.enum(["present", "absent", "late"]);
 export type AttendanceStatus = z.infer<typeof attendanceStatusSchema>;
@@ -41,5 +42,21 @@ export interface RegisterSummaryRowVM {
   /** Days the register was marked for this student. */
   marked: number;
   /** Present days over marked days, as a whole percent; null when nothing is marked. */
+  pct: number | null;
+}
+
+/** One staff member's tally over a term, derived from gate scans (see lib/staff/attendance.ts). */
+export interface StaffAttendanceRowVM {
+  staff_id: string;
+  staff_no: string;
+  name: string;
+  role: StaffRole;
+  /** False when the person has no device number, so nothing can be measured. */
+  tracked: boolean;
+  present: number;
+  absent: number;
+  /** School days counted for this person. */
+  marked: number;
+  /** Present days over school days, as a whole percent; null when nothing is measured. */
   pct: number | null;
 }
