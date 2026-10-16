@@ -2546,6 +2546,10 @@ export type Database = {
       }
     }
     Functions: {
+      assessment_has_submitted_results: {
+        Args: { p_assessment_id: string }
+        Returns: boolean
+      }
       class_attendance_summary: {
         Args: never
         Returns: {

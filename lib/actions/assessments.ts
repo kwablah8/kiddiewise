@@ -86,27 +86,31 @@ export async function updateAssessment(
 }
 
 /**
- * Delete an assessment that hasn't entered the record.
+ * Delete an assessment.
  *
- * Submitted results are what parents and terminal reports read, block-if-history applies and the
- * delete is refused. Unsubmitted rows are the teacher's own drafts and cascade away with the
- * assessment (results FK, migration 0008). RLS: teachers may only delete within their own
- * class-subject pairs (asm_teacher_delete, migration 0025).
+ * Submitted results are what parents and terminal reports read. A teacher may not delete once any
+ * are submitted (the database enforces it too, asm_teacher_delete, migration 0050); an admin may,
+ * and the results go with it. Unsubmitted rows are the teacher's own drafts and cascade away with
+ * the assessment (results FK, migration 0008). Teachers may only delete within their own
+ * class-subject pairs.
  */
 export async function deleteAssessment(input: { id: string }): Promise<ActionResult<{ ok: true }>> {
   return attempt(async () => {
     const { id } = z.object({ id: z.string().min(1) }).parse(input);
     const ctx = await tenant();
 
-    const { count } = await ctx.db
-      .from("results")
-      .select("id", { count: "exact", head: true })
-      .eq("assessment_id", id)
-      .eq("is_submitted", true);
-    if ((count ?? 0) > 0) {
-      throw new UserFacingError(
-        "Scores from this assessment have been submitted — they're part of the record now. It can't be deleted.",
-      );
+    const isAdmin = ctx.profile.role === "school_admin" || ctx.profile.role === "super_admin";
+    if (!isAdmin) {
+      const { count } = await ctx.db
+        .from("results")
+        .select("id", { count: "exact", head: true })
+        .eq("assessment_id", id)
+        .eq("is_submitted", true);
+      if ((count ?? 0) > 0) {
+        throw new UserFacingError(
+          "Scores from this assessment have been submitted — they're part of the record now. Ask an administrator if it has to be removed.",
+        );
+      }
     }
 
     assertOk(await ctx.db.from("assessments").delete().eq("id", id), "assessment");

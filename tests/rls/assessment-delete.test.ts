@@ -1,6 +1,7 @@
 /**
- * asm_teacher_delete (migration 0025): a teacher may delete assessments only for the class-subject
- * pairs they teach. PostgREST deletes silently affect zero rows when RLS filters them out, so the
+ * asm_teacher_delete (migrations 0025, 0050): a teacher may delete assessments only for the
+ * class-subject pairs they teach, and only while none of its results is submitted. An admin may delete
+ * any assessment in their school. PostgREST deletes silently affect zero rows when RLS filters them out, so the
  * negative case asserts the row SURVIVES rather than expecting an error. The app-level guard
  * (submitted results block deletion) lives in the Server Action and is exercised on-screen; what
  * belongs here is the database boundary itself, including the results cascade.
@@ -90,5 +91,45 @@ describe("teacher deletion of assessments", () => {
       .select("id")
       .eq("id", assessmentId);
     expect(survivor).toHaveLength(1);
+  });
+});
+
+describe("submitted assessments", () => {
+  async function seedSubmitted(): Promise<string> {
+    const assessmentId = await seedAssessment(s.classA_taught);
+    const { error } = await admin().from("results").insert({
+      school_id: s.schoolA,
+      assessment_id: assessmentId,
+      student_id: s.studentA1,
+      score: 15,
+      is_submitted: true,
+      entered_by: s.teacherA,
+    });
+    if (error) throw new Error(`result seed: ${error.message}`);
+    return assessmentId;
+  }
+
+  it("a teacher CANNOT delete once a score is submitted", async () => {
+    const assessmentId = await seedSubmitted();
+    const teacher = await signInAs(s.teacherAEmail);
+    const { error } = await teacher.from("assessments").delete().eq("id", assessmentId);
+    expect(error).toBeNull(); // RLS filters silently
+
+    const { data: survivor } = await admin().from("assessments").select("id").eq("id", assessmentId);
+    expect(survivor).toHaveLength(1);
+    const { data: kept } = await admin().from("results").select("id").eq("assessment_id", assessmentId);
+    expect(kept).toHaveLength(1);
+  });
+
+  it("an admin can delete it, and its results go with it", async () => {
+    const assessmentId = await seedSubmitted();
+    const adminA = await signInAs(s.adminAEmail);
+    const { error } = await adminA.from("assessments").delete().eq("id", assessmentId);
+    expect(error).toBeNull();
+
+    const { data: gone } = await admin().from("assessments").select("id").eq("id", assessmentId);
+    expect(gone).toHaveLength(0);
+    const { data: orphans } = await admin().from("results").select("id").eq("assessment_id", assessmentId);
+    expect(orphans).toHaveLength(0);
   });
 });

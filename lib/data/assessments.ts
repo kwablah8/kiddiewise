@@ -53,6 +53,7 @@ function toListItemVM(a: AssessmentRow): AssessmentListItemVM {
     max_score: Number(a.max_score),
     date: a.date,
     result_count: a.results.length,
+    submitted_count: a.results.filter((r) => r.is_submitted).length,
     is_submitted: a.results.length > 0 && a.results.every((r) => r.is_submitted),
   };
 }

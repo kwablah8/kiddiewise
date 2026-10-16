@@ -14,6 +14,8 @@ export const assessmentListItemVM = z.object({
   max_score: z.number(),
   date: z.string().nullable(),
   result_count: z.number(),
+  /** How many of those scores have been submitted: a teacher can no longer delete once any are. */
+  submitted_count: z.number(),
   is_submitted: z.boolean(),
 });
 export type AssessmentListItemVM = z.infer<typeof assessmentListItemVM>;

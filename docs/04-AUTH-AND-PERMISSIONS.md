@@ -163,6 +163,7 @@ webhook (`/api/revalidate-sanity`, HMAC signature) and the gate device's scans
 | Manage academic years & terms | ✓ | ✓ | R | — |
 | Mark / update attendance | ✓ | ✓ | ✓ as class teacher | R (own children) |
 | Create assessments / exams | ✓ | ✓ | ✓ own | — |
+| Delete an assessment | ✓ (even once scores are submitted) | ✓ (even once scores are submitted) | ✓ own, until a score is submitted | — |
 | Enter / submit results | ✓ | ✓ | ✓ own | R (own children) |
 | Configure grading scale & assessment types | ✓ | ✓ | R | — |
 | Generate / publish terminal reports | ✓ | ✓ | R (own) | R (published, own children) |

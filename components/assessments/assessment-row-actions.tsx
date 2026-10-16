@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSession } from "@/lib/auth/useSession";
 import { useUpdateAssessment, useDeleteAssessment } from "@/lib/queries/assessments";
 import { useAssessmentTypes } from "@/lib/queries/grading";
 import { assessmentUpdateSchema, type AssessmentListItemVM } from "@/lib/validators/assessments";
@@ -42,8 +43,12 @@ type EditFormOutput = z.output<typeof editFormSchema>;
  * Edit + delete controls for one assessment row, shared by the teacher's list and the admin's
  * table. Who may actually write is RLS's decision (asm_teacher_* / asm_admin), the buttons render
  * for everyone who can see the row, and an unauthorised write comes back as a permission message.
+ * The one exception shown up front: once scores are submitted only an admin may delete.
  */
 export function AssessmentRowActions({ assessment }: { assessment: AssessmentListItemVM }) {
+  const { profile } = useSession();
+  const isAdmin = profile?.role === "school_admin" || profile?.role === "super_admin";
+  const deleteLocked = !isAdmin && assessment.submitted_count > 0;
   const [editOpen, setEditOpen] = useState(false);
   const [editKey, setEditKey] = useState(0);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -71,6 +76,8 @@ export function AssessmentRowActions({ assessment }: { assessment: AssessmentLis
         variant="ghost"
         size="icon-sm"
         aria-label={`Delete ${assessment.title}`}
+        disabled={deleteLocked}
+        title={deleteLocked ? "Submitted scores can only be removed by an administrator" : undefined}
         onClick={() => setDeleteOpen(true)}
       >
         <Trash2 className="size-4 text-[var(--danger)]" aria-hidden="true" />
@@ -245,6 +252,7 @@ function ConfirmDeleteAssessmentDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const deleteAssessment = useDeleteAssessment();
+  const drafts = assessment.result_count - assessment.submitted_count;
 
   async function handleConfirm() {
     try {
@@ -268,12 +276,20 @@ function ConfirmDeleteAssessmentDialog({
           <DialogDescription>
             <strong className="text-[var(--text)]">{assessment.title}</strong> (
             {assessment.class_name} · {assessment.subject_name}) will be removed
-            {assessment.result_count > 0
-              ? `, along with its ${assessment.result_count} draft ${
-                  assessment.result_count === 1 ? "score" : "scores"
-                }`
-              : ""}
-            . An assessment with submitted scores can&apos;t be deleted.
+            {drafts > 0 ? `, along with its ${drafts} draft ${drafts === 1 ? "score" : "scores"}` : ""}
+            .{" "}
+            {assessment.submitted_count > 0 ? (
+              <>
+                <strong className="text-[var(--danger)]">
+                  {assessment.submitted_count} submitted{" "}
+                  {assessment.submitted_count === 1 ? "score is" : "scores are"} part of the record.
+                </strong>{" "}
+                Deleting removes {assessment.submitted_count === 1 ? "it" : "them"} for good, including from
+                what parents see. Terminal reports already generated keep their figures until regenerated.
+              </>
+            ) : (
+              "This can't be undone."
+            )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-2">
